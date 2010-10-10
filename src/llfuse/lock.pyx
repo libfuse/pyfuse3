@@ -91,5 +91,5 @@ cdef class NoLockManager:
 
 lock = Lock()
 lock_released = NoLockManager()
-
+lock.acquire()
 
