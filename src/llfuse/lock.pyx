@@ -17,15 +17,12 @@ python-llfuse can be distributed under the terms of the GNU LGPL.
 cdef extern from "lock_c.c":
     int acquire() nogil
     int release() nogil
-    void init() nogil
     int EINVAL
     int EDEADLK
     int EPERM
 
 cdef extern from "sched.h":
     int sched_yield() nogil
-
-cimport python_exc
 
 cdef class Lock:
     '''
@@ -47,7 +44,7 @@ cdef class Lock:
         else:
             raise RuntimeError("pthread_lock_mutex returned errorcode %d" % ret)
 
-    def release(self):
+    def release(self, *a):
         '''Release global lock'''
         
         cdef int ret
@@ -68,7 +65,7 @@ cdef class Lock:
 
         with nogil:
             ret1 = release()
-            if ret1 !=  0:
+            if ret1 ==  0:
                 sched_yield()
                 ret2 = acquire()
 
@@ -80,25 +77,19 @@ cdef class Lock:
         elif ret2 != 0:
             raise RuntimeError("pthread_lock_mutex returned errorcode %d" % ret2)
 
-
-    def without(self):
-        '''Return context manager that releases the global lock'''
-        
-        return nolock
-
     __enter__ = acquire
     __exit__ = release
 
 cdef class NoLockManager:
     '''Context manager to execute code while the global lock is released'''
 
-    __enter__ = Lock.release
-    __exit__ = Lock.acquire
-    
+    def __enter__ (self):
+        lock.release()
+        
+    def __exit__(self, *a):
+        lock.acquire()
 
-with nogil:
-    init()
 lock = Lock()
-nolock = NoLockManager()
+lock_released = NoLockManager()
 
 

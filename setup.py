@@ -109,6 +109,8 @@ class build_cython(setuptools.Command):
             from Cython.Compiler.Main import compile
         except ImportError:
             raise SystemExit('Cython needs to be installed for this command')
+
+        options = { 'include_path': [ os.path.join(basedir, 'Include') ] }
         
         for extension in self.extensions:
             for file in extension.sources:
@@ -120,7 +122,8 @@ class build_cython(setuptools.Command):
                      ( not os.path.exists(path + ext) or
                      os.path.getmtime(path + ext) < os.path.getmtime(path + '.pyx'))):
                     print('compiling %s to %s' % (file + '.pyx', file + ext))
-                    res = compile(path + '.pyx', full_module_name=extension.name)
+                    res = compile(path + '.pyx', full_module_name=extension.name,
+                                  **options)
                     assert res.num_errors == 0
                 else:
                     print('%s is up to date' % (file + ext,))

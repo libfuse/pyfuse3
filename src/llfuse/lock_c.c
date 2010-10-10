@@ -13,23 +13,17 @@ python-llfuse can be distributed under the terms of the GNU LGPL.
 
 #include <pthread.h>
 
-int acquire();
-int release();
-void init();
+int acquire(void);
+int release(void);
 
-static pthread_mutex_t mutex;
+static pthread_mutex_t mutex = PTHREAD_ERRORCHECK_MUTEX_INITIALIZER_NP;
 
-inline void init()
-{
-    mutex = PTHREAD_ERRORCHECK_MUTEX_INITIALIZER_NP;
-}
-
-inline int acquire()
+inline int acquire(void)
 {
     return pthread_mutex_lock(&mutex);
 }
 
-inline int release()
+inline int release(void)
 {
     return pthread_mutex_unlock(&mutex);
 }

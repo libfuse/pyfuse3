@@ -12,44 +12,38 @@ python-llfuse can be distributed under the terms of the GNU LGPL.
 '''
 
 import os
-cimport xattr
-cimport python_exc
 
-from errno cimport *
-from dirent cimport *
-from types cimport *
-from string cimport *
-from python_string cimport PyString_AsStringAndSize, PyString_FromStringAndSize
-from stdlib cimport malloc, free
+cimport cpython.exc
+from libc cimport string, errno, stdlib, dirent, xattr
+from cpython.string cimport PyString_AsStringAndSize, PyString_FromStringAndSize
 
 def listdir(path):
     '''Like os.listdir(), but releases the GIL'''
     
-    cdef DIR* dirp
-    cdef dirent ent
-    cdef dirent* res
+    cdef dirent.DIR* dirp
+    cdef dirent.dirent ent
+    cdef dirent.dirent* res
     cdef int ret
-    global errno
 
     with nogil:
-        dirp = opendir(path)
+        dirp = dirent.opendir(path)
     names = list()
 
     while True:
-        errno = 0
+        errno.errno = 0
         with nogil:
-            ret = readdir_r(dirp, &ent, &res)
+            ret = dirent.readdir_r(dirp, &ent, &res)
         if ret != 0:
             raise OSError(errno, os.strerror(errno), path)
         if res is NULL:
             break
-        if strcmp(ent.d_name, b'.') == 0 or strcmp(ent.d_name, b'..') == 0:
+        if string.strcmp(ent.d_name, b'.') == 0 or string.strcmp(ent.d_name, b'..') == 0:
             continue
 
         names.append(ent.d_name)
         
     with nogil:
-        closedir(dirp)
+        dirent.closedir(dirp)
     
     return names
 
@@ -62,9 +56,6 @@ def setxattr(path, name, value):
     cdef char* s
 
     ret = PyString_AsStringAndSize(value, &s, &n)
-    if ret != 0:
-        # TODO: Need to re-raise exception somehow
-        return NULL
 
     with nogil:
         ret = xattr.setxattr(path, name, s, n, 0)
@@ -88,28 +79,25 @@ def getxattr(path, name, int size_guess=128):
     cdef int bufsize
 
     bufsize = size_guess
-    buf = <char*> malloc(bufsize)
+    buf = <char*> stdlib.malloc(bufsize)
 
     if buf is NULL:
-        # TODO: How to raise this exception?
-        python_exc.PyErr_NoMemory()
+        cpython.exc.PyErr_NoMemory()
 
     try:
         with nogil:
             ret = xattr.getxattr(path, name, &buf, bufsize)
 
-        if ret < 0 and errno == ERANGE:
+        if ret < 0 and errno.errno == errno.ERANGE:
             with nogil:
                 ret = xattr.getxattr(path, name, NULL, 0)
             if ret < 0:
                 raise OSError(errno, os.strerror(errno), path)
             bufsize = ret
-            free(buf)
-            buf = <char*> malloc(bufsize)
+            stdlib.free(buf)
+            buf = <char*> stdlib.malloc(bufsize)
             if buf is NULL:
-                python_exc.PyErr_NoMemory()
-                # TODO: What do we return now?
-                return NULL
+                cpython.exc.PyErr_NoMemory()
 
             with nogil:
                 ret = xattr.getxattr(path, name, &buf, bufsize)
@@ -120,5 +108,5 @@ def getxattr(path, name, int size_guess=128):
         return PyString_FromStringAndSize(buf, ret)
     
     finally:
-        free(buf)
+        stdlib.free(buf)
         
