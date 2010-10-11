@@ -1,10 +1,15 @@
 '''
-operations.py - this file is part of S3QL (http://s3ql.googlecode.com)
+operations.py
 
-Copyright (C) 2008-2010 Nikolaus Rath <Nikolaus@rath.org>
+This module contains the `Operations` class. File systems have
+to inherit from this class and pass the instance to the
+`llfuse.init()` function.
 
-This program can be distributed under the terms of the GNU LGPL.
-''' 
+Copyright (C) Nikolaus Rath <Nikolaus@rath.org>
+
+This file is part of python-llfuse (http://python-llfuse.googlecode.com).
+python-llfuse can be distributed under the terms of the GNU LGPL.
+'''
 
 from __future__ import division, print_function, absolute_import
 
