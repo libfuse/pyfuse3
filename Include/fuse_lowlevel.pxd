@@ -9,33 +9,19 @@ This file is part of python-llfuse (http://python-llfuse.googlecode.com).
 python-llfuse can be distributed under the terms of the GNU LGPL.
 '''
 
-from libc.sys.stat cimport stat, uid_t, gid_t, off_t, mode_t, dev_t
-from libc.sys.statvfs cimport statvfs
+from fuse_common cimport *
+from libc.sys.stat cimport *
+from libc.sys.types cimport *
+from libc.sys.statvfs cimport *
 
+# Based on fuse sources, revision tag fuse_2_8_3
 cdef extern from "fuse_lowlevel.h" nogil:
     int FUSE_ROOT_ID 
+
     ctypedef int fuse_ino_t
     ctypedef struct fuse_req:
         pass
     ctypedef fuse_req* fuse_req_t
-    ctypedef int pid_t
-
-    struct fuse_session:
-        pass
-    struct fuse_chan:
-       pass
-    struct fuse_session_ops:
-        pass
-    struct fuse_chan_ops:
-        pass
-    struct fuse_conn_info:
-        pass
-    struct fuse_file_info:
-        pass
-
-    struct fuse_args:
-        int argc
-        char **argv
 
     struct fuse_entry_param:
         fuse_ino_t ino
@@ -43,7 +29,7 @@ cdef extern from "fuse_lowlevel.h" nogil:
         stat attr
         double attr_timeout
         double entry_timeout
-    
+
     struct fuse_ctx:
         int uid
         int gid
@@ -83,10 +69,10 @@ cdef extern from "fuse_lowlevel.h" nogil:
                       char *newname)
         void (*open) (fuse_req_t req, fuse_ino_t ino,
                       fuse_file_info *fi)
-        void (*read) (fuse_req_t req, fuse_ino_t ino, int size, off_t off,
+        void (*read) (fuse_req_t req, fuse_ino_t ino, size_t size, off_t off,
                       fuse_file_info *fi)
         void (*write) (fuse_req_t req, fuse_ino_t ino, char *buf,
-                       int size, off_t off, fuse_file_info *fi)
+                       size_t size, off_t off, fuse_file_info *fi)
         void (*flush) (fuse_req_t req, fuse_ino_t ino,
                        fuse_file_info *fi)
         void (*release) (fuse_req_t req, fuse_ino_t ino,
@@ -95,7 +81,7 @@ cdef extern from "fuse_lowlevel.h" nogil:
                        fuse_file_info *fi)
         void (*opendir) (fuse_req_t req, fuse_ino_t ino,
                          fuse_file_info *fi)
-        void (*readdir) (fuse_req_t req, fuse_ino_t ino, int size, off_t off,
+        void (*readdir) (fuse_req_t req, fuse_ino_t ino, size_t size, off_t off,
                          fuse_file_info *fi)
         void (*releasedir) (fuse_req_t req, fuse_ino_t ino,
                             fuse_file_info *fi)
@@ -103,10 +89,10 @@ cdef extern from "fuse_lowlevel.h" nogil:
                           fuse_file_info *fi)
         void (*statfs) (fuse_req_t req, fuse_ino_t ino)
         void (*setxattr) (fuse_req_t req, fuse_ino_t ino, char *name,
-                          char *value, int size, int flags)
+                          char *value, size_t size, int flags)
         void (*getxattr) (fuse_req_t req, fuse_ino_t ino, char *name,
-                          int size)
-        void (*listxattr) (fuse_req_t req, fuse_ino_t ino, int size)
+                          size_t size)
+        void (*listxattr) (fuse_req_t req, fuse_ino_t ino, size_t size)
         void (*removexattr) (fuse_req_t req, fuse_ino_t ino, char *name)
         void (*access) (fuse_req_t req, fuse_ino_t ino, int mask)
         void (*create) (fuse_req_t req, fuse_ino_t parent, char *name,
@@ -121,26 +107,30 @@ cdef extern from "fuse_lowlevel.h" nogil:
                         double attr_timeout)
     int fuse_reply_readlink(fuse_req_t req, char *link)
     int fuse_reply_open(fuse_req_t req, fuse_file_info *fi)
-    int fuse_reply_write(fuse_req_t req, int count)
-    int fuse_reply_buf(fuse_req_t req, char *buf, int size)
+    int fuse_reply_write(fuse_req_t req, size_t count)
+    int fuse_reply_buf(fuse_req_t req, char *buf, size_t size)
     int fuse_reply_statfs(fuse_req_t req, statvfs *stbuf)
-    int fuse_reply_xattr(fuse_req_t req, int count)
+    int fuse_reply_xattr(fuse_req_t req, size_t count)
 
-    int fuse_add_direntry(fuse_req_t req, char *buf, int bufsize,
+    size_t fuse_add_direntry(fuse_req_t req, char *buf, size_t bufsize,
                              char *name, stat *stbuf,
                              off_t off)
 
     int fuse_lowlevel_notify_inval_inode(fuse_chan *ch, fuse_ino_t ino,
                                          off_t off, off_t len)
     int fuse_lowlevel_notify_inval_entry(fuse_chan *ch, fuse_ino_t parent,
-                                         char *name, int namelen)
+                                         char *name, size_t namelen)
     
     void *fuse_req_userdata(fuse_req_t req)
     fuse_ctx *fuse_req_ctx(fuse_req_t req)
-    int fuse_req_getgroups(fuse_req_t req, int size, gid_t list[])
+    int fuse_req_getgroups(fuse_req_t req, size_t size, gid_t list[])
     fuse_session *fuse_lowlevel_new(fuse_args *args,
                                     fuse_lowlevel_ops *op,
-                                    int op_size, void *userdata)
+                                    size_t op_size, void *userdata)
+
+
+    struct fuse_session_ops:
+        pass
 
     fuse_session *fuse_session_new(fuse_session_ops *op, void *data)
     void fuse_session_add_chan(fuse_session *se, fuse_chan *ch)
@@ -148,6 +138,3 @@ cdef extern from "fuse_lowlevel.h" nogil:
     void fuse_session_destroy(fuse_session *se)
     int fuse_session_loop(fuse_session *se)
     int fuse_session_loop_mt(fuse_session *se)
-    fuse_chan *fuse_chan_new(fuse_chan_ops *op, int fd,
-                             int bufsize, void *data)
-    void fuse_chan_destroy(fuse_chan *ch)
