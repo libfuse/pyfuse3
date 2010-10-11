@@ -28,6 +28,7 @@ def main():
         long_desc = fh.read()
 
     compile_args = pkg_config('fuse', cflags=True, ldflags=False, min_ver='2.8.0')
+    compile_args.append('-DFUSE_USE_VERSION=28')
     link_args = pkg_config('fuse', cflags=False, ldflags=True, min_ver='2.8.0')
 
     setuptools.setup(
@@ -109,7 +110,10 @@ class build_cython(setuptools.Command):
         except ImportError:
             raise SystemExit('Cython needs to be installed for this command')
 
-        options = { 'include_path': [ os.path.join(basedir, 'Include') ] }
+        # TODO: Turn on timestamps once Cython supports them
+        options = { 'include_path': [ os.path.join(basedir, 'Include') ],
+                    'recursive': False, 'verbose': True,
+                    'timestamps': False }
         
         for extension in self.extensions:
             for file in extension.sources:
@@ -117,13 +121,12 @@ class build_cython(setuptools.Command):
                 path = os.path.join(basedir, file)
                 if ext != '.c':
                     continue 
-                if ( os.path.exists(path + '.pyx') and
-                     ( not os.path.exists(path + ext) or
-                     os.path.getmtime(path + ext) < os.path.getmtime(path + '.pyx'))):
+                if os.path.exists(path + '.pyx'):
                     print('compiling %s to %s' % (file + '.pyx', file + ext))
                     res = compile(path + '.pyx', full_module_name=extension.name,
                                   **options)
-                    assert res.num_errors == 0
+                    if res.num_errors != 0:
+                        raise SystemExit('Cython encountered errors.')
                 else:
                     print('%s is up to date' % (file + ext,))
 
