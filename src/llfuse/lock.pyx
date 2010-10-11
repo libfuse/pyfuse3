@@ -30,6 +30,10 @@ cdef class Lock:
     execute code while the global lock is being held.
     '''
 
+    def __init__(self):
+        raise TypeError('You should not instantiate this class, use the '
+                        'provided instance instead.')
+
     def acquire(self):
         '''Acquire global lock'''
         
@@ -83,13 +87,17 @@ cdef class Lock:
 cdef class NoLockManager:
     '''Context manager to execute code while the global lock is released'''
 
+    def __init__(self):
+        raise TypeError('You should not instantiate this class, use the '
+                        'provided instance instead.')
+
     def __enter__ (self):
         lock.release()
         
     def __exit__(self, *a):
         lock.acquire()
 
-lock = Lock()
-lock_released = NoLockManager()
+lock = Lock.__new__(Lock)
+lock_released = NoLockManager.__new__(NoLockManager)
 lock.acquire()
 
