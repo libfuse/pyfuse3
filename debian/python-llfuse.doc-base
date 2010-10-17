@@ -1,0 +1,8 @@
+Document: python-llfuse
+Title: Python-llfuse API Documentation
+Author: Nikolaus Rath <Nikolaus@rath.org>
+Section: Programming/Python
+
+Format: HTML
+Index: /usr/share/doc/python-llfuse/html/index.html
+Files: /usr/share/doc/python-llfuse/html/*.html
