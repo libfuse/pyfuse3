@@ -19,12 +19,12 @@ build-docs:
 
 build-python%:
 	dh_testdir
-	python$* setup.py build -f
+	python$* setup.py build 
 	touch $@
 
 build-dbg-python%:
 	dh_testdir
-	python$*-dbg setup.py build -g -f
+	python$*-dbg setup.py build -g
 	touch $@
 
 install: build install-prereq $(PYVERS:%=install-python%) $(PYVERS:%=install-dbg-python%) 
