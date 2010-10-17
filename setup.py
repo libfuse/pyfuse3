@@ -2,12 +2,12 @@
 '''
 setup.py
 
-Installation script for python-llfuse.
+Installation script for LLFUSE.
 
 Copyright (C) Nikolaus Rath <Nikolaus@rath.org>
 
-This file is part of python-llfuse (http://python-llfuse.googlecode.com).
-python-llfuse can be distributed under the terms of the GNU LGPL.
+This file is part of LLFUSE (http://python-llfuse.googlecode.com).
+LLFUSE can be distributed under the terms of the GNU LGPL.
 '''
 
 from __future__ import division, print_function, absolute_import
@@ -20,31 +20,34 @@ import subprocess
 basedir = os.path.abspath(os.path.dirname(sys.argv[0]))
 sys.path.insert(0, os.path.join(basedir, 'src'))
 from distribute_setup import use_setuptools
-use_setuptools(version='0.6.2', download_delay=5)
+use_setuptools(version='0.6.12', download_delay=5)
 import setuptools
 import setuptools.command.test as setuptools_test
 from setuptools import Extension
 
+LLFUSE_VERSION = '0.9.1'
+
 def main():
     
-    with open(os.path.join(basedir, 'README.txt'), 'r') as fh:
+    with open(os.path.join(basedir, 'rst', 'about.rst'), 'r') as fh:
         long_desc = fh.read()
 
-    compile_args = [ '-Werror' ]
-    fuse_compile_args = pkg_config('fuse', cflags=True, ldflags=False, min_ver='2.8.0')
-    fuse_compile_args.append('-DFUSE_USE_VERSION=28')
-    fuse_link_args = pkg_config('fuse', cflags=False, ldflags=True, min_ver='2.8.0')
+    compile_args = pkg_config('fuse', cflags=True, ldflags=False, min_ver='2.8.0')
+    compile_args.append('-DFUSE_USE_VERSION=28')
+    compile_args.append('-DLLFUSE_VERSION="%s"' % LLFUSE_VERSION)
+    compile_args.append('-Werror')
+    link_args = pkg_config('fuse', cflags=False, ldflags=True, min_ver='2.8.0')
 
     setuptools.setup(
           name='llfuse',
           zip_safe=True,
-          version='0.9.1',
+          version=LLFUSE_VERSION,
           description='Python bindings for the low-level FUSE API',
           long_description=long_desc,
           author='Nikolaus Rath',
           author_email='Nikolaus@rath.org',
           url='http://python-llfuse.googlecode.com/',
-          download_url='http://code.google.com/p/python-llfuse/downloads/list',
+          download_url='http://code.google.com/p/python-llfuse/downloads/',
           license='LGPL',
           classifiers=['Development Status :: 4 - Beta',
                        'Intended Audience :: Developers',
@@ -58,16 +61,16 @@ def main():
           package_dir={'': 'src'},
           packages=setuptools.find_packages('src'),
           provides=['llfuse'],
-          ext_modules=[ Extension('llfuse.lock', ['src/llfuse/lock.c'],
-                                  extra_compile_args=compile_args), 
-                        Extension('llfuse.util', ['src/llfuse/util.c'], 
-                                  extra_compile_args=compile_args), 
-                        Extension('llfuse.main', ['src/llfuse/main.c'], 
-                                  extra_compile_args=compile_args + fuse_compile_args,
-                                  extra_link_args=fuse_link_args)],
+          ext_modules=[Extension('llfuse', ['src/llfuse.c'], 
+                                  extra_compile_args=compile_args,
+                                  extra_link_args=link_args)],
           cmdclass={'build_cython': build_cython,
-                    'upload_docs': upload_docs }
-         )
+                    'upload_docs': upload_docs },
+          command_options={
+            'build_sphinx': {
+                'version': ('setup.py', LLFUSE_VERSION),
+                'release': ('setup.py', LLFUSE_VERSION)}},
+          )
 
 
 def pkg_config(pkg, cflags=True, ldflags=False, min_ver=None):
