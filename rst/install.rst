@@ -1,6 +1,8 @@
 Installing LLFUSE
 ===================
 
+.. highlight:: sh
+
 Stable releases
 ---------------
 
