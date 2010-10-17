@@ -9,7 +9,7 @@ that it can be used by other projects as well.
 
 To download LLFUSE, please visit the `LLFUSE homepage`_. The
 documentation can be `read online`__ and is also included in the
-``doc/html`` directory of every LLFUSE release.
+:file:`doc/html` directory of the LLFUSE tarball.
 
 Please report any bugs on the `issue tracker`_. For discussion and
 questions, please use the general `FUSE mailing list`_. A searchable

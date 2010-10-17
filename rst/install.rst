@@ -8,7 +8,7 @@ Stable releases
 
 LLFUSE can be installed like any other Python extension. Make sure
 that you have the Python and FUSE development headers installed, then
-download and extract the LLFUSE release and run ::
+download and extract the LLFUSE tarball and run ::
 
   sudo python setup.py install
 
