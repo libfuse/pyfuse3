@@ -20,7 +20,7 @@ import subprocess
 basedir = os.path.abspath(os.path.dirname(sys.argv[0]))
 sys.path.insert(0, os.path.join(basedir, 'src'))
 from distribute_setup import use_setuptools
-use_setuptools(version='0.6', download_delay=5)
+use_setuptools(version='0.6.2', download_delay=5)
 import setuptools
 import setuptools.command.test as setuptools_test
 from setuptools import Extension
