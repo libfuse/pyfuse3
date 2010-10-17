@@ -30,9 +30,10 @@ def main():
     with open(os.path.join(basedir, 'README.txt'), 'r') as fh:
         long_desc = fh.read()
 
-    compile_args = pkg_config('fuse', cflags=True, ldflags=False, min_ver='2.8.0')
-    compile_args.append('-DFUSE_USE_VERSION=28')
-    link_args = pkg_config('fuse', cflags=False, ldflags=True, min_ver='2.8.0')
+    compile_args = [ '-Werror' ]
+    fuse_compile_args = pkg_config('fuse', cflags=True, ldflags=False, min_ver='2.8.0')
+    fuse_compile_args.append('-DFUSE_USE_VERSION=28')
+    fuse_link_args = pkg_config('fuse', cflags=False, ldflags=True, min_ver='2.8.0')
 
     setuptools.setup(
           name='llfuse',
@@ -57,11 +58,13 @@ def main():
           package_dir={'': 'src'},
           packages=setuptools.find_packages('src'),
           provides=['llfuse'],
-          ext_modules=[ Extension('llfuse.lock', ['src/llfuse/lock.c']), 
-                        Extension('llfuse.util', ['src/llfuse/util.c']), 
+          ext_modules=[ Extension('llfuse.lock', ['src/llfuse/lock.c'],
+                                  extra_compile_args=compile_args), 
+                        Extension('llfuse.util', ['src/llfuse/util.c'], 
+                                  extra_compile_args=compile_args), 
                         Extension('llfuse.main', ['src/llfuse/main.c'], 
-                                  extra_compile_args=compile_args,
-                                  extra_link_args=link_args)],
+                                  extra_compile_args=compile_args + fuse_compile_args,
+                                  extra_link_args=fuse_link_args)],
           cmdclass={'build_cython': build_cython}
          )
 
