@@ -1,7 +1,8 @@
-========================
- The `Operations` class
-========================
+Request Handlers
+================
 
 
-.. autoclass:: llfuse.operations.Operations
-    :members:
+.. currentmodule:: llfuse
+
+.. autoclass:: Operations
+  :members:
