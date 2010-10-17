@@ -6,6 +6,7 @@ syntax: regexp
 ^.settings$
 \.pyc$
 ^dist$
+^doc$
 
 # Temporary files created when building deb
 syntax: regexp
