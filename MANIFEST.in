@@ -1,3 +1,9 @@
 include Changes.txt
-include README.txt
+include distribute-0.6.2.tar.gz
+graft doc/html
+graft Include
+graft contrib
+graft rst
+graft debian
+recursive-include src *.pyx *.pxd
 exclude MANIFEST.in
