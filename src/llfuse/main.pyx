@@ -22,7 +22,7 @@ from libc.sys.stat cimport stat
 from libc.sys.types cimport mode_t, dev_t, off_t
 from libc.stdlib cimport const_char
 from libc cimport stdlib, string
-from cpython.string cimport PyString_AsString
+from cpython.bytes cimport PyBytes_AsString
 cimport cpython.exc
 from llfuse.lock import lock, lock_released
 
@@ -271,7 +271,7 @@ cdef fuse_args_t* make_fuse_args(list args):
 
         try:
             for (i, arg) in enumerate(args):
-                fuse_args.argv[i] = PyString_AsString(arg)
+                fuse_args.argv[i] = PyBytes_AsString(arg)
 
             return fuse_args
         except:

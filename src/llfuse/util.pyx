@@ -15,7 +15,7 @@ import os
 
 cimport cpython.exc
 from libc cimport string, errno, stdlib, dirent, xattr
-from cpython.string cimport PyString_AsStringAndSize, PyString_FromStringAndSize
+from cpython.bytes cimport PyBytes_AsStringAndSize, PyBytes_FromStringAndSize
 
 def listdir(path):
     '''Like os.listdir(), but releases the GIL'''
@@ -55,7 +55,7 @@ def setxattr(path, name, value):
     cdef Py_ssize_t n
     cdef char* s
 
-    ret = PyString_AsStringAndSize(value, &s, &n)
+    ret = PyBytes_AsStringAndSize(value, &s, &n)
 
     with nogil:
         ret = xattr.setxattr(path, name, s, n, 0)
@@ -105,7 +105,7 @@ def getxattr(path, name, int size_guess=128):
         if ret < 0:
             raise OSError(errno, os.strerror(errno), path)
 
-        return PyString_FromStringAndSize(buf, ret)
+        return PyBytes_FromStringAndSize(buf, ret)
     
     finally:
         stdlib.free(buf)
