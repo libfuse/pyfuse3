@@ -108,4 +108,5 @@ if __name__ == '__main__':
     
     llfuse.init(operations, mountpoint, [ b"nonempty", b'fsname=llfuses_xmp' ])
     llfuse.main()
+    llfuse.close()
     
