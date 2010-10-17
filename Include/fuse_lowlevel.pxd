@@ -13,6 +13,7 @@ from fuse_common cimport *
 from libc.sys.stat cimport *
 from libc.sys.types cimport *
 from libc.sys.statvfs cimport *
+from libc.stdlib cimport const_char
 
 # Based on fuse sources, revision tag fuse_2_8_3
 cdef extern from "fuse_lowlevel.h" nogil:
@@ -23,6 +24,8 @@ cdef extern from "fuse_lowlevel.h" nogil:
         pass
     ctypedef fuse_req* fuse_req_t
 
+    ctypedef int ulong_t "unsigned long"
+    
     struct fuse_entry_param:
         fuse_ino_t ino
         int generation
@@ -48,30 +51,30 @@ cdef extern from "fuse_lowlevel.h" nogil:
     struct fuse_lowlevel_ops:
         void (*init) (void *userdata, fuse_conn_info *conn)
         void (*destroy) (void *userdata)
-        void (*lookup) (fuse_req_t req, fuse_ino_t parent, char *name)
-        void (*forget) (fuse_req_t req, fuse_ino_t ino, int nlookup)
+        void (*lookup) (fuse_req_t req, fuse_ino_t parent, const_char *name)
+        void (*forget) (fuse_req_t req, fuse_ino_t ino, ulong_t nlookup)
         void (*getattr) (fuse_req_t req, fuse_ino_t ino,
                          fuse_file_info *fi)
         void (*setattr) (fuse_req_t req, fuse_ino_t ino, stat *attr,
                          int to_set, fuse_file_info *fi)
         void (*readlink) (fuse_req_t req, fuse_ino_t ino)
-        void (*mknod) (fuse_req_t req, fuse_ino_t parent, char *name,
+        void (*mknod) (fuse_req_t req, fuse_ino_t parent, const_char *name,
                        mode_t mode, dev_t rdev)
-        void (*mkdir) (fuse_req_t req, fuse_ino_t parent, char *name,
+        void (*mkdir) (fuse_req_t req, fuse_ino_t parent, const_char *name,
                        mode_t mode)
-        void (*unlink) (fuse_req_t req, fuse_ino_t parent, char *name)
-        void (*rmdir) (fuse_req_t req, fuse_ino_t parent, char *name)
-        void (*symlink) (fuse_req_t req, char *link, fuse_ino_t parent,
-                         char *name)
-        void (*rename) (fuse_req_t req, fuse_ino_t parent, char *name,
-                        fuse_ino_t newparent, char *newname)
+        void (*unlink) (fuse_req_t req, fuse_ino_t parent, const_char *name)
+        void (*rmdir) (fuse_req_t req, fuse_ino_t parent, const_char *name)
+        void (*symlink) (fuse_req_t req, const_char *link, fuse_ino_t parent,
+                         const_char *name)
+        void (*rename) (fuse_req_t req, fuse_ino_t parent, const_char *name,
+                        fuse_ino_t newparent, const_char *newname)
         void (*link) (fuse_req_t req, fuse_ino_t ino, fuse_ino_t newparent,
-                      char *newname)
+                      const_char *newname)
         void (*open) (fuse_req_t req, fuse_ino_t ino,
                       fuse_file_info *fi)
         void (*read) (fuse_req_t req, fuse_ino_t ino, size_t size, off_t off,
                       fuse_file_info *fi)
-        void (*write) (fuse_req_t req, fuse_ino_t ino, char *buf,
+        void (*write) (fuse_req_t req, fuse_ino_t ino, const_char *buf,
                        size_t size, off_t off, fuse_file_info *fi)
         void (*flush) (fuse_req_t req, fuse_ino_t ino,
                        fuse_file_info *fi)
@@ -88,14 +91,14 @@ cdef extern from "fuse_lowlevel.h" nogil:
         void (*fsyncdir) (fuse_req_t req, fuse_ino_t ino, int datasync,
                           fuse_file_info *fi)
         void (*statfs) (fuse_req_t req, fuse_ino_t ino)
-        void (*setxattr) (fuse_req_t req, fuse_ino_t ino, char *name,
-                          char *value, size_t size, int flags)
-        void (*getxattr) (fuse_req_t req, fuse_ino_t ino, char *name,
+        void (*setxattr) (fuse_req_t req, fuse_ino_t ino, const_char *name,
+                          const_char *value, size_t size, int flags)
+        void (*getxattr) (fuse_req_t req, fuse_ino_t ino, const_char *name,
                           size_t size)
         void (*listxattr) (fuse_req_t req, fuse_ino_t ino, size_t size)
-        void (*removexattr) (fuse_req_t req, fuse_ino_t ino, char *name)
+        void (*removexattr) (fuse_req_t req, fuse_ino_t ino, const_char *name)
         void (*access) (fuse_req_t req, fuse_ino_t ino, int mask)
-        void (*create) (fuse_req_t req, fuse_ino_t parent, char *name,
+        void (*create) (fuse_req_t req, fuse_ino_t parent, const_char *name,
                         mode_t mode, fuse_file_info *fi)
 
     int fuse_reply_err(fuse_req_t req, int err)
@@ -105,21 +108,21 @@ cdef extern from "fuse_lowlevel.h" nogil:
                           fuse_file_info *fi)
     int fuse_reply_attr(fuse_req_t req, stat *attr,
                         double attr_timeout)
-    int fuse_reply_readlink(fuse_req_t req, char *link)
+    int fuse_reply_readlink(fuse_req_t req, const_char *link)
     int fuse_reply_open(fuse_req_t req, fuse_file_info *fi)
     int fuse_reply_write(fuse_req_t req, size_t count)
-    int fuse_reply_buf(fuse_req_t req, char *buf, size_t size)
+    int fuse_reply_buf(fuse_req_t req, const_char *buf, size_t size)
     int fuse_reply_statfs(fuse_req_t req, statvfs *stbuf)
     int fuse_reply_xattr(fuse_req_t req, size_t count)
 
-    size_t fuse_add_direntry(fuse_req_t req, char *buf, size_t bufsize,
-                             char *name, stat *stbuf,
+    size_t fuse_add_direntry(fuse_req_t req, const_char *buf, size_t bufsize,
+                             const_char *name, stat *stbuf,
                              off_t off)
 
     int fuse_lowlevel_notify_inval_inode(fuse_chan *ch, fuse_ino_t ino,
                                          off_t off, off_t len)
     int fuse_lowlevel_notify_inval_entry(fuse_chan *ch, fuse_ino_t parent,
-                                         char *name, size_t namelen)
+                                         const_char *name, size_t namelen)
     
     void *fuse_req_userdata(fuse_req_t req)
     fuse_ctx *fuse_req_ctx(fuse_req_t req)
