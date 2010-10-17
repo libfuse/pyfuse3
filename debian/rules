@@ -49,7 +49,7 @@ clean:
 	python setup.py clean -a
 	dh_clean
 	rm -rf dist
-	rm -rf build-dbg-python* build-python* build-stamp
+	rm -rf build-dbg-python* build-python* build-stamp build-docs
 	rm -rf doc/doctrees
 
 binary: binary-arch binary-indep
