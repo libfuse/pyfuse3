@@ -1,3 +1,5 @@
+.. _example file system:
+
 Example File System
 =====================
 

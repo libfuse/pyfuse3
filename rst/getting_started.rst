@@ -10,5 +10,6 @@ system. To enter the request handling loop, run `llfuse.main`. This
 function will return when the file system should be unmounted again,
 which is done by calling `llfuse.close`.
 
-It is probably a good idea to look at the example file system in the
-``contrib`` directory.
+It is probably a good idea to look at the :ref:`example file system`
+as well.
+
