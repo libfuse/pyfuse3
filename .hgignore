@@ -1,19 +1,26 @@
 syntax: regexp
 ^src/llfuse\.egg-info$
 ^build$
-^.pydevproject$
-^.project$
-^.settings$
 \.pyc$
 ^dist$
-^doc$
+^doc/html$
+^doc/doctrees$
+^src/llfuse.c$
+^src/llfuse.so$
+^build-
+^distribute-0.6
 
 # Temporary files created when building deb
 syntax: regexp
 ^debian/python-llfuse$
+^debian/python-llfuse-dbg$
 ^debian/files$
 ^debian/python-llfuse.debhelper.log$
 ^debian/python-llfuse.postinst.debhelper$
 ^debian/python-llfuse.prerm.debhelper$
 ^debian/python-llfuse.substvars$
+^debian/python-llfuse-dbg.debhelper.log$
+^debian/python-llfuse-dbg.postinst.debhelper$
+^debian/python-llfuse-dbg.prerm.debhelper$
+^debian/python-llfuse-dbg.substvars$
 

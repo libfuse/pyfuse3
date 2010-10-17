@@ -1,5 +1,5 @@
 include Changes.txt
-include distribute-0.6.2.tar.gz
+include distribute-*.tar.gz
 graft doc/html
 graft Include
 graft contrib
