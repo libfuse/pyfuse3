@@ -65,7 +65,8 @@ def main():
                         Extension('llfuse.main', ['src/llfuse/main.c'], 
                                   extra_compile_args=compile_args + fuse_compile_args,
                                   extra_link_args=fuse_link_args)],
-          cmdclass={'build_cython': build_cython}
+          cmdclass={'build_cython': build_cython,
+                    'upload_docs': upload_docs }
          )
 
 
@@ -96,7 +97,7 @@ def pkg_config(pkg, cflags=True, ldflags=False, min_ver=None):
                          'Check that the %s development package been installed properly.'
                          % (proc.returncode, pkg), file=sys.stderr)
 
-    return cflags.split()
+    return cflags.decode('us-ascii').split()
 
         
 class build_cython(setuptools.Command):
@@ -137,5 +138,20 @@ class build_cython(setuptools.Command):
                     print('%s is up to date' % (file + ext,))
 
         
+class upload_docs(setuptools.Command):
+    user_options = []
+    boolean_options = []
+    description = "Upload documentation"
+
+    def initialize_options(self):
+        pass
+
+    def finalize_options(self):
+        pass
+
+    def run(self):
+        subprocess.check_call(['rsync', '-aHv', '--del', os.path.join(basedir, 'doc', 'html') + '/',
+                               'ebox.rath.org:/var/www/llfuse-docs/'])
+
 if __name__ == '__main__':
     main()
