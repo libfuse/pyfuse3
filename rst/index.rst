@@ -15,6 +15,7 @@ Table of Contents
    getting_started.rst
    llfuse.rst
    operations.rst
+   example.rst
 
     
 Indices and tables
