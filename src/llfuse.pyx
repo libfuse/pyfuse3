@@ -25,13 +25,14 @@ from fuse_lowlevel cimport (fuse_args as fuse_args_t, fuse_lowlevel_new,
                             fuse_set_signal_handlers, fuse_req_t, ulong_t,
                             fuse_session_destroy, fuse_ino_t, fuse_file_info,
                             fuse_session_loop, fuse_session_loop_mt,
-                            fuse_session_remove_chan)
-from libc.sys.stat cimport stat
+                            fuse_session_remove_chan, fuse_reply_err,
+                            fuse_reply_entry, fuse_entry_param)
+from libc.sys.stat cimport stat as c_stat
 from libc.sys.types cimport mode_t, dev_t, off_t
 from libc.stdlib cimport const_char
 from libc cimport stdlib, string, errno, dirent, xattr
 from cpython.bytes cimport (PyBytes_AsStringAndSize, PyBytes_FromStringAndSize,
-                            PyBytes_AsString)
+                            PyBytes_AsString, PyBytes_FromString)
 cimport cpython.exc
 
 ######################
@@ -42,22 +43,30 @@ cdef extern from "sched.h":
     int sched_yield() nogil
 
 # Include components written in plain C
-cdef extern from "lock.c":
+cdef extern from "lock.c" nogil:
     int acquire() nogil
     int release() nogil
     int EINVAL
     int EDEADLK
     int EPERM
 
+cdef extern from "time.c" nogil:
+    int GET_ATIME_NS(c_stat* buf)
+    int GET_CTIME_NS(c_stat* buf)
+    int GET_MTIME_NS(c_stat* buf)
+    
+    void SET_ATIME_NS(c_stat* buf, int val)
+    void SET_CTIME_NS(c_stat* buf, int val)
+    void SET_MTIME_NS(c_stat* buf, int val)
+
+
 ################
 # PYTHON IMPORTS
 ################
 
-import logging
 import errno
 import os
-import errno
-
+import logging
 
     
 #######################
@@ -65,15 +74,44 @@ import errno
 #######################
     
 cdef void fuse_init (void *userdata, fuse_conn_info *conn) with gil:
-    with lock:
-        operations.init()
-
+    try:
+        with lock:
+            operations.init()
+    except Exception as e:
+        handle_exc('init', e, NULL)
+        
 cdef void fuse_destroy (void *userdata) with gil:
-    pass
+    # Note: called by fuse_session_destroy()
+    try:
+        with lock:
+            operations.destroy()
+    except Exception as e:
+        handle_exc('destroy', e, NULL)
 
+
+    
 cdef void fuse_lookup (fuse_req_t req, fuse_ino_t parent,
                        const_char *name) with gil:
-    pass
+    cdef fuse_entry_param entry
+    cdef int ret
+
+    try:
+        with lock:
+            attr = operations.lookup(parent, PyBytes_FromString(name))
+
+        fill_entry_param(attr, &entry)
+        
+    except FUSEError as e:
+        ret = fuse_reply_err(req, e.errno)
+    except Exception as e:
+        ret = handle_exc('lookup', e, req)
+    else:
+        ret = fuse_reply_entry(req, &entry)
+
+    if ret != 0:
+        log.error('fuse_lookup(): fuse_reply_* failed with %s',
+                  errno.errorcode.get(e.errno, str(e.errno)))
+    
 
 cdef void fuse_forget (fuse_req_t req, fuse_ino_t ino,
                        ulong_t nlookup) with gil:
@@ -83,7 +121,7 @@ cdef void fuse_getattr (fuse_req_t req, fuse_ino_t ino,
                         fuse_file_info *fi) with gil:
     pass
 
-cdef void fuse_setattr (fuse_req_t req, fuse_ino_t ino, stat *attr,
+cdef void fuse_setattr (fuse_req_t req, fuse_ino_t ino, c_stat *attr,
                         int to_set, fuse_file_info *fi) with gil:
     pass
 
@@ -296,9 +334,6 @@ def init(operations_, char* mountpoint_, list args):
     global session
     global channel
 
-    # Give operations instance a chance to check and change the FUSE options
-    operations_.check_args(args)
-
     mountpoint = mountpoint_
     operations = operations_
     fuse_args = make_fuse_args(args)
@@ -334,14 +369,12 @@ def main(single=False):
         log.debug('Calling fuse_session_loop')
         # We need to unlock even in single threaded mode, because the
         # Operations methods will always try to acquire the lock
-        with lock_released:
-            if fuse_session_loop(session) != 0:
-                raise RuntimeError("fuse_session_loop() failed")
+        if fuse_session_loop(session) != 0:
+            raise RuntimeError("fuse_session_loop() failed")
     else:
         log.debug('Calling fuse_session_loop_mt')
-        with lock_released:
-            if fuse_session_loop_mt(session) != 0:
-                raise RuntimeError("fuse_session_loop_mt() failed")
+        if fuse_session_loop_mt(session) != 0:
+            raise RuntimeError("fuse_session_loop_mt() failed")
 
 def close():
     '''Unmount file system and clean up'''
@@ -366,7 +399,6 @@ def close():
 
 lock = Lock.__new__(Lock)
 lock_released = NoLockManager.__new__(NoLockManager)
-lock.acquire()
 
 ####################
 # INTERNAL FUNCTIONS
@@ -379,6 +411,50 @@ cdef char* mountpoint = NULL
 cdef fuse_session* session = NULL
 cdef fuse_chan* channel = NULL
 cdef fuse_lowlevel_ops fuse_ops
+
+
+cdef object fill_entry_param(object attr, fuse_entry_param* entry):
+    entry.ino = attr.st_ino
+    entry.generation = attr.generation
+    entry.entry_timeout = attr.entry_timeout
+    entry.attr_timeout = attr.attry_timeout
+
+    fill_c_stat(attr, &entry.attr)
+
+cdef object fill_c_stat(object attr, c_stat* stat):
+    stat.st_ino = attr.st_ino
+    stat.st_mode = attr.st_mode
+    stat.st_nlink = attr.st_nlink
+    stat.st_uid = attr.st_uid
+    stat.st_gid = attr.st_gid
+    stat.st_rdev = attr.st_rdev
+    stat.st_size = attr.st_size
+    stat.st_blksize = attr.st_blksize
+    stat.st_blocks = attr.st_blocks
+
+    stat.st_atime = attr.st_atime
+    stat.st_ctime = attr.st_ctime
+    stat.st_mtime = attr.st_mtime
+    
+    SET_ATIME_NS(stat, (attr.st_atime - stat.st_atime) * 1e9)
+    SET_CTIME_NS(stat, (attr.st_ctime - stat.st_ctime) * 1e9)
+    SET_MTIME_NS(stat, (attr.st_mtime - stat.st_mtime) * 1e9)
+    
+cdef int handle_exc(char* fn, object e, fuse_req_t req):
+    '''Try to call operations.handle_exc and fuse_reply_err'''
+    
+    log.exception('operations.%s() raised exception.', fn)
+    try:
+        with lock:
+            operations.handle_exc(fn, e)
+    except Exception as e:
+        log.exception('operations.handle_exc() raised exception itself')
+
+    if req is NULL:
+        return 0
+    else:
+        return fuse_reply_err(req, errno.EIO)
+        
 
 cdef void init_fuse_ops():
     '''Initialize fuse_lowlevel_ops structure'''
@@ -519,10 +595,30 @@ cdef class NoLockManager:
     def __exit__(self, *a):
         lock.acquire()
 
-  
+
+
+    
 ###############################
 # PYTHON CLASSES AND EXCEPTIONS
 ###############################
+        
+class EntryAttributes(object):
+    '''
+    Instances of this class store attributes of directory entries.
+    Most of the attributes correspond to the elements of the ``stat``
+    C struct as returned by e.g. ``fstat``.
+    
+    Note that the  *st_Xtime* attributes support floating point numbers to
+    allow for nanosecond resolution.
+    '''
+
+    # Attributes are documented in rst/operations.rst
+    
+    __slots__ = [ 'ino', 'generation', 'entry_timeout',
+                  'attr_timeout', 'st_mode', 'st_nlink', 'st_uid', 'st_gid',
+                  'st_rdev', 'st_size', 'st_blksize', 'st_blocks',
+                  'st_atime', 'st_mtime', 'st_ctime' ]
+
         
 class FUSEError(Exception):
     '''Wrapped errno value to be returned to the fuse kernel module
@@ -544,18 +640,33 @@ class FUSEError(Exception):
     
 class Operations(object):
     '''
-    This is a dummy class that just documents the possible methods that
-    a file system may declare.
+    This class defines the general and request handler methods that an
+    LLFUSE file system may implement. If a particular request handler
+    has not been implemented, it must raise `FUSEError(errno.ENOSYS)`.
+
+    It has recommended that file systems are derived from this class
+    and only overwrite the handlers that they actually implement. (The
+    default implementations defined in this class all just raise the
+    not-implemented exception).
+
+    The only exception that request handlers are allowed to raise is
+    `FUSEError(errno)`. This will cause the specified errno to be
+    returned by the syscall that is being handled.
     '''
     
     # This is a dummy class, so all the methods could of course
     # be functions
-    #pylint: disable-msg=R0201
+    #pylint: disable=R0201
     
-    def handle_exc(self, exc):
+    def handle_exc(self, fn, exc):
         '''Handle exceptions that occured during request processing. 
         
-        This method returns nothing and does not raise any exceptions itself.
+        This method will be called when things went seriously wrong.
+        This includes e.g. bugs in LLFUSE itself or request handlers
+        raising exceptions other than `FUSEError`, but *not* problems
+        with sending the reply once the request has been processed.
+
+        The type of the request that failed is passed in *fn*.
         '''
         
         pass
@@ -563,9 +674,10 @@ class Operations(object):
     def init(self):
         '''Initialize operations
         
-        This function has to be called before any request has been received,
-        but after the mountpoint has been set up and the process has
-        daemonized.
+        This function will be called just before the file system
+        starts handling requests. It must not raise any exceptions
+        (including `FUSEError`, since this method is not handling a
+        particular syscall).
         '''
         
         pass
@@ -573,22 +685,24 @@ class Operations(object):
     def destroy(self):
         '''Clean up operations.
         
-        This method has to be called after the last request has been
-        received, when the file system is about to be unmounted.
+        This method will be called after the last request has been
+        received and when the file system is about to be unmounted. It
+        must not raise any exceptions (including `FUSEError`, since
+        this method is not handling a particular syscall).
         '''
         
         pass
+
+    def lookup(self, parent_inode, name):
+        '''Look up a directory entry by name and get its attributes.
     
-    def check_args(self, fuse_args):
-        '''Review FUSE arguments
-        
-        This method checks if the FUSE options `fuse_args` are compatible
-        with the way that the file system operations are implemented.
-        It raises an exception if incompatible options are encountered and
-        silently adds required options if they are missing.
+        If the entry does not exist, this method must raise
+        `FUSEError(errno.ENOENT)`. Otherwise it must return an
+        `EntryAttributes` instance (or any other object that has the
+        same attributes).
         '''
         
-        pass
+        raise FUSEError(errno.ENOSYS)
     
     def readdir(self, fh, off):
         '''Read directory entries
@@ -675,26 +789,6 @@ class Operations(object):
         raise FUSEError(errno.ENOSYS)
 
     
-    def lookup(self, parent_inode, name):
-        '''Look up a directory entry by name and get its attributes.
-    
-        Returns an object with attributes corresponding to the elements in
-        ``struct stat`` as well as
-        
-        :generation: The inode generation number
-        :attr_timeout: Validity timeout (in seconds) for the attributes
-        :entry_timeout: Validity timeout (in seconds) for the name 
-        
-        Note that the ``st_Xtime`` entries support floating point numbers to
-        allow for nano second resolution.
-        
-        The returned object must not be modified by the caller as this would
-        affect the internal state of the file system.
-        
-        If the entry does not exist, raises `FUSEError(errno.ENOENT)`.
-        '''
-        
-        raise FUSEError(errno.ENOSYS)
 
     def listxattr(self, inode):
         '''Get list of extended attribute names'''
