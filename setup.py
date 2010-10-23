@@ -38,6 +38,15 @@ def main():
     compile_args.append('-Werror')
     link_args = pkg_config('fuse', cflags=False, ldflags=True, min_ver='2.8.0')
 
+    uname = subprocess.Popen(["uname", "-s"], stdout=subprocess.PIPE).communicate()[0].strip()
+    if uname == 'Linux':
+        compile_args.append('-DHAVE_STRUCT_STAT_ST_ATIM')
+    elif uname == 'FreeBSD':
+        compile_args.append('-DHAVE_STRUCT_STAT_ST_ATIMESPEC')
+    else:
+        print("NOTE: unknown system (%s), " % uname +
+              "nanosecond resolution file times will not be available")
+
     setuptools.setup(
           name='llfuse',
           zip_safe=True,

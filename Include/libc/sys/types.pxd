@@ -21,7 +21,4 @@ cdef extern from "sys/types.h" nogil:
     ctypedef int off_t
     ctypedef int blksize_t
     ctypedef int blkcnt_t
-
-    ctypedef struct time_t:
-        pass
-    
+    ctypedef int time_t
