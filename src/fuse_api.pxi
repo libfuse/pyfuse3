@@ -117,6 +117,7 @@ def init(operations_, char* mountpoint_, list args):
     '''
 
     log.debug('Initializing llfuse')
+    cdef fuse_args f_args
 
     from llfuse.operations import Operations
     if not isinstance(operations_, Operations):
@@ -130,16 +131,16 @@ def init(operations_, char* mountpoint_, list args):
 
     mountpoint = mountpoint_
     operations = operations_
-    fuse_args = make_fuse_args(args)
 
+    make_fuse_args(args, &f_args)
     log.debug('Calling fuse_mount')
-    channel = fuse_mount(mountpoint, fuse_args)
+    channel = fuse_mount(mountpoint, &f_args)
     if not channel:
         raise RuntimeError('fuse_mount failed')
 
     log.debug('Calling fuse_lowlevel_new')
     init_fuse_ops()
-    session = fuse_lowlevel_new(fuse_args, &fuse_ops, sizeof(fuse_ops), NULL)
+    session = fuse_lowlevel_new(&f_args, &fuse_ops, sizeof(fuse_ops), NULL)
     if not session:
         fuse_unmount(mountpoint, channel)
         raise RuntimeError("fuse_lowlevel_new() failed")
@@ -196,7 +197,7 @@ lock_released = NoLockManager.__new__(NoLockManager)
 
 
 
-cdef class RequestContext:
+class RequestContext:
     '''
     Instances of this class provide information about the caller
     of the syscall that triggered a request.
@@ -205,10 +206,10 @@ cdef class RequestContext:
     __slots__ = [ 'uid', 'pid', 'gid', 'umask' ]
 
     def __init__(self):
-        for name in __slots__:
+        for name in self.__slots__:
             setattr(self, name, None)
 
-cdef class EntryAttributes:
+class EntryAttributes:
     '''
     Instances of this class store attributes of directory entries.
     Most of the attributes correspond to the elements of the ``stat``
@@ -227,7 +228,7 @@ cdef class EntryAttributes:
 
 
     def __init__(self):
-        for name in __slots__:
+        for name in self.__slots__:
             setattr(self, name, None)
       
         

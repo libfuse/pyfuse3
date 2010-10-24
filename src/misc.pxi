@@ -100,33 +100,36 @@ cdef void init_fuse_ops():
     fuse_ops.access = fuse_access
     fuse_ops.create = fuse_create
 
-cdef fuse_args_t* make_fuse_args(list args):
-    cdef fuse_args_t* fuse_args
-    fuse_args = <fuse_args_t*> stdlib.malloc(sizeof(fuse_args_t))
+cdef fuse_args* make_fuse_args(list args, fuse_args* f_args) except NULL:
+    cdef char* arg
+    cdef int i
+    cdef Py_ssize_t size
 
-    if fuse_args is NULL:
+    f_args.allocated = 1
+    f_args.argc = len(args)
+    f_args.argv = <char**> stdlib.calloc(f_args.argc, sizeof(char*))
+
+    if f_args.argv is NULL:
         cpython.exc.PyErr_NoMemory()
-        
+
     try:
-        fuse_args.allocated = 1
-        fuse_args.argc = len(args)
-        fuse_args.argv = <char**> stdlib.malloc(fuse_args.argc * sizeof(char*))
+        for (i, el) in enumerate(args):
+            PyBytes_AsStringAndSize(el, &arg, &size)
+            f_args.argv[i] = <char*> stdlib.malloc(size)
 
-        if fuse_args.argv is NULL:
-            cpython.exc.PyErr_NoMemory()
+            if f_args.argv[i] is NULL:
+                cpython.exc.PyErr_NoMemory()
 
-        try:
-            for (i, arg) in enumerate(args):
-                fuse_args.argv[i] = PyBytes_AsString(arg)
+            string.strncpy(f_args.argv[i], arg, size)
 
-            return fuse_args
-        except:
-            stdlib.free(fuse_args.argv)
-            raise
+        return f_args
     except:
-        stdlib.free(fuse_args)
+        for i in range(len(args)):
+            # Freeing a NULL pointer (if this element has not been allocated
+            # yet) is fine.
+            stdlib.free(f_args.argv[i])
+        stdlib.free(f_args.argv)
         raise
-
     
 cdef class Lock:
     '''
