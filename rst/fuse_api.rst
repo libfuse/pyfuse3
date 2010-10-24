@@ -2,7 +2,7 @@
  FUSE API Functions
 ====================
 
-.. module:: llfuse
+.. currentmodule:: llfuse
 
 .. autofunction:: init
 .. autofunction:: main

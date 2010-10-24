@@ -7,6 +7,8 @@ LLFUSE Documentation
 Table of Contents
 -----------------
 
+.. module:: llfuse
+
 .. toctree::
    :maxdepth: 1
 
