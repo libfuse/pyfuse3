@@ -12,6 +12,8 @@ python-llfuse can be distributed under the terms of the GNU LGPL.
 from libc.sys.types cimport *
 
 cdef extern from "sys/stat.h" nogil:
+    mode_t S_IFMT
+    mode_t S_IFDIR
 
     struct stat:
         dev_t     st_dev

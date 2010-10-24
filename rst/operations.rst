@@ -9,6 +9,17 @@ Request Handlers
 
 .. autoexception:: FUSEError
 
+.. autoclass:: RequestContext
+
+   .. attribute:: pid
+   
+   .. attribute:: uid
+   
+   .. attribute:: gid
+   
+   .. attribute:: umask
+   
+
 .. autoclass:: EntryAttributes
 
    .. attribute:: ino

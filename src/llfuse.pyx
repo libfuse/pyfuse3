@@ -27,7 +27,7 @@ from fuse_lowlevel cimport (fuse_args as fuse_args_t, fuse_lowlevel_new,
                             fuse_session_loop, fuse_session_loop_mt,
                             fuse_session_remove_chan, fuse_reply_err,
                             fuse_reply_entry, fuse_entry_param)
-from libc.sys.stat cimport stat as c_stat
+from libc.sys.stat cimport stat as c_stat, S_IFMT, S_IFDIR
 from libc.sys.types cimport mode_t, dev_t, off_t
 from libc.stdlib cimport const_char
 from libc cimport stdlib, string, errno, dirent, xattr
@@ -115,26 +115,172 @@ cdef void fuse_lookup (fuse_req_t req, fuse_ino_t parent,
 
 cdef void fuse_forget (fuse_req_t req, fuse_ino_t ino,
                        ulong_t nlookup) with gil:
-    pass
+    cdef int ret
+
+    try:
+        with lock:
+            operations.forget(ino, nlookup)
+
+    except Exception as e:
+        handle_exc('forget', e, NULL)
+
+    ret = fuse_reply_none(req)
+    if ret != 0:
+        log.error('fuse_forget(): fuse_reply_none failed with %s',
+                  errno.errorcode.get(e.errno, str(e.errno)))
 
 cdef void fuse_getattr (fuse_req_t req, fuse_ino_t ino,
                         fuse_file_info *fi) with gil:
-    pass
+    cdef c_stat stat
+    cdef int ret
+    cdef int timeout
+
+    try:
+        with lock:
+            attr = operations.getattr(ino)
+
+        fill_c_stat(attr, &stat)
+        timeout = attr.attr_timeout
+        
+    except FUSEError as e:
+        ret = fuse_reply_err(req, e.errno)
+    except Exception as e:
+        ret = handle_exc('getattr', e, req)
+    else:
+        ret = fuse_reply_attr(req, &stat, timeout)
+
+    if ret != 0:
+        log.error('fuse_getattr(): fuse_reply_* failed with %s',
+                  errno.errorcode.get(e.errno, str(e.errno)))
 
 cdef void fuse_setattr (fuse_req_t req, fuse_ino_t ino, c_stat *attr,
                         int to_set, fuse_file_info *fi) with gil:
-    pass
+    cdef c_stat stat
+    cdef int ret
+    cdef int timeout
+
+    try:
+        attr = EntryAttributes()
+        
+        if to_set & FUSE_SET_ATTR_ATIME:
+            attr.st_atime = stat.st_atime + GET_ATIME_NS(stat) * 1e-9
+
+        if to_set & FUSE_SET_ATTR_MTIME:
+            attr.st_mtime = stat.st_mtime + GET_MTIME_NS(stat) * 1e-9
+
+        if to_set & FUSE_SET_ATTR_MODE:
+            attr.st_mode = stat.st_mode
+            
+        if to_set & FUSE_SET_ATTR_UID:
+            attr.st_uid = stat.st_uid
+
+        if to_set & FUSE_SET_ATTR_GID:
+            attr.st_gid = stat.st_gid
+            
+        if to_set & FUSE_SET_ATTR_SIZE:
+            attr.st_size = stat.st_size
+            
+        with lock:
+            attr = operations.setattr(ino, attr)
+
+        fill_c_stat(attr, &stat)
+        timeout = attr.attr_timeout
+        
+    except FUSEError as e:
+        ret = fuse_reply_err(req, e.errno)
+    except Exception as e:
+        ret = handle_exc('setattr', e, req)
+    else:
+        ret = fuse_reply_attr(req, &stat, timeout)
+
+    if ret != 0:
+        log.error('fuse_setattr(): fuse_reply_* failed with %s',
+                  errno.errorcode.get(e.errno, str(e.errno)))
 
 cdef void fuse_readlink (fuse_req_t req, fuse_ino_t ino) with gil:
-    pass
+    cdef int ret
+    cdef char* name
+    try:
+        with lock:
+            target = operations.readlink(ino)
+
+        name = PyBytes_AsString(target)
+            
+    except FUSEError as e:
+        ret = fuse_reply_err(req, e.errno)
+    except Exception as e:
+        ret = handle_exc('readlink', e, req)
+    else:
+        ret = fuse_reply_readlink(req, name)
+
+    if ret != 0:
+        log.error('fuse_readlink(): fuse_reply_* failed with %s',
+                  errno.errorcode.get(e.errno, str(e.errno)))
 
 cdef void fuse_mknod (fuse_req_t req, fuse_ino_t parent, const_char *name,
                       mode_t mode, dev_t rdev) with gil:
-    pass
+    cdef int ret
+    cdef fuse_entry_param entry
+    cdef fuse_ctx* context
+    
+    try:
+        context = fuse_req_ctx(req)
+
+        ctx = RequestContext()
+        ctx.pid = context.pid
+        ctx.uid = context.uid
+        ctx.gid = context.gid
+        ctx.umask = context.umask
+        
+        with lock:
+            attr = operations.mknod(parent, PyBytes_FromString(name), mode,
+                                    rdev, ctx)
+
+        fill_entry_param(attr, &entry)
+            
+    except FUSEError as e:
+        ret = fuse_reply_err(req, e.errno)
+    except Exception as e:
+        ret = handle_exc('mknod', e, req)
+    else:
+        ret = fuse_reply_entry(req, &entry)
+
+    if ret != 0:
+        log.error('fuse_mknod(): fuse_reply_* failed with %s',
+                  errno.errorcode.get(e.errno, str(e.errno)))
 
 cdef void fuse_mkdir (fuse_req_t req, fuse_ino_t parent, const_char *name,
                       mode_t mode) with gil:
-    pass
+    cdef int ret
+    cdef fuse_entry_param entry
+    cdef fuse_ctx* context
+    
+    try:
+        # Force the entry type to directory
+        mode = (mode & ~S_IFMT) | S_IFDIR
+        
+        context = fuse_req_ctx(req)
+        ctx = RequestContext()
+        ctx.pid = context.pid
+        ctx.uid = context.uid
+        ctx.gid = context.gid
+        ctx.umask = context.umask
+        
+        with lock:
+            attr = operations.mkdir(parent, PyBytes_FromString(name), mode, ctx)
+
+        fill_entry_param(attr, &entry)
+            
+    except FUSEError as e:
+        ret = fuse_reply_err(req, e.errno)
+    except Exception as e:
+        ret = handle_exc('mkdir', e, req)
+    else:
+        ret = fuse_reply_entry(req, &entry)
+
+    if ret != 0:
+        log.error('fuse_mkdir(): fuse_reply_* failed with %s',
+                  errno.errorcode.get(e.errno, str(e.errno)))
 
 cdef void fuse_unlink (fuse_req_t req, fuse_ino_t parent, const_char *name) with gil:
     pass
@@ -602,7 +748,20 @@ cdef class NoLockManager:
 # PYTHON CLASSES AND EXCEPTIONS
 ###############################
         
-class EntryAttributes(object):
+
+cdef class RequestContext:
+    '''
+    Instances of this class provide information about the caller
+    of the syscall that triggered a request.
+    '''
+
+    __slots__ = [ 'uid', 'pid', 'gid', 'umask' ]
+
+    def __init__(self):
+        for name in __slots__:
+            setattr(self, name, None)
+
+cdef class EntryAttributes:
     '''
     Instances of this class store attributes of directory entries.
     Most of the attributes correspond to the elements of the ``stat``
@@ -619,6 +778,11 @@ class EntryAttributes(object):
                   'st_rdev', 'st_size', 'st_blksize', 'st_blocks',
                   'st_atime', 'st_mtime', 'st_ctime' ]
 
+
+    def __init__(self):
+        for name in __slots__:
+            setattr(self, name, None)
+      
         
 class FUSEError(Exception):
     '''Wrapped errno value to be returned to the fuse kernel module
