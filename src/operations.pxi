@@ -68,42 +68,102 @@ class Operations(object):
         '''Look up a directory entry by name and get its attributes.
     
         If the entry does not exist, this method must raise
-        `FUSEError(errno.ENOENT)`. Otherwise it must return an
-        `EntryAttributes` instance (or any other object that has the
-        same attributes).
+        `FUSEError` with an errno of ``ENOENT``. Otherwise it must
+        return an `EntryAttributes` instance.
         '''
         
         raise FUSEError(errno.ENOSYS)
     
-    def readdir(self, fh, off):
-        '''Read directory entries
-        
-        This method returns an iterator over the contents of directory `fh`,
-        starting at the entry identified by `off`.
-        
-        The iterator yields tuples of the form ``(name, attr, next_)``, where
-        ``attr` is an object with attributes corresponding to the elements of
-        ``struct stat`` and ``next_`` gives an offset that can be passed as
-        `off` to a successive `readdir()` call.
-         
-        Iteration may be stopped as soon as enough elements have been
-        retrieved and does not have to be continued until `StopIteration`
-        is raised.
+    def forget(self, inode, nlookup):
+        '''Notify about inode being removed from the kernel cache
 
-        If entries are added or removed during a `readdir` cycle, they may
-        or may not be returned. However, they will not cause other entries
-        to be skipped or returned more than once.        
+        This method is called when the kernel removes *inode* from
+        its internal caches. *nlookup* is the number of times that
+        `lookup` has been called for this inode.
+
+        Once the file system has received a `forget` call for an inode,
+        no other request handlers will be called for this inode without
+        a prior `lookup` call.
+        '''
+        
+        pass
+    
+    def getattr(self, inode):
+        '''Get attributes for *inode*
+    
+        This method should return an `EntryAttributes` instance with
+        the attributes of *inode*. The ``entry_timeout`` attribute is
+        ignored in this context.
+        '''
+        
+        raise FUSEError(errno.ENOSYS)
+
+
+    def setattr(self, inode, attr):
+        '''Change attributes of *inode*
+        
+        *attr* is an `EntryAttributes` instance with the new
+        attributes. Only the attributes ``st_size``, ``st_mode``,
+        ``st_uid``, ``st_gid``, ``st_atime`` and ``st_mtime`` are
+        relevant. Unchanged attributes will have a value `None`.
+        
+        The method should return a new `EntryAttributes` instance
+        with the updated attributes (i.e., all attributes except for
+        ``entry_timeout`` should be set).
+        '''
+        
+        raise FUSEError(errno.ENOSYS)
+
+    def readlink(self, inode):
+        '''Return target of symbolic link'''
+        
+        raise FUSEError(errno.ENOSYS)
+
+ 
+    def mknod(self, parent_inode, name, mode, rdev, ctx):
+        '''Create (possibly special) file
+    
+        *ctx* will be a `RequestContext` instance. The method must
+        return an `EntryAttributes` instance with the attributes of
+        the newly created directory entry.
+        '''
+        
+        raise FUSEError(errno.ENOSYS)
+
+    def mkdir(self, parent_inode, name, mode, ctx):
+        '''Create a directory
+    
+        *ctx* will be a `RequestContext` instance. The method must
+        return an `EntryAttributes` instance with the attributes of
+        the newly created directory entry.
         '''
         
         raise FUSEError(errno.ENOSYS)
     
+    def unlink(self, parent_inode, name):
+        '''Remove a (possibly special) file'''
         
-    def read(self, fh, off, size):
-        '''Read `size` bytes from `fh` at position `off`
+        raise FUSEError(errno.ENOSYS)
+
+    def rmdir(self, inode_parent, name):
+        '''Remove a directory'''
         
-        Unless the file has been opened in direct_io mode or EOF is reached,
-        this function  returns exactly `size` bytes. 
+        raise FUSEError(errno.ENOSYS)
+
+    def symlink(self, inode_parent, name, target, ctx):
+        '''Create a symbolic link
+        
+        `ctx` must be a context object that contains pid, uid and 
+        primary gid of the requesting process.
+        
+        Returns an object with the attributes of the newly created directory
+        entry, similar to the one returned by `lookup`.
         '''
+        
+        raise FUSEError(errno.ENOSYS)
+    
+    def rename(self, inode_parent_old, name_old, inode_parent_new, name_new):
+        '''Rename a directory entry'''
         
         raise FUSEError(errno.ENOSYS)
     
@@ -126,6 +186,52 @@ class Operations(object):
         
         raise FUSEError(errno.ENOSYS)
     
+    def read(self, fh, off, size):
+        '''Read `size` bytes from `fh` at position `off`
+        
+        Unless the file has been opened in direct_io mode or EOF is reached,
+        this function  returns exactly `size` bytes. 
+        '''
+        
+        raise FUSEError(errno.ENOSYS)
+
+    def write(self, fh, off, data):
+        '''Write data into an open file
+        
+        Returns the number of bytes written.
+        Unless the file was opened in ``direct_io`` mode, this is always equal to
+        `len(data)`. 
+        '''
+        
+        raise FUSEError(errno.ENOSYS)
+    
+    def flush(self, fh):
+        '''Handle close() syscall.
+        
+        May be called multiple times for the same open file (e.g. if the file handle
+        has been duplicated).
+                                                             
+        This method also clears all locks belonging to the file handle's owner.
+        '''
+        
+        raise FUSEError(errno.ENOSYS)
+
+    def release(self, fh):
+        '''Release open file
+        
+        This method must be called exactly once for each `open` call.
+        '''
+        
+        raise FUSEError(errno.ENOSYS)
+    
+    def fsync(self, fh, datasync):
+        '''Flush buffers for file `fh`
+        
+        If `datasync` is true, only the user data is flushed (and no meta data). 
+        '''
+        
+        raise FUSEError(errno.ENOSYS)
+    
     def opendir(self, inode):
         '''Open a directory.
         
@@ -133,52 +239,60 @@ class Operations(object):
         '''
         
         raise FUSEError(errno.ENOSYS)
+    
 
-    
-    def mkdir(self, parent_inode, name, mode, ctx):
-        '''Create a directory
-    
-        `ctx` must be a context object that contains pid, uid and primary gid of
-        the requesting process.
+    def readdir(self, fh, off):
+        '''Read directory entries
         
-        Returns an object with the attributes of the newly created directory
-        entry. The attributes are the same as for `lookup`.
+        This method returns an iterator over the contents of directory `fh`,
+        starting at the entry identified by `off`.
+        
+        The iterator yields tuples of the form ``(name, attr, next_)``, where
+        ``attr` is an object with attributes corresponding to the elements of
+        ``struct stat`` and ``next_`` gives an offset that can be passed as
+        `off` to a successive `readdir()` call.
+         
+        Iteration may be stopped as soon as enough elements have been
+        retrieved and does not have to be continued until `StopIteration`
+        is raised.
+
+        If entries are added or removed during a `readdir` cycle, they may
+        or may not be returned. However, they will not cause other entries
+        to be skipped or returned more than once.        
         '''
         
         raise FUSEError(errno.ENOSYS)
-
-    def mknod(self, parent_inode, name, mode, rdev, ctx):
-        '''Create (possibly special) file
     
-        `ctx` must be a context object that contains pid, uid and primary gid of
-        the requesting process.
+    def releasedir(self, fh):
+        '''Release open directory
         
-        Returns an object with the attributes of the newly created directory
-        entry. The attributes are the same as for `lookup`.
+        This method must be called exactly once for each `opendir` call.
         '''
         
         raise FUSEError(errno.ENOSYS)
-
     
-
-    def listxattr(self, inode):
-        '''Get list of extended attribute names'''
+    def fsyncdir(self, fh, datasync):  
+        '''Flush buffers for directory `fh`
+        
+        If the `datasync` is true, then only the directory contents are flushed
+        (and not the meta data about the directory itself).
+        '''
+        
+        raise FUSEError(errno.ENOSYS)
+        
+    def statfs(self):
+        '''Get file system statistics
+        
+        Returns a `dict` with keys corresponding to the attributes of 
+        ``struct statfs``.
+        '''
         
         raise FUSEError(errno.ENOSYS)
     
-    def getattr(self, inode):
-        '''Get attributes for `inode`
-    
-        Returns an object with attributes corresponding to the elements in 
-        ``struct stat`` as well as
+    def setxattr(self, inode, name, value):
+        '''Set an extended attribute.
         
-        :attr_timeout: Validity timeout (in seconds) for the attributes
-        
-        The returned object must not be modified by the caller as this would
-        affect the internal state of the file system.
-        
-        Note that the ``st_Xtime`` entries support floating point numbers to
-        allow for nano second resolution.
+        The attribute may or may not exist already.
         '''
         
         raise FUSEError(errno.ENOSYS)
@@ -190,7 +304,21 @@ class Operations(object):
         '''
         
         raise FUSEError(errno.ENOSYS)
- 
+
+    def listxattr(self, inode):
+        '''Get list of extended attribute names'''
+        
+        raise FUSEError(errno.ENOSYS)
+    
+    def removexattr(self, inode, name):
+        '''Remove extended attribute
+        
+        If the attribute does not exist, raises `FUSEError(ENOATTR)`
+        '''
+        
+        raise FUSEError(errno.ENOSYS)
+    
+    
     def access(self, inode, mode, ctx, get_sup_gids):
         '''Check if requesting process has `mode` rights on `inode`. 
         
@@ -216,128 +344,7 @@ class Operations(object):
         
         raise FUSEError(errno.ENOSYS)
 
-    def flush(self, fh):
-        '''Handle close() syscall.
-        
-        May be called multiple times for the same open file (e.g. if the file handle
-        has been duplicated).
-                                                             
-        This method also clears all locks belonging to the file handle's owner.
-        '''
-        
-        raise FUSEError(errno.ENOSYS)
-    
-    def fsync(self, fh, datasync):
-        '''Flush buffers for file `fh`
-        
-        If `datasync` is true, only the user data is flushed (and no meta data). 
-        '''
-        
-        raise FUSEError(errno.ENOSYS)
     
     
-    def fsyncdir(self, fh, datasync):  
-        '''Flush buffers for directory `fh`
-        
-        If the `datasync` is true, then only the directory contents are flushed
-        (and not the meta data about the directory itself).
-        '''
-        
-        raise FUSEError(errno.ENOSYS)
-        
-    def readlink(self, inode):
-        '''Return target of symbolic link'''
-        
-        raise FUSEError(errno.ENOSYS)
     
-    def release(self, fh):
-        '''Release open file
-        
-        This method must be called exactly once for each `open` call.
-        '''
-        
-        raise FUSEError(errno.ENOSYS)
-    
-    def releasedir(self, fh):
-        '''Release open directory
-        
-        This method must be called exactly once for each `opendir` call.
-        '''
-        
-        raise FUSEError(errno.ENOSYS)
-    
-    def removexattr(self, inode, name):
-        '''Remove extended attribute
-        
-        If the attribute does not exist, raises `FUSEError(ENOATTR)`
-        '''
-        
-        raise FUSEError(errno.ENOSYS)
-    
-    def rename(self, inode_parent_old, name_old, inode_parent_new, name_new):
-        '''Rename a directory entry'''
-        
-        raise FUSEError(errno.ENOSYS)
-    
-    def rmdir(self, inode_parent, name):
-        '''Remove a directory'''
-        
-        raise FUSEError(errno.ENOSYS)
-    
-    def setattr(self, inode, attr):
-        '''Change directory entry attributes
-        
-        `attr` must be an object with attributes corresponding to the attributes
-        of ``struct stat``. `attr` may also include a new value for ``st_size``
-        which means that the file should be truncated or extended.
-        
-        Returns an object with the new attributs of the directory entry, similar
-        to the one returned by `getattr()`
-        '''
-        
-        raise FUSEError(errno.ENOSYS)
-    
-    def setxattr(self, inode, name, value):
-        '''Set an extended attribute.
-        
-        The attribute may or may not exist already.
-        '''
-        
-        raise FUSEError(errno.ENOSYS)
-    
-    def statfs(self):
-        '''Get file system statistics
-        
-        Returns a `dict` with keys corresponding to the attributes of 
-        ``struct statfs``.
-        '''
-        
-        raise FUSEError(errno.ENOSYS)
-    
-    def symlink(self, inode_parent, name, target, ctx):
-        '''Create a symbolic link
-        
-        `ctx` must be a context object that contains pid, uid and 
-        primary gid of the requesting process.
-        
-        Returns an object with the attributes of the newly created directory
-        entry, similar to the one returned by `lookup`.
-        '''
-        
-        raise FUSEError(errno.ENOSYS)
-    
-    def unlink(self, parent_inode, name):
-        '''Remove a (possibly special) file'''
-        
-        raise FUSEError(errno.ENOSYS)
-    
-    def write(self, fh, off, data):
-        '''Write data into an open file
-        
-        Returns the number of bytes written.
-        Unless the file was opened in ``direct_io`` mode, this is always equal to
-        `len(data)`. 
-        '''
-        
-        raise FUSEError(errno.ENOSYS)
     

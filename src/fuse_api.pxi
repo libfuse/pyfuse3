@@ -200,7 +200,8 @@ lock_released = NoLockManager.__new__(NoLockManager)
 class RequestContext:
     '''
     Instances of this class provide information about the caller
-    of the syscall that triggered a request.
+    of the syscall that triggered a request. The attributes should be
+    self-explanatory.
     '''
 
     __slots__ = [ 'uid', 'pid', 'gid', 'umask' ]
@@ -213,10 +214,16 @@ class EntryAttributes:
     '''
     Instances of this class store attributes of directory entries.
     Most of the attributes correspond to the elements of the ``stat``
-    C struct as returned by e.g. ``fstat``.
+    C struct as returned by e.g. ``fstat`` and should be
+    self-explanatory.
     
     Note that the  *st_Xtime* attributes support floating point numbers to
     allow for nanosecond resolution.
+
+    Generally, you can use any other class instead of
+    `EntryAttributes` as long as the instances have the same
+    attributes.
+
     '''
 
     # Attributes are documented in rst/operations.rst
