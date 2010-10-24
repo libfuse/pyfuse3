@@ -61,10 +61,7 @@ cdef void fuse_forget (fuse_req_t req, fuse_ino_t ino,
     except Exception as e:
         handle_exc('forget', e, NULL)
 
-    ret = fuse_reply_none(req)
-    if ret != 0:
-        log.error('fuse_forget(): fuse_reply_none failed with %s',
-                  errno.errorcode.get(e.errno, str(e.errno)))
+    fuse_reply_none(req)
 
 cdef void fuse_getattr (fuse_req_t req, fuse_ino_t ino,
                         fuse_file_info *fi) with gil:
@@ -90,10 +87,10 @@ cdef void fuse_getattr (fuse_req_t req, fuse_ino_t ino,
         log.error('fuse_getattr(): fuse_reply_* failed with %s',
                   errno.errorcode.get(e.errno, str(e.errno)))
 
-cdef void fuse_setattr (fuse_req_t req, fuse_ino_t ino, c_stat *attr,
+cdef void fuse_setattr (fuse_req_t req, fuse_ino_t ino, c_stat *stat,
                         int to_set, fuse_file_info *fi) with gil:
-    cdef c_stat stat
     cdef int ret
+    cdef c_stat stat_n
     cdef int timeout
 
     try:
@@ -120,7 +117,7 @@ cdef void fuse_setattr (fuse_req_t req, fuse_ino_t ino, c_stat *attr,
         with lock:
             attr = operations.setattr(ino, attr)
 
-        fill_c_stat(attr, &stat)
+        fill_c_stat(attr, &stat_n)
         timeout = attr.attr_timeout
         
     except FUSEError as e:
@@ -128,7 +125,7 @@ cdef void fuse_setattr (fuse_req_t req, fuse_ino_t ino, c_stat *attr,
     except Exception as e:
         ret = handle_exc('setattr', e, req)
     else:
-        ret = fuse_reply_attr(req, &stat, timeout)
+        ret = fuse_reply_attr(req, &stat_n, timeout)
 
     if ret != 0:
         log.error('fuse_setattr(): fuse_reply_* failed with %s',
