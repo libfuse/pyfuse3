@@ -4,20 +4,21 @@ LLFUSE Documentation
 .. include:: about.rst
 
 
-
 Table of Contents
 -----------------
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
    install.rst
    getting_started.rst
-   llfuse.rst
+   fuse_api.rst
+   data.rst
+   lock.rst
    operations.rst
    example.rst
 
-    
+
 Indices and tables
 ------------------
 

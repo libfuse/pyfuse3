@@ -1,10 +1,11 @@
-Installing LLFUSE
+===================
+ Installing LLFUSE
 ===================
 
 .. highlight:: sh
 
 Stable releases
----------------
+===============
 
 LLFUSE can be installed like any other Python extension. Make sure
 that you have the Python and FUSE development headers installed, then
@@ -19,7 +20,7 @@ or ::
 Note that LLFUSE requires at least FUSE 2.8.0 and Python 2.6.
 
 Development Version
--------------------
+===================
 
 If you have checked out the unstable development version from the
 Mercurial repository, a bit more effort is required. You need to have

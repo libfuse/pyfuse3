@@ -1,5 +1,5 @@
-About LLFUSE
-------------
+ About LLFUSE
+==============
 
 LLFUSE is a set of Python bindings for the low level FUSE_ API. It
 requires at least FUSE 2.8.0 and supports both Python 2.x and 3.x.

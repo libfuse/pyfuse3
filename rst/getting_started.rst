@@ -1,7 +1,8 @@
 .. _getting_started:
 
-Getting started
-===============
+=================
+ Getting started
+=================
 
 A file system is implemented by subclassing the `llfuse.Operations`
 class and implementing the various request handlers. An instance of

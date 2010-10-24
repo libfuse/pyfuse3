@@ -1,6 +1,7 @@
 .. _example file system:
 
-Example File System
+=====================
+ Example File System
 =====================
 
 The following is an example of a very simple file system that uses
