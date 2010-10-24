@@ -39,6 +39,8 @@ cdef extern from "fuse_lowlevel.h" nogil:
         int pid
         int umask
 
+    ctypedef fuse_ctx const_fuse_ctx "const struct fuse_ctx"
+    
     int FUSE_SET_ATTR_MODE
     int FUSE_SET_ATTR_UID
     int FUSE_SET_ATTR_GID

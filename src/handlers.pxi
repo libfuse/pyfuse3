@@ -155,7 +155,7 @@ cdef void fuse_mknod (fuse_req_t req, fuse_ino_t parent, const_char *name,
                       mode_t mode, dev_t rdev) with gil:
     cdef int ret
     cdef fuse_entry_param entry
-    cdef fuse_ctx* context
+    cdef const_fuse_ctx* context
     
     try:
         context = fuse_req_ctx(req)
@@ -187,7 +187,7 @@ cdef void fuse_mkdir (fuse_req_t req, fuse_ino_t parent, const_char *name,
                       mode_t mode) with gil:
     cdef int ret
     cdef fuse_entry_param entry
-    cdef fuse_ctx* context
+    cdef const_fuse_ctx* context
     
     try:
         # Force the entry type to directory
