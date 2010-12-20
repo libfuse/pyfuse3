@@ -16,14 +16,19 @@ import sys
 import os
 import subprocess
 
-# Import distribute
+# Add util to load path
 basedir = os.path.abspath(os.path.dirname(sys.argv[0]))
-sys.path.insert(0, os.path.join(basedir, 'src'))
+sys.path.insert(0, os.path.join(basedir, 'util'))
+
+# Import distribute
 from distribute_setup import use_setuptools
 use_setuptools(version='0.6.12', download_delay=5)
 import setuptools
 import setuptools.command.test as setuptools_test
 from setuptools import Extension
+
+# Import Sphinx autodoc Cython support
+import sphinx_cython
 
 LLFUSE_VERSION = '0.9.1'
 
@@ -78,7 +83,8 @@ def main():
           command_options={
             'build_sphinx': {
                 'version': ('setup.py', LLFUSE_VERSION),
-                'release': ('setup.py', LLFUSE_VERSION)}},
+                'release': ('setup.py', LLFUSE_VERSION),
+	    }}
           )
 
 
@@ -92,8 +98,11 @@ def pkg_config(pkg, cflags=True, ldflags=False, min_ver=None):
             cmd = ['pkg-config', '--modversion', pkg ]
             proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
             version = proc.communicate()[0].strip()
-            raise SystemExit('%s version too old (found: %s, required: %s)' 
-                             % (pkg, version, min_ver), file=sys.stderr)
+            if not version:
+                raise SystemExit() # pkg-config generates error message already
+            else:
+                raise SystemExit('%s version too old (found: %s, required: %s)' 
+                                 % (pkg, version, min_ver))
     
     cmd = ['pkg-config', pkg ]
     if cflags:
@@ -107,7 +116,7 @@ def pkg_config(pkg, cflags=True, ldflags=False, min_ver=None):
     if proc.wait() != 0:
         raise SystemExit('Failed to execute pkg-config. Exit code: %d.\n'
                          'Check that the %s development package been installed properly.'
-                         % (proc.returncode, pkg), file=sys.stderr)
+                         % (proc.returncode, pkg))
 
     return cflags.decode('us-ascii').split()
 
@@ -132,7 +141,9 @@ class build_cython(setuptools.Command):
         # TODO: Turn on timestamps once Cython supports them
         options = { 'include_path': [ os.path.join(basedir, 'Include') ],
                     'recursive': False, 'verbose': True,
-                    'timestamps': False }
+                    'timestamps': False,
+                    'compiler_directives': { 'embedsignature': True }
+                     }
         
         for extension in self.extensions:
             for file in extension.sources:
@@ -149,6 +160,7 @@ class build_cython(setuptools.Command):
                 else:
                     print('%s is up to date' % (file + ext,))
 
+
         
 class upload_docs(setuptools.Command):
     user_options = []
@@ -164,6 +176,7 @@ class upload_docs(setuptools.Command):
     def run(self):
         subprocess.check_call(['rsync', '-aHv', '--del', os.path.join(basedir, 'doc', 'html') + '/',
                                'ebox.rath.org:/var/www/llfuse-docs/'])
+
 
 if __name__ == '__main__':
     main()
