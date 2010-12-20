@@ -12,12 +12,6 @@ Architecture: any
 Depends: ${misc:Depends}, ${python:Depends}, ${shlibs:Depends}, libjs-jquery
 Description: Python bindings for the low-level FUSE API
  Python-llfuse is a set of Python bindings for the low level FUSE API.
- .
- Python-llfuse was originally part of S3QL
- (http://code.google.com/p/s3ql/), but has recently been factored out
- so that it can be used by other projects as well. For that reason, it
- does not yet include much standalone documentation apart from the
- docstrings.
 
 Package: python-llfuse-dbg
 Section: debug
@@ -26,11 +20,5 @@ Architecture: any
 Depends: python-llfuse (= ${binary:Version}), python-dbg, ${shlibs:Depends}, ${misc:Depends}
 Description: Python bindings for the low-level FUSE API
  Python-llfuse is a set of Python bindings for the low level FUSE API.
- .
- Python-llfuse was originally part of S3QL
- (http://code.google.com/p/s3ql/), but has recently been factored out
- so that it can be used by other projects as well. For that reason, it
- does not yet include much standalone documentation apart from the
- docstrings.
  .
  This package contains the extension built for the Python debug interpreter.
