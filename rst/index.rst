@@ -1,5 +1,6 @@
-LLFUSE Documentation
-====================
+======================
+ LLFUSE Documentation
+======================
 
 .. include:: about.rst
 
