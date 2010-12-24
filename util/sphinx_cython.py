@@ -90,4 +90,3 @@ class MyMethodDocumenter(MyDocumenter, SphinxAutodoc.MethodDocumenter):
             
 SphinxAutodoc.MethodDocumenter = MyMethodDocumenter 
 SphinxAutodoc.FunctionDocumenter = MyFunctionDocumenter
-__
