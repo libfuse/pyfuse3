@@ -18,10 +18,16 @@ import inspect
 import re
 from sphinx.util import force_decode
 
-
 TYPE_RE = re.compile(r'(?:int|char)(?:\s+\*?\s*|\s*\*?\s+)([a-zA-Z_].*)')
 
-class MyFunctionDocumenter(SphinxAutodoc.FunctionDocumenter):
+class MyDocumenter(SphinxAutodoc.Documenter):
+    '''
+    Overwrites `get_doc()` to remove function and
+    method signatures and `format_args` to parse and give
+    precedence to function signatures in the first line
+    of the docstring. 
+    ''' 
+
     def get_doc(self, encoding=None):
         docstr = self.get_attr(self.object, '__doc__', None)
         
@@ -33,7 +39,7 @@ class MyFunctionDocumenter(SphinxAutodoc.FunctionDocumenter):
             and docstr.startswith(myname + '(')
             and '\n' in docstr
             and docstr[docstr.index('\n')-1] == ')'):
-            docstr = docstr[docstr.index('\n'):]
+            docstr = docstr[docstr.index('\n')+1:]
                     
         if docstr:
             # make sure we have Unicode docstrings, then sanitize and split
@@ -41,56 +47,7 @@ class MyFunctionDocumenter(SphinxAutodoc.FunctionDocumenter):
             return [prepare_docstring(force_decode(docstr, encoding))]
         return []
         
-    def format_args(self):
-        myname = self.fullname[len(self.modname)+1:]
-        if myname.endswith('()'):
-            myname = myname[:-2]
-            
-        # Try to parse docstring
-        docstr = self.get_attr(self.object, '__doc__', None)                    
-        if (docstr 
-            and docstr.startswith(myname + '(')
-            and '\n' in docstr
-            and docstr[docstr.index('\n')-1] == ')'):
-            args = docstr[len(myname):docstr.index('\n')]
-            
-            # Get rid of Cython style types declarations
-            argl = []
-            for arg in [ x.strip() for x in args.split(',') ]:
-                hit = TYPE_RE.match(arg)
-                if hit:
-                    argl.append(hit.group(1))
-                else:
-                    argl.append(arg)
-            args = ', '.join(argl)
-            
-        else:
-            return super(MyFunctionDocumenter, self).format_args() 
-            
-        # escape backslashes for reST
-        args = args.replace('\\', '\\\\')
-        return args
-            
-class MyMethodDocumenter(SphinxAutodoc.MethodDocumenter):
-    def get_doc(self, encoding=None):
-        docstr = self.get_attr(self.object, '__doc__', None)
         
-        myname = self.fullname[len(self.modname)+1:]
-        if myname.endswith('()'):
-            myname = myname[:-2]
-            
-        if (docstr 
-            and docstr.startswith(myname + '(')
-            and '\n' in docstr
-            and docstr[docstr.index('\n')-1] == ')'):
-            docstr = docstr[docstr.index('\n'):]
-                    
-        if docstr:
-            # make sure we have Unicode docstrings, then sanitize and split
-            # into lines
-            return [prepare_docstring(force_decode(docstr, encoding))]
-        return []
-            
     def format_args(self):
         
         myname = self.fullname[len(self.modname)+1:]
@@ -108,7 +65,8 @@ class MyMethodDocumenter(SphinxAutodoc.MethodDocumenter):
             # Get rid of Cython style types declarations
             argl = []
             for arg in [ x.strip() for x in args.split(',') ]:
-                if arg in ('cls', 'self'):
+                if (arg in ('cls', 'self') 
+                    and isinstance(self, SphinxAutodoc.MethodDocumenter)):
                     continue 
                 hit = TYPE_RE.match(arg)
                 if hit:
@@ -118,11 +76,18 @@ class MyMethodDocumenter(SphinxAutodoc.MethodDocumenter):
             args = '(%s)' % ', '.join(argl)
             
         else:
-            return super(MyMethodDocumenter, self).format_args()  
+            return super(self.__class__, self).format_args()  
             
         # escape backslashes for reST
         args = args.replace('\\', '\\\\')
-        return args            
+        return args         
             
-SphinxAutodoc.MethodDocumenter = MyMethodDocumenter
+class MyFunctionDocumenter(MyDocumenter, SphinxAutodoc.FunctionDocumenter):
+    pass
+            
+class MyMethodDocumenter(MyDocumenter, SphinxAutodoc.MethodDocumenter):    
+    pass
+            
+SphinxAutodoc.MethodDocumenter = MyMethodDocumenter 
 SphinxAutodoc.FunctionDocumenter = MyFunctionDocumenter
+__
