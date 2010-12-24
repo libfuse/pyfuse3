@@ -1,9 +1,9 @@
 include Changes.txt
-include distribute-*.tar.gz
 graft doc/html
 graft Include
 graft contrib
 graft rst
+graft util
 graft debian
 recursive-include src *.pyx *.pxd
 exclude MANIFEST.in

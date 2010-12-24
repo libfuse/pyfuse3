@@ -10,13 +10,6 @@ build: build-stamp
 build-stamp: $(PYVERS:%=build-python%) $(PYVERS:%=build-dbg-python%)
 	touch $@
 
-build-docs:
-	[ -e doc/html ] || python setup.py build_sphinx
-	[ ! -e doc/doctrees ] || rm -rf doc/doctrees
-	[ ! -e doc/html/.buildinfo ] || rm -rf doc/html/.buildinfo
-
-	touch $@
-
 build-python%:
 	dh_testdir
 	python$* setup.py build 
@@ -48,13 +41,11 @@ install-dbg-python%:
 clean:
 	python setup.py clean -a
 	dh_clean
-	rm -rf dist
-	rm -rf build-dbg-python* build-python* build-stamp build-docs
-	rm -rf doc/doctrees
+	rm -rf build-dbg-python* build-python* build-stamp
 
 binary: binary-arch binary-indep
 
-binary-arch: build install build-docs
+binary-arch: build install
 	dh_testroot -a
 	dh_testdir -a
 	dh_install -a
