@@ -13,8 +13,14 @@ from fuse_opt cimport *
 
 # Based on fuse sources, revision tag fuse_2_8_3
 cdef extern from * nogil: # fuse_common.h should not be included
+
     struct fuse_file_info:
-        pass
+        int flags
+        int direct_io
+        int keep_cache
+        int nonseekable
+        int fh
+        int lock_owner
 
     struct fuse_conn_info:
         pass
