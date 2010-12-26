@@ -15,3 +15,6 @@ cdef extern from "attr/xattr.h" nogil:
     
     int getxattr (char *path, char *name,
                   void *value, int size)
+
+    int XATTR_CREATE
+    int XATTR_REPLACE
