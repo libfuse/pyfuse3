@@ -22,7 +22,10 @@ import sys, os
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc']
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.intersphinx' ]
+
+# Link to Python standard library
+intersphinx_mapping = {'python': ('http://docs.python.org/', None)}
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
