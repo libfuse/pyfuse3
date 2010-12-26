@@ -36,6 +36,9 @@ source_encoding = 'utf-8'
 # The master toctree document.
 master_doc = 'index'
 
+# Warn about unresolved references
+nitpicky = True
+
 # General information about the project.
 project = u'LLFUSE'
 copyright = u'2010, Nikolaus Rath'
@@ -194,3 +197,4 @@ latex_documents = [
 
 # If false, no module index is generated.
 #latex_use_modindex = True
+

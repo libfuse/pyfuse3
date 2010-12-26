@@ -46,6 +46,16 @@ cdef object fill_c_stat(object attr, c_stat* stat):
     SET_ATIME_NS(stat, (attr.st_atime - stat.st_atime) * 1e9)
     SET_CTIME_NS(stat, (attr.st_ctime - stat.st_ctime) * 1e9)
     SET_MTIME_NS(stat, (attr.st_mtime - stat.st_mtime) * 1e9)
+
+cdef object fill_statvfs(object attr, statvfs* stat):
+    stat.f_bsize = attr.f_bsize
+    stat.f_frsize = attr.f_frsize
+    stat.f_blocks = attr.f_blocks
+    stat.f_bfree = attr.f_bfree
+    stat.f_bavail = attr.f_bavail
+    stat.f_files = attr.f_files
+    stat.f_ffree = attr.f_ffree
+    stat.f_favail = attr.f_favail
     
 cdef int handle_exc(char* fn, object e, fuse_req_t req):
     '''Try to call operations.handle_exc and fuse_reply_err'''
@@ -54,7 +64,7 @@ cdef int handle_exc(char* fn, object e, fuse_req_t req):
     try:
         with lock:
             operations.handle_exc(fn, e)
-    except Exception as e:
+    except BaseException as e:
         log.exception('operations.handle_exc() raised exception itself')
 
     if req is NULL:
@@ -62,6 +72,19 @@ cdef int handle_exc(char* fn, object e, fuse_req_t req):
     else:
         return fuse_reply_err(req, errno.EIO)
         
+cdef object get_request_context(fuse_req_t req):
+    '''Get RequestContext() object'''
+    
+    cdef const_fuse_ctx* context
+
+    context = fuse_req_ctx(req)
+    ctx = RequestContext()
+    ctx.pid = context.pid
+    ctx.uid = context.uid
+    ctx.gid = context.gid
+
+    return ctx
+
 
 cdef void init_fuse_ops():
     '''Initialize fuse_lowlevel_ops structure'''

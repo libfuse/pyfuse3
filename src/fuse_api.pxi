@@ -220,10 +220,9 @@ class EntryAttributes:
     Note that the  *st_Xtime* attributes support floating point numbers to
     allow for nanosecond resolution.
 
-    Generally, you can use any other class instead of
-    `EntryAttributes` as long as the instances have the same
+    Request handlers do not need to return objects that inherit from 
+    `EntryAttributes` directly as long as they provide the required
     attributes.
-
     '''
 
     # Attributes are documented in rst/operations.rst
@@ -238,6 +237,25 @@ class EntryAttributes:
         for name in self.__slots__:
             setattr(self, name, None)
       
+class StatvfsData:
+    '''
+    Instances of this class store information about the file system.
+    The attributes correspond to the elements of the ``statvfs``
+    struct, see :man:`statvfs(2)` for details.
+    
+    Request handlers do not need to return objects that inherit from
+    `StatvfsData` directly as long as they provide the required
+    attributes.
+    '''
+
+    # Attributes are documented in rst/operations.rst
+    
+    __slots__ = [ 'f_bsize', 'f_frsize', 'f_blocks', 'f_bfree',
+                  'f_bavail', 'f_files', 'f_ffree', 'f_favail' ]
+
+    def __init__(self):
+        for name in self.__slots__:
+            setattr(self, name, None)
         
 class FUSEError(Exception):
     '''Wrapped errno value to be returned to the fuse kernel module

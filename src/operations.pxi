@@ -153,11 +153,9 @@ class Operations(object):
     def symlink(self, inode_parent, name, target, ctx):
         '''Create a symbolic link
         
-        `ctx` must be a context object that contains pid, uid and 
-        primary gid of the requesting process.
-        
-        Returns an object with the attributes of the newly created directory
-        entry, similar to the one returned by `lookup`.
+        *ctx* will be a `RequestContext` instance. The method must
+        return an `EntryAttributes` instance with the attributes of
+        the newly created directory entry.
         '''
         
         raise FUSEError(errno.ENOSYS)
@@ -170,8 +168,8 @@ class Operations(object):
     def link(self, inode, new_parent_inode, new_name):
         '''Create a hard link.
     
-        Returns an object with the attributes of the newly created directory
-        entry. The attributes are the same as for `lookup`.
+        The method must return an `EntryAttributes` instance with the
+        attributes of the newly created directory entry.
         '''
         
         raise FUSEError(errno.ENOSYS)
@@ -179,28 +177,32 @@ class Operations(object):
     def open(self, inode, flags):
         '''Open a file.
         
-        Returns an (integer) file handle. `flags` is a bitwise or of the open flags
-        described in open(2) and defined in the `os` module (with the exception of 
+        *flags* will be a bitwise or of the open flags described in
+        open(2) and defined in the `os` module (with the exception of
         ``O_CREAT``, ``O_EXCL``, ``O_NOCTTY`` and ``O_TRUNC``)
+
+        This method should return an integer file handle. The file
+        handle will be passed to the `read`, `write`, `flush`, `fsync`
+        and `release` methods to identify the open file.
         '''
         
         raise FUSEError(errno.ENOSYS)
     
     def read(self, fh, off, size):
-        '''Read `size` bytes from `fh` at position `off`
+        '''Read *size* bytes from *fh* at position *off*
         
-        Unless the file has been opened in direct_io mode or EOF is reached,
-        this function  returns exactly `size` bytes. 
+        This function should return exactly the number of bytes
+	requested except on EOF or error, otherwise the rest of the
+	data will be substituted with zeroes.
         '''
         
         raise FUSEError(errno.ENOSYS)
 
-    def write(self, fh, off, data):
-        '''Write data into an open file
+    def write(self, fh, off, buf):
+        '''Write *buf* into *fh* at *off*
         
-        Returns the number of bytes written.
-        Unless the file was opened in ``direct_io`` mode, this is always equal to
-        `len(data)`. 
+        This method should return the number of bytes written. If no
+        error occured, this should be exactly ``len(buf)``.
         '''
         
         raise FUSEError(errno.ENOSYS)
@@ -208,10 +210,12 @@ class Operations(object):
     def flush(self, fh):
         '''Handle close() syscall.
         
-        May be called multiple times for the same open file (e.g. if the file handle
-        has been duplicated).
+        This method is called whenever a file descriptor is closed. It
+        may be called multiple times for the same open file (e.g. if
+        the file handle has been duplicated).
                                                              
-        This method also clears all locks belonging to the file handle's owner.
+        If the file system implements locking, this method must clear
+        all locks belonging to the file handle's owner.
         '''
         
         raise FUSEError(errno.ENOSYS)
@@ -219,15 +223,18 @@ class Operations(object):
     def release(self, fh):
         '''Release open file
         
-        This method must be called exactly once for each `open` call.
+        This method will be called when the last file descriptor of
+        *fh* has been closed. Therefore it will be called exactly once
+        for each `open` call.
         '''
         
         raise FUSEError(errno.ENOSYS)
     
     def fsync(self, fh, datasync):
-        '''Flush buffers for file `fh`
+        '''Flush buffers for open file *fh*
         
-        If `datasync` is true, only the user data is flushed (and no meta data). 
+        If *datasync* is true, only the file contents should be
+        flushed (in contrast to the metadata about the file).
         '''
         
         raise FUSEError(errno.ENOSYS)
@@ -235,7 +242,9 @@ class Operations(object):
     def opendir(self, inode):
         '''Open a directory.
         
-        Returns an (integer) file handle. 
+        This method should return an integer file handle. The file
+        handle will be passed to the `readdir`, `fsyncdir`
+        and `releasedir` methods to identify the directory.
         '''
         
         raise FUSEError(errno.ENOSYS)
@@ -244,21 +253,20 @@ class Operations(object):
     def readdir(self, fh, off):
         '''Read directory entries
         
-        This method returns an iterator over the contents of directory `fh`,
-        starting at the entry identified by `off`.
+        This method should return an iterator over the contents of
+        directory *fh*, starting at the entry identified by *off*.
         
-        The iterator yields tuples of the form ``(name, attr, next_)``, where
-        ``attr` is an object with attributes corresponding to the elements of
-        ``struct stat`` and ``next_`` gives an offset that can be passed as
-        `off` to a successive `readdir()` call.
+        The iterator must yield tuples of the form ``(name, attr,
+        next_)``, where ``attr` is an `EntryAttributes` instance and
+        ``next_`` gives an offset that can be passed as *off* to start
+        a successive `readdir` call at the right position.
          
         Iteration may be stopped as soon as enough elements have been
-        retrieved and does not have to be continued until `StopIteration`
-        is raised.
+        retrieved. The method should be prepared for this case.
 
-        If entries are added or removed during a `readdir` cycle, they may
-        or may not be returned. However, they will not cause other entries
-        to be skipped or returned more than once.        
+        If entries are added or removed during a `readdir` cycle, they
+        may or may not be returned. However, they must not cause other
+        entries to be skipped or returned more than once.
         '''
         
         raise FUSEError(errno.ENOSYS)
@@ -272,22 +280,45 @@ class Operations(object):
         raise FUSEError(errno.ENOSYS)
     
     def fsyncdir(self, fh, datasync):  
-        '''Flush buffers for directory `fh`
+        '''Flush buffers for open directory `fh`
         
-        If the `datasync` is true, then only the directory contents are flushed
-        (and not the meta data about the directory itself).
+        If *datasync* is true, only the directory contents should be
+        flushed (in contrast to metadata about the directory itself).
         '''
         
         raise FUSEError(errno.ENOSYS)
         
     def statfs(self):
         '''Get file system statistics
-        
-        Returns a `dict` with keys corresponding to the attributes of 
-        ``struct statfs``.
+
+        The method is expected to return an appropriately filled
+        `StatvfsData` instance.
         '''
         
         raise FUSEError(errno.ENOSYS)
+
+    def stacktrace(self):
+        '''Asynchronous debugging
+        
+        This method will be called when the ``fuse_stacktrace`` extended
+        attribute is set on the mountpoint. It will be called without
+        holding the global lock. The default implementation logs the
+        current stack trace of every running Python thread. This can be
+        quite useful to debug file system deadlocks.
+        '''
+
+        import sys
+        import traceback
+        
+        code = list()
+        for threadId, frame in sys._current_frames().items():
+            code.append("\n# ThreadID: %s" % threadId)
+            for filename, lineno, name, line in traceback.extract_stack(frame):
+                code.append('%s:%d, in %s' % (os.path.basename(filename), lineno, name))
+                if line:
+                    code.append("    %s" % (line.strip()))
+
+        log.error("\n".join(code))
     
     def setxattr(self, inode, name, value):
         '''Set an extended attribute.
@@ -300,7 +331,8 @@ class Operations(object):
     def getxattr(self, inode, name):
         '''Return extended attribute value
         
-        If the attribute does not exist, raises `FUSEError(ENOATTR)`
+        If the attribute does not exist, the method must raise
+        `FUSEError(ENOATTR)`
         '''
         
         raise FUSEError(errno.ENOSYS)
@@ -313,33 +345,34 @@ class Operations(object):
     def removexattr(self, inode, name):
         '''Remove extended attribute
         
-        If the attribute does not exist, raises `FUSEError(ENOATTR)`
+        If the attribute does not exist, the method must raise
+        `FUSEError(ENOATTR)`
         '''
         
         raise FUSEError(errno.ENOSYS)
     
     
-    def access(self, inode, mode, ctx, get_sup_gids):
-        '''Check if requesting process has `mode` rights on `inode`. 
+    def access(self, inode, mode, ctx):
+        '''Check if requesting process has *mode* rights on *inode*. 
+
+        *ctx* will be a `RequestContext` instance. The method
+        must return a boolean value.
         
-        Returns a boolean value. `get_sup_gids` must be a function that returns
-        a list of the supplementary group ids of the requester.
-        
-        `ctx` must be a context object that contains pid, uid and primary gid of
-        the requesting process.
+        If the ``default_permissions`` mount option is given, this method is not
+        called.
         '''
         
         raise FUSEError(errno.ENOSYS)
     
     def create(self, inode_parent, name, mode, ctx):
-        '''Create a file and open it
+        '''Create a file with permissions *mode* and open it
                 
-        `ctx` must be a context object that contains pid, uid and 
-        primary gid of the requesting process.
-        
-        Returns a tuple of the form ``(fh, attr)``. `fh` is
-        integer file handle that is used to identify the open file and
-        `attr` is an object similar to the one returned by `lookup`.
+        *ctx* will be a `RequestContext` instance.
+
+        The method must return a tuple of the form *(fh, attr)*,
+        where *fh* is a file handle like the one returned by `open`
+        and *attr* is an `EntryAttributes` instance with the
+        attributes of the newly created directory entry.
         '''
         
         raise FUSEError(errno.ENOSYS)
