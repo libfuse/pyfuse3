@@ -13,7 +13,8 @@ class Operations(object):
     '''
     This class defines the general and request handler methods that an
     LLFUSE file system may implement. If a particular request handler
-    has not been implemented, it must raise `FUSEError(errno.ENOSYS)`.
+    has not been implemented, it must raise `FUSEError` with an errorcode of
+    `errno.ENOSYS`.
 
     It has recommended that file systems are derived from this class
     and only overwrite the handlers that they actually implement. (The
@@ -21,7 +22,7 @@ class Operations(object):
     not-implemented exception).
 
     The only exception that request handlers are allowed to raise is
-    `FUSEError(errno)`. This will cause the specified errno to be
+    `FUSEError`. This will cause the specified errno to be
     returned by the syscall that is being handled.
     '''
     
@@ -280,7 +281,7 @@ class Operations(object):
         raise FUSEError(errno.ENOSYS)
     
     def fsyncdir(self, fh, datasync):  
-        '''Flush buffers for open directory `fh`
+        '''Flush buffers for open directory *fh*
         
         If *datasync* is true, only the directory contents should be
         flushed (in contrast to metadata about the directory itself).
@@ -332,7 +333,7 @@ class Operations(object):
         '''Return extended attribute value
         
         If the attribute does not exist, the method must raise
-        `FUSEError(ENOATTR)`
+        `FUSEError` with an error code of `ENOATTR`.
         '''
         
         raise FUSEError(errno.ENOSYS)
@@ -346,7 +347,7 @@ class Operations(object):
         '''Remove extended attribute
         
         If the attribute does not exist, the method must raise
-        `FUSEError(ENOATTR)`
+        `FUSEError` with an error code of `ENOATTR`.
         '''
         
         raise FUSEError(errno.ENOSYS)
