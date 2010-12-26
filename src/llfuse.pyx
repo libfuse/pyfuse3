@@ -56,7 +56,6 @@ cdef extern from "time.c" nogil:
 # PYTHON IMPORTS
 ################
 
-import errno
 import os
 import logging
 
