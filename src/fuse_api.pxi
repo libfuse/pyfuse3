@@ -10,6 +10,7 @@ This file is part of LLFUSE (http://python-llfuse.googlecode.com).
 LLFUSE can be distributed under the terms of the GNU LGPL.
 '''
 
+ENOATTR = errno.ENOATTR
 
 def listdir(path):
     '''Like os.listdir(), but releases the GIL'''
@@ -62,7 +63,7 @@ def getxattr(path, name, int size_guess=128):
     '''Get extended attribute
     
     If the caller knows the approximate size of the attribute value,
-    it should be supplied in `size_guess`. If the guess turns out
+    it should be supplied in *size_guess*. If the guess turns out
     to be wrong, the system call has to be carried out three times
     (the first call will fail, the second determines the size and
     the third finally gets the value).
@@ -108,10 +109,10 @@ def getxattr(path, name, int size_guess=128):
 def init(operations_, char* mountpoint_, list args):
     '''Initialize and mount FUSE file system
             
-    `operations_` has to be an instance of the `Operations` class (or another
+    *operations_* has to be an instance of the `Operations` class (or another
     class defining the same methods).
     
-    `args` has to be a list of strings. Valid options are listed in struct
+    *args* has to be a list of strings. Valid options are listed in struct
     fuse_opt fuse_mount_opts[] (mount.c:68) and struct fuse_opt fuse_ll_opts[]
     (fuse_lowlevel_c:1526).
     '''
@@ -241,7 +242,7 @@ class StatvfsData:
     '''
     Instances of this class store information about the file system.
     The attributes correspond to the elements of the ``statvfs``
-    struct, see :man:`statvfs(2)` for details.
+    struct, see :manpage:`statvfs(2)` for details.
     
     Request handlers do not need to return objects that inherit from
     `StatvfsData` directly as long as they provide the required

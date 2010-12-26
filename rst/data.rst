@@ -16,6 +16,25 @@
    
    .. attribute:: umask
 
+.. autoclass:: StatvfsData
+
+   .. attribute:: f_bsize
+   
+   .. attribute:: f_frsize
+   
+   .. attribute:: f_blocks
+   
+   .. attribute:: f_bfree
+   
+   .. attribute:: f_bavail
+   
+   .. attribute:: f_files
+   
+   .. attribute:: f_ffree
+   
+   .. attribute:: f_favail
+   
+
 .. autoclass:: EntryAttributes
 
    .. attribute:: ino
@@ -53,3 +72,9 @@
    .. attribute:: st_ctime
 
    .. attribute:: st_mtime
+
+
+.. py:attribute:: ENOATTR
+
+   This errorcode is unfortunately missing in the `errno` module,
+   so it is provided by llfuse instead.
