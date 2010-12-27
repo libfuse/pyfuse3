@@ -253,9 +253,14 @@ class Operations(llfuse.Operations):
 
         if attr.st_size is not None:
             data = self.get_row('SELECT data FROM inodes WHERE id=?', (inode,))[0]
+            if data is None:
+                data = ''
+            if len(data) < attr.st_size:
+                data = data + '\0' * (attr.st_size - len(data))
+            else:
+                data = data[:attr.st_size]
             self.cursor.execute('UPDATE inodes SET data=?, size=? WHERE id=?',
-                                (buffer(data[:attr.st_size]),
-                                 attr.st_size, inode))
+                                (buffer(data), attr.st_size, inode))
         if attr.st_mode is not None:
             self.cursor.execute('UPDATE inodes SET mode=? WHERE id=?',
                                 (attr.st_mode, inode))
@@ -346,11 +351,15 @@ class Operations(llfuse.Operations):
 
     def read(self, fh, offset, length):
         data = self.get_row('SELECT data FROM inodes WHERE id=?', (fh,))[0]
+        if data is None:
+            data = ''
         return data[offset:offset+length]
 
                 
     def write(self, fh, offset, buf):
-        data = str(self.get_row('SELECT data FROM inodes WHERE id=?', (fh,)))[0]
+        data = self.get_row('SELECT data FROM inodes WHERE id=?', (fh,))[0]
+        if data is None:
+            data = ''
         data = data[:offset] + buf + data[offset+len(buf):]
         
         self.cursor.execute('UPDATE inodes SET data=?, size=? WHERE id=?',
