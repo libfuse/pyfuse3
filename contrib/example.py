@@ -12,11 +12,20 @@ python-llfuse can be distributed under the terms of the GNU LGPL.
 
 from __future__ import division, print_function, absolute_import
 
+import os
+import sys
+
+# We are running from the llfuse source directory, make sure
+# that we use modules from this directory
+basedir = os.path.abspath(os.path.join(os.path.dirname(sys.argv[0]), '..'))
+if (os.path.exists(os.path.join(basedir, 'setup.py')) and
+    os.path.exists(os.path.join(basedir, 'src', 'llfuse.so'))):
+    sys.path = [os.path.join(basedir, 'src')] + sys.path
+    
+    
 import llfuse
 import errno
 import stat
-import os
-import sys
 from time import time
 import sqlite3
 import logging
@@ -43,7 +52,7 @@ class Operations(llfuse.Operations):
         self.db = sqlite3.connect(':memory:')
         self.db.text_factory = str
         self.db.row_factory = sqlite3.Row
-        self.cursor = self.db.cursor()
+        self.cursor = self.db.cursor()        
         self.inode_open_count = defaultdict(int)
         self.init_tables()
              
@@ -62,7 +71,7 @@ class Operations(llfuse.Operations):
             target    BLOB(256) ,
             size      INT NOT NULL DEFAULT 0,
             rdev      INT NOT NULL DEFAULT 0,
-            data      BLOB,
+            data      BLOB
         )
         """)
     
@@ -119,7 +128,7 @@ class Operations(llfuse.Operations):
         row = self.get_row('SELECT * FROM inodes WHERE id=?', (inode,))
         
         entry = llfuse.EntryAttributes()
-        entry.ino = inode
+        entry.st_ino = inode
         entry.generation = 0
         entry.entry_timeout = 300
         entry.attr_timeout = 300
@@ -381,7 +390,9 @@ if __name__ == '__main__':
     operations = Operations()
     
     llfuse.init(operations, mountpoint, 
-                [ b"nonempty", b'fsname=llfuse_xmp' ])
-    llfuse.main()
+                [  b'fsname=llfuse_xmp', b"nonempty" ])
+    
+    # sqlite3 does not support multithreading
+    llfuse.main(single=True)
     llfuse.close()
     
