@@ -24,3 +24,4 @@ syntax: regexp
 ^debian/python-llfuse-dbg.prerm.debhelper$
 ^debian/python-llfuse-dbg.substvars$
 
+glob:src/llfuse_d.so
