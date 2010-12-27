@@ -47,7 +47,7 @@
 
 .. autoclass:: EntryAttributes
 
-   .. attribute:: ino
+   .. attribute:: st_ino
    
    .. attribute:: generation
 
@@ -55,7 +55,7 @@
       
    .. attribute:: entry_timeout
 
-      Validity timeout (in seconds) for the name
+      Validity timeout (in seconds) for the name of the directory entry
       
    .. attribute:: attr_timeout
 
