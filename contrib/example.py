@@ -92,6 +92,9 @@ class Operations(llfuse.Operations):
                               | stat.S_IXUSR | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH 
                               | stat.S_IXOTH, os.getuid(), os.getgid(), time(), 
                               time(), time()))
+        self.cursor.execute("INSERT INTO contents (name, parent_inode, inode) VALUES (?,?,?)",
+                            (b'..', llfuse.ROOT_INODE, llfuse.ROOT_INODE))
+        
                 
     def get_row(self, *a, **kw):
         self.cursor.execute(*a, **kw) 
@@ -248,38 +251,38 @@ class Operations(llfuse.Operations):
 
     def setattr(self, inode, attr):
 
-        if 'st_size' in attr:
-            entry = self.getattr(inode)
+        if attr.st_size is not None:
+            data = self.get_row('SELECT data FROM inodes WHERE id=?', (inode,))[0]
             self.cursor.execute('UPDATE inodes SET data=?, size=? WHERE id=?',
-                                (buffer(entry['data'][:attr['st_size']]),
-                                 attr['st_size'], inode))
-        if 'st_mode' in attr:
+                                (buffer(data[:attr.st_size]),
+                                 attr.st_size, inode))
+        if attr.st_mode is not None:
             self.cursor.execute('UPDATE inodes SET mode=? WHERE id=?',
-                                (attr['st_mode'], inode))
+                                (attr.st_mode, inode))
 
-        if 'st_uid' in attr:
+        if attr.st_uid is not None:
             self.cursor.execute('UPDATE inodes SET uid=? WHERE id=?',
-                                (attr['st_uid'], inode))
+                                (attr.st_uid, inode))
 
-        if 'st_gid' in attr:
+        if attr.st_gid is not None:
             self.cursor.execute('UPDATE inodes SET gid=? WHERE id=?',
-                                (attr['st_gid'], inode))
+                                (attr.st_gid, inode))
 
-        if 'st_rdev' in attr:
+        if attr.st_rdev is not None:
             self.cursor.execute('UPDATE inodes SET rdev=? WHERE id=?',
-                                (attr['st_rdev'], inode))
+                                (attr.st_rdev, inode))
 
-        if 'st_atime' in attr:
+        if attr.st_atime is not None:
             self.cursor.execute('UPDATE inodes SET atime=? WHERE id=?',
-                                (attr['st_atime'], inode))
+                                (attr.st_atime, inode))
 
-        if 'st_mtime' in attr:
+        if attr.st_mtime is not None:
             self.cursor.execute('UPDATE inodes SET mtime=? WHERE id=?',
-                                (attr['st_mtime'], inode))
+                                (attr.st_mtime, inode))
 
-        if 'st_ctime' in attr:
+        if attr.st_ctime is not None:
             self.cursor.execute('UPDATE inodes SET ctime=? WHERE id=?',
-                                (attr['st_ctime'], inode))
+                                (attr.st_ctime, inode))
 
         return self.getattr(inode)
 
@@ -315,7 +318,7 @@ class Operations(llfuse.Operations):
         # Use inodes as a file handles
         return inode
 
-    def access(self, inode, mode, ctx, get_sup_gids):
+    def access(self, inode, mode, ctx):
         # Yeah, could be a function and has unused arguments
         #pylint: disable=R0201,W0613
         return True
@@ -342,17 +345,16 @@ class Operations(llfuse.Operations):
 
 
     def read(self, fh, offset, length):
-        entry = self.getattr(inode=fh)
-        return entry['data'][offset:offset+length]
+        data = self.get_row('SELECT data FROM inodes WHERE id=?', (fh,))[0]
+        return data[offset:offset+length]
 
                 
     def write(self, fh, offset, buf):
-        entry = self.getattr(inode=fh)
-        buf2 = str(entry['data'])
-        buf2[offset:offset+len(buf)] = buf
+        data = str(self.get_row('SELECT data FROM inodes WHERE id=?', (fh,)))[0]
+        data = data[:offset] + buf + data[offset+len(buf):]
         
         self.cursor.execute('UPDATE inodes SET data=?, size=? WHERE id=?',
-                            (buffer(buf2), len(buf2), fh))
+                            (buffer(data), len(data), fh))
         return len(buf)
    
     def release(self, fh):
