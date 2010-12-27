@@ -405,7 +405,7 @@ cdef void fuse_readdir (fuse_req_t req, fuse_ino_t ino, size_t size, off_t off,
     cdef int ret, acc_size
     cdef char *cname, *buf
     cdef c_stat stat
-    
+
     # GCC thinks this may end up uninitialized
     ret = 0
     
@@ -419,9 +419,10 @@ cdef void fuse_readdir (fuse_req_t req, fuse_ino_t ino, size_t size, off_t off,
                 cname = PyBytes_AsString(name)
                 fill_c_stat(attr, &stat)
                 ret = fuse_add_direntry(req, buf + acc_size, size - acc_size,
-                                        cname, &stat, off)
+                                        cname, &stat, next_)
                 if ret > (size - acc_size):
                     break
+                acc_size += ret
         ret = fuse_reply_buf(req, buf, acc_size)
     except FUSEError as e:
         ret = fuse_reply_err(req, e.errno)
