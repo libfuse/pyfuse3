@@ -75,7 +75,7 @@ def getxattr(path, name, int size_guess=128):
     cdef int bufsize
 
     bufsize = size_guess
-    buf = <char*> stdlib.malloc(bufsize)
+    buf = <char*> stdlib.malloc(bufsize * sizeof(char))
 
     if buf is NULL:
         cpython.exc.PyErr_NoMemory()
@@ -91,7 +91,7 @@ def getxattr(path, name, int size_guess=128):
                 raise OSError(errno, os.strerror(errno), path)
             bufsize = ret
             stdlib.free(buf)
-            buf = <char*> stdlib.malloc(bufsize)
+            buf = <char*> stdlib.malloc(bufsize * sizeof(char))
             if buf is NULL:
                 cpython.exc.PyErr_NoMemory()
 
