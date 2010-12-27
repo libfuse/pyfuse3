@@ -24,7 +24,7 @@ cdef object fill_entry_param(object attr, fuse_entry_param* entry):
     entry.ino = attr.st_ino
     entry.generation = attr.generation
     entry.entry_timeout = attr.entry_timeout
-    entry.attr_timeout = attr.attry_timeout
+    entry.attr_timeout = attr.attr_timeout
 
     fill_c_stat(attr, &entry.attr)
 
