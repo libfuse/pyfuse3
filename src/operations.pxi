@@ -69,7 +69,7 @@ class Operations(object):
         '''Look up a directory entry by name and get its attributes.
     
         If the entry does not exist, this method must raise
-        `FUSEError` with an errno of ``ENOENT``. Otherwise it must
+        `FUSEError` with an errno of `errno.ENOENT`. Otherwise it must
         return an `EntryAttributes` instance.
         '''
         
@@ -93,8 +93,9 @@ class Operations(object):
         '''Get attributes for *inode*
     
         This method should return an `EntryAttributes` instance with
-        the attributes of *inode*. The ``entry_timeout`` attribute is
-        ignored in this context.
+        the attributes of *inode*. The
+        `~EntryAttributes.entry_timeout` attribute is ignored in this
+        context.
         '''
         
         raise FUSEError(errno.ENOSYS)
@@ -104,13 +105,15 @@ class Operations(object):
         '''Change attributes of *inode*
         
         *attr* is an `EntryAttributes` instance with the new
-        attributes. Only the attributes ``st_size``, ``st_mode``,
-        ``st_uid``, ``st_gid``, ``st_atime`` and ``st_mtime`` are
-        relevant. Unchanged attributes will have a value `None`.
+        attributes. Only the attributes `~EntryAttributes.st_size`,
+        `~EntryAttributes.st_mode`, `~EntryAttributes.st_uid`,
+        `~EntryAttributes.st_gid`, `~EntryAttributes.st_atime` and
+        `~EntryAttributes.st_mtime` are relevant. Unchanged attributes
+        will have a value `None`.
         
         The method should return a new `EntryAttributes` instance
         with the updated attributes (i.e., all attributes except for
-        ``entry_timeout`` should be set).
+        `~EntryAttributes.entry_timeout` should be set).
         '''
         
         raise FUSEError(errno.ENOSYS)
@@ -142,7 +145,15 @@ class Operations(object):
         raise FUSEError(errno.ENOSYS)
     
     def unlink(self, parent_inode, name):
-        '''Remove a (possibly special) file'''
+        '''Remove a (possibly special) file
+
+        If the file is currently opened, the file system must defer
+        removing the actual file contents and metadata until the file
+        is no longer opened by any application.
+
+        Note that an unlinked file may also appear again if it gets a
+        new directory entry by the `link` method.
+        '''
         
         raise FUSEError(errno.ENOSYS)
 
@@ -179,8 +190,9 @@ class Operations(object):
         '''Open a file.
         
         *flags* will be a bitwise or of the open flags described in
-        open(2) and defined in the `os` module (with the exception of
-        ``O_CREAT``, ``O_EXCL``, ``O_NOCTTY`` and ``O_TRUNC``)
+        the :manpage:`open(2)` manpage and defined in the `os` module
+        (with the exception of ``O_CREAT``, ``O_EXCL``, ``O_NOCTTY``
+        and ``O_TRUNC``)
 
         This method should return an integer file handle. The file
         handle will be passed to the `read`, `write`, `flush`, `fsync`
@@ -203,7 +215,7 @@ class Operations(object):
         '''Write *buf* into *fh* at *off*
         
         This method should return the number of bytes written. If no
-        error occured, this should be exactly ``len(buf)``.
+        error occured, this should be exactly :samp:`len(buf)`.
         '''
         
         raise FUSEError(errno.ENOSYS)
@@ -257,9 +269,9 @@ class Operations(object):
         This method should return an iterator over the contents of
         directory *fh*, starting at the entry identified by *off*.
         
-        The iterator must yield tuples of the form ``(name, attr,
-        next_)``, where ``attr` is an `EntryAttributes` instance and
-        ``next_`` gives an offset that can be passed as *off* to start
+        The iterator must yield tuples of the form :samp:`({name}, {attr},
+        {next_})`, where *attr* is an `EntryAttributes` instance and
+        *next_* gives an offset that can be passed as *off* to start
         a successive `readdir` call at the right position.
          
         Iteration may be stopped as soon as enough elements have been
