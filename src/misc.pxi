@@ -138,12 +138,12 @@ cdef fuse_args* make_fuse_args(list args, fuse_args* f_args) except NULL:
     try:
         for (i, el) in enumerate(args):
             PyBytes_AsStringAndSize(el, &arg, &size)
-            f_args.argv[i] = <char*> stdlib.malloc(size)
+            f_args.argv[i] = <char*> stdlib.malloc(size+1)
 
             if f_args.argv[i] is NULL:
                 cpython.exc.PyErr_NoMemory()
 
-            string.strncpy(f_args.argv[i], arg, size)
+            string.strncpy(f_args.argv[i], arg, size+1)
 
         return f_args
     except:
