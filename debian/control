@@ -10,6 +10,7 @@ Homepage: http://code.google.com/p/python-llfuse/
 Package: python-llfuse
 Architecture: any
 Depends: ${misc:Depends}, ${python:Depends}, ${shlibs:Depends}, libjs-jquery
+Conflicts: s3ql (< 0.29)
 Description: Python bindings for the low-level FUSE API
  Python-llfuse is a set of Python bindings for the low level FUSE API.
 
