@@ -71,6 +71,10 @@ class Operations(object):
         If the entry does not exist, this method must raise
         `FUSEError` with an errno of `errno.ENOENT`. Otherwise it must
         return an `EntryAttributes` instance.
+
+        The file system must be able to handle lookups for :file:`.`
+        and :file:`..`, no matter if these entries are returned by
+        `readdir` or not.
         '''
         
         raise FUSEError(errno.ENOSYS)
@@ -280,6 +284,9 @@ class Operations(object):
         If entries are added or removed during a `readdir` cycle, they
         may or may not be returned. However, they must not cause other
         entries to be skipped or returned more than once.
+
+        :file:`.` and :file:`..` entries may be included but are not
+        required.
         '''
         
         raise FUSEError(errno.ENOSYS)
