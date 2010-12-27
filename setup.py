@@ -28,7 +28,6 @@ sys.path.insert(0, os.path.join(basedir, 'src'))
 from distribute_setup import use_setuptools
 use_setuptools(version='0.6.12', download_delay=5)
 import setuptools
-import setuptools.command.test as setuptools_test
 from setuptools import Extension
 
 # Import Sphinx autodoc Cython support
