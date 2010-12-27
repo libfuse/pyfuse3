@@ -11,6 +11,7 @@ LLFUSE can be distributed under the terms of the GNU LGPL.
 '''
 
 ENOATTR = errno.ENOATTR
+ROOT_INODE = FUSE_ROOT_ID
 
 def listdir(path):
     '''Like os.listdir(), but releases the GIL'''

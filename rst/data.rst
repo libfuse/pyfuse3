@@ -4,6 +4,16 @@
 
 .. currentmodule:: llfuse
 
+.. py:attribute:: ENOATTR
+
+   This errorcode is unfortunately missing in the `errno` module,
+   so it is provided by llfuse instead.
+
+.. py:attribute:: ROOT_INODE
+
+   The inode of the root directory, i.e. the mount point of the file
+   system.
+   
 .. autoexception:: FUSEError
 
 .. autoclass:: RequestContext
@@ -74,7 +84,3 @@
    .. attribute:: st_mtime
 
 
-.. py:attribute:: ENOATTR
-
-   This errorcode is unfortunately missing in the `errno` module,
-   so it is provided by llfuse instead.
