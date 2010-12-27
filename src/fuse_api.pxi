@@ -113,9 +113,11 @@ def init(operations_, char* mountpoint_, list args):
     *operations_* has to be an instance of the `Operations` class (or another
     class defining the same methods).
     
-    *args* has to be a list of strings. Valid options are listed in struct
-    fuse_opt fuse_mount_opts[] (mount.c:68) and struct fuse_opt fuse_ll_opts[]
-    (fuse_lowlevel_c:1526).
+    *args* has to be a list of strings. Valid options are listed under ``struct
+    fuse_opt fuse_mount_opts[]``
+    (`mount.c:82 <http://fuse.git.sourceforge.net/git/gitweb.cgi?p=fuse/fuse;a=blob;f=lib/mount.c;h=224ae9d5f299e3e497475d24400587f031e41d78;hb=HEAD#l82>`_)
+    and ``struct fuse_opt fuse_ll_opts[]``
+    (`fuse_lowlevel_c:2209 <http://fuse.git.sourceforge.net/git/gitweb.cgi?p=fuse/fuse;a=blob;f=lib/fuse_lowlevel.c;h=a19d429fc51417f4d55797f6c8f10b7db316b1de;hb=HEAD#l2209>`_).
     '''
 
     log.debug('Initializing llfuse')
