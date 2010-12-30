@@ -51,6 +51,8 @@ cdef extern from "time.c" nogil:
     void SET_CTIME_NS(c_stat* buf, int val)
     void SET_MTIME_NS(c_stat* buf, int val)
 
+cdef extern from "version.c":
+    pass
 
 ################
 # PYTHON IMPORTS
