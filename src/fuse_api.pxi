@@ -194,7 +194,32 @@ def close():
     session = NULL
     channel = NULL
 
+def invalidate_inode(int inode, attr_only=False):
+    '''Invalidate cache for *inode*
+    
+    Instructs the FUSE kernel module to forgot cached attributes and
+    data (unless *attr_only* is True) for *inode*.
+    '''
+       
+    if attr_only:
+        fuse_lowlevel_notify_inval_inode(channel, inode, -1, 0)
+    else:
+        fuse_lowlevel_notify_inval_inode(channel, inode, 0, 0)
+      
+def invalidate_entry(int inode_p, name):
+    '''Invalidate directory entry
 
+    Instructs the FUSE kernel module to forget about the
+    directory entry *name* in the directory with inode *inode_p*
+    '''
+
+    cdef ssize_t len_
+    cdef char *cname
+
+    PyBytes_AsStringAndSize(name, &cname, &len_)
+    fuse_lowlevel_notify_inval_entry(channel, inode_p, cname, len_)
+
+    
 lock = Lock.__new__(Lock)
 lock_released = NoLockManager.__new__(NoLockManager)
 
