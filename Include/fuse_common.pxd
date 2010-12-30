@@ -10,17 +10,18 @@ python-llfuse can be distributed under the terms of the GNU LGPL.
 '''
 
 from fuse_opt cimport *
+from libc.stdint cimport uint64_t
 
 # Based on fuse sources, revision tag fuse_2_8_3
 cdef extern from * nogil: # fuse_common.h should not be included
 
     struct fuse_file_info:
         int flags
-        int direct_io
-        int keep_cache
-        int nonseekable
-        int fh
-        int lock_owner
+        unsigned int direct_io 
+        unsigned int keep_cache
+        unsigned int nonseekable
+        uint64_t fh
+        uint64_t lock_owner
 
     struct fuse_conn_info:
         pass

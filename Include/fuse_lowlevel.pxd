@@ -28,16 +28,16 @@ cdef extern from "fuse_lowlevel.h" nogil:
     
     struct fuse_entry_param:
         fuse_ino_t ino
-        int generation
+        unsigned long generation
         stat attr
         double attr_timeout
         double entry_timeout
 
     struct fuse_ctx:
-        int uid
-        int gid
-        int pid
-        int umask
+        uid_t uid
+        gid_t gid
+        pid_t pid
+        mode_t umask
 
     ctypedef fuse_ctx const_fuse_ctx "const struct fuse_ctx"
     
