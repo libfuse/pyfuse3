@@ -48,13 +48,15 @@ def setxattr(path, name, value):
     '''Set extended attribute'''
 
     cdef int ret
-    cdef Py_ssize_t n
-    cdef char* s
+    cdef Py_ssize_t len_
+    cdef char *cvalue, *cname, *cpath
 
-    PyBytes_AsStringAndSize(value, &s, &n)
+    PyBytes_AsStringAndSize(value, &cvalue, &len_)
+    cname = PyBytes_AsString(name)
+    cpath = PyBytes_AsString(path)
 
     with nogil:
-        ret = xattr.setxattr(path, name, s, n, 0)
+        ret = xattr.setxattr(cpath, cname, cvalue, len_, 0)
 
     if ret != 0:
         raise OSError(errno, os.strerror(errno), path)
@@ -71,8 +73,11 @@ def getxattr(path, name, int size_guess=128):
     '''
 
     cdef int ret
-    cdef char* buf
+    cdef char *buf, *cname, *cpath
     cdef int bufsize
+
+    cname = PyBytes_AsString(name)
+    cpath = PyBytes_AsString(path)
 
     bufsize = size_guess
     buf = <char*> stdlib.malloc(bufsize * sizeof(char))
@@ -82,11 +87,11 @@ def getxattr(path, name, int size_guess=128):
 
     try:
         with nogil:
-            ret = xattr.getxattr(path, name, &buf, bufsize)
+            ret = xattr.getxattr(cpath, cname, buf, bufsize)
 
         if ret < 0 and errno.errno == errno.ERANGE:
             with nogil:
-                ret = xattr.getxattr(path, name, NULL, 0)
+                ret = xattr.getxattr(cpath, cname, NULL, 0)
             if ret < 0:
                 raise OSError(errno, os.strerror(errno), path)
             bufsize = ret
@@ -96,7 +101,7 @@ def getxattr(path, name, int size_guess=128):
                 cpython.exc.PyErr_NoMemory()
 
             with nogil:
-                ret = xattr.getxattr(path, name, &buf, bufsize)
+                ret = xattr.getxattr(cpath, cname, buf, bufsize)
 
         if ret < 0:
             raise OSError(errno, os.strerror(errno), path)
