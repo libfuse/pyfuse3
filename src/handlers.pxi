@@ -316,7 +316,7 @@ cdef void fuse_write (fuse_req_t req, fuse_ino_t ino, const_char *buf,
                       size_t size, off_t off, fuse_file_info *fi) with gil:
     cdef int ret
     cdef size_t len_
-    
+
     # GCC thinks this may end up uninitialized
     len_ = 0
     
@@ -402,8 +402,9 @@ cdef void fuse_opendir (fuse_req_t req, fuse_ino_t ino, fuse_file_info *fi) with
 
 cdef void fuse_readdir (fuse_req_t req, fuse_ino_t ino, size_t size, off_t off,
                         fuse_file_info *fi) with gil:
-    cdef int ret, acc_size
+    cdef int ret
     cdef char *cname, *buf
+    cdef size_t len_, acc_size
     cdef c_stat stat
 
     # GCC thinks this may end up uninitialized
@@ -418,11 +419,11 @@ cdef void fuse_readdir (fuse_req_t req, fuse_ino_t ino, size_t size, off_t off,
                     buf = <char*> stdlib.malloc(size * sizeof(char))
                 cname = PyBytes_AsString(name)
                 fill_c_stat(attr, &stat)
-                ret = fuse_add_direntry(req, buf + acc_size, size - acc_size,
-                                        cname, &stat, next_)
-                if ret > (size - acc_size):
+                len_ = fuse_add_direntry(req, buf + acc_size, size - acc_size,
+                                         cname, &stat, next_)
+                if len_ > (size - acc_size):
                     break
-                acc_size += ret
+                acc_size += len_
         ret = fuse_reply_buf(req, buf, acc_size)
     except FUSEError as e:
         ret = fuse_reply_err(req, e.errno)
@@ -545,7 +546,7 @@ cdef void fuse_getxattr (fuse_req_t req, fuse_ino_t ino, const_char *cname,
 
         if size == 0:
             ret = fuse_reply_xattr(req, len_)
-        elif len_ <= size:
+        elif <size_t> len_ <= size:
             ret = fuse_reply_buf(req, cbuf, len_)
         else:
             ret = fuse_reply_err(req, errno.ERANGE)
@@ -573,7 +574,7 @@ cdef void fuse_listxattr (fuse_req_t req, fuse_ino_t ino, size_t size) with gil:
 
         if size == 0:
             ret = fuse_reply_xattr(req, len_)
-        elif len_ <= size:
+        elif <size_t> len_ <= size:
             ret = fuse_reply_buf(req, cbuf, len_)
         else:
             ret = fuse_reply_err(req, errno.ERANGE)
