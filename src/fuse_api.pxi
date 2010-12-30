@@ -194,7 +194,7 @@ def close():
     session = NULL
     channel = NULL
 
-def invalidate_inode(int inode, attr_only=False):
+def invalidate_inode(inode, attr_only=False):
     '''Invalidate cache for *inode*
     
     Instructs the FUSE kernel module to forgot cached attributes and
@@ -206,7 +206,7 @@ def invalidate_inode(int inode, attr_only=False):
     else:
         fuse_lowlevel_notify_inval_inode(channel, inode, 0, 0)
       
-def invalidate_entry(int inode_p, name):
+def invalidate_entry(inode_p, name):
     '''Invalidate directory entry
 
     Instructs the FUSE kernel module to forget about the
