@@ -1,8 +1,7 @@
 /*
-lock_c.c
+lock.c
 
-This file provides the plain C components of lock.pyx. It is
-included by the lock.c generated from lock.pyx by Cython.
+This file provides the plain C components for the global lock.
 
 Copyright (C) Nikolaus Rath <Nikolaus@rath.org>
 
