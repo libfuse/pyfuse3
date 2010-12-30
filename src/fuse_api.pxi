@@ -160,18 +160,22 @@ def init(operations_, char* mountpoint_, list args):
 def main(single=False):
     '''Run FUSE main loop'''
 
+    cdef int ret
+    
     if session == NULL:
         raise RuntimeError('Need to call init() before main()')
 
     if single:
         log.debug('Calling fuse_session_loop')
-        # We need to unlock even in single threaded mode, because the
-        # Operations methods will always try to acquire the lock
-        if fuse_session_loop(session) != 0:
+        with nogil:
+            ret = fuse_session_loop(session)
+        if ret != 0:
             raise RuntimeError("fuse_session_loop() failed")
     else:
         log.debug('Calling fuse_session_loop_mt')
-        if fuse_session_loop_mt(session) != 0:
+        with nogil:
+            ret = fuse_session_loop_mt(session)
+        if ret != 0:
             raise RuntimeError("fuse_session_loop_mt() failed")
 
 def close():
