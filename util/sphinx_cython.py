@@ -14,12 +14,13 @@ LLFUSE can be distributed under the terms of the GNU LGPL.
 
 import sphinx.ext.autodoc as SphinxAutodoc
 from sphinx.util.docstrings import prepare_docstring
-import inspect
 import re
 from sphinx.util import force_decode
 
 TYPE_RE = re.compile(r'(?:int|char)(?:\s+\*?\s*|\s*\*?\s+)([a-zA-Z_].*)')
 
+# Some abstract methods are not overridden
+#pylint: disable=W0223
 class MyDocumenter(SphinxAutodoc.Documenter):
     '''
     Overwrites `get_doc()` to remove function and
@@ -87,6 +88,8 @@ class MyFunctionDocumenter(MyDocumenter, SphinxAutodoc.FunctionDocumenter):
             
 class MyMethodDocumenter(MyDocumenter, SphinxAutodoc.MethodDocumenter):    
     pass
-            
-SphinxAutodoc.MethodDocumenter = MyMethodDocumenter 
-SphinxAutodoc.FunctionDocumenter = MyFunctionDocumenter
+         
+def enable():            
+    SphinxAutodoc.MethodDocumenter = MyMethodDocumenter 
+    SphinxAutodoc.FunctionDocumenter = MyFunctionDocumenter
+    

@@ -32,8 +32,9 @@ from setuptools import Extension
 
 # Import Sphinx autodoc Cython support
 import sphinx_cython
+sphinx_cython.enable()
 
-LLFUSE_VERSION = '0.9.1'
+LLFUSE_VERSION = '0.29'
 
 def main():
     
@@ -133,15 +134,16 @@ class build_cython(setuptools.Command):
         pass
 
     def finalize_options(self):
+        # Attribute defined outside init
+        #pylint: disable=W0201
         self.extensions = self.distribution.ext_modules
 
     def run(self):
         try:
-            from Cython.Compiler.Main import compile
+            from Cython.Compiler.Main import compile as cython_compile
         except ImportError:
             raise SystemExit('Cython needs to be installed for this command')
 
-        # TODO: Turn on timestamps once Cython supports them
         options = { 'include_path': [ os.path.join(basedir, 'Include') ],
                     'recursive': False, 'verbose': True,
                     'timestamps': False,
@@ -149,19 +151,19 @@ class build_cython(setuptools.Command):
                      }
         
         for extension in self.extensions:
-            for file in extension.sources:
-                (file, ext) = os.path.splitext(file)
-                path = os.path.join(basedir, file)
+            for file_ in extension.sources:
+                (file_, ext) = os.path.splitext(file_)
+                path = os.path.join(basedir, file_)
                 if ext != '.c':
                     continue 
                 if os.path.exists(path + '.pyx'):
-                    print('compiling %s to %s' % (file + '.pyx', file + ext))
-                    res = compile(path + '.pyx', full_module_name=extension.name,
-                                  **options)
+                    print('compiling %s to %s' % (file_ + '.pyx', file_ + ext))
+                    res = cython_compile(path + '.pyx', full_module_name=extension.name,
+                                         **options)
                     if res.num_errors != 0:
                         raise SystemExit('Cython encountered errors.')
                 else:
-                    print('%s is up to date' % (file + ext,))
+                    print('%s is up to date' % (file_ + ext,))
 
 
         
