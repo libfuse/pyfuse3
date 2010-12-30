@@ -42,9 +42,10 @@ def main():
         long_desc = fh.read()
 
     compile_args = pkg_config('fuse', cflags=True, ldflags=False, min_ver='2.8.0')
-    compile_args.append('-DFUSE_USE_VERSION=28')
-    compile_args.append('-DLLFUSE_VERSION="%s"' % LLFUSE_VERSION)
-    compile_args.append('-Werror')
+    compile_args.extend(['-DFUSE_USE_VERSION=28',
+                         '-DLLFUSE_VERSION="%s"' % LLFUSE_VERSION,
+                         '-Werror', '-Wall', '-Wextra', '-Wconversion',
+                         '-Wno-unused-parameter', '-Wno-sign-conversion' ])
     link_args = pkg_config('fuse', cflags=False, ldflags=True, min_ver='2.8.0')
 
     uname = subprocess.Popen(["uname", "-s"], stdout=subprocess.PIPE).communicate()[0].strip()
