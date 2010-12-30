@@ -1,5 +1,5 @@
-python-llfuse (0.9.1) UNRELEASED; urgency=low
+python-llfuse (0.29~maverick)  maverick; urgency=low
 
   * Initial release.
 
- -- Nikolaus Rath <Nikolaus@rath.org>  Sat, 16 Oct 2010 15:57:22 -0400
+ -- Nikolaus Rath <Nikolaus@rath.org>  Thu, 30 Dec 2010 17:42:24 -0500
