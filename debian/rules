@@ -33,7 +33,7 @@ install-python%:
                                   --no-compile -O0 --install-layout=deb
 
 install-dbg-python%: 
-	python$* setup.py install --force --root=$(CURDIR)/debian/python-llfuse-dbg \
+	python$*-dbg setup.py install --force --root=$(CURDIR)/debian/python-llfuse-dbg \
                                   --no-compile -O0 --install-layout=deb
 	find debian/python-llfuse-dbg ! -type d ! -name '*.so' | xargs rm -f
 	find debian/python-llfuse-dbg -depth -empty -exec rmdir {} \;
