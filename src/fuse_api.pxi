@@ -72,7 +72,7 @@ def getxattr(path, name, int size_guess=128):
     the third finally gets the value).
     '''
 
-    cdef int ret
+    cdef ssize_t ret
     cdef char *buf, *cname, *cpath
     cdef int bufsize
 

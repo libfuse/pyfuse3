@@ -87,11 +87,13 @@ cdef void fuse_setattr (fuse_req_t req, fuse_ino_t ino, c_stat *stat,
     try:
         attr = EntryAttributes()
         
+        # Type casting required on 64bit, where double
+        # is smaller than long int.
         if to_set & FUSE_SET_ATTR_ATIME:
-            attr.st_atime = stat.st_atime + GET_ATIME_NS(stat) * 1e-9
+            attr.st_atime = <double> stat.st_atime + <double> GET_ATIME_NS(stat) * 1e-9
 
         if to_set & FUSE_SET_ATTR_MTIME:
-            attr.st_mtime = stat.st_mtime + GET_MTIME_NS(stat) * 1e-9
+            attr.st_mtime = <double> stat.st_mtime + <double> GET_MTIME_NS(stat) * 1e-9
 
         if to_set & FUSE_SET_ATTR_MODE:
             attr.st_mode = stat.st_mode

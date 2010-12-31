@@ -134,7 +134,7 @@ cdef make_fuse_args(list args, fuse_args* f_args):
         args_new.append(el)
     args = args_new
     
-    f_args.argc = len(args)
+    f_args.argc = <int> len(args)
     if f_args.argc == 0:
         f_args.argv = NULL
         return
