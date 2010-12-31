@@ -30,9 +30,17 @@ use_setuptools(version='0.6.12', download_delay=5)
 import setuptools
 from setuptools import Extension
 
-# Import Sphinx autodoc Cython support
-import sphinx_cython
-sphinx_cython.enable()
+# Import Sphinx autodoc Cython support if Sphinx is present
+try:
+    import sphinx.setup_command 
+    # Prevent unused import warnings
+    if False:
+        sphinx.setup_command.BuildDoc()
+except ImportError:
+    pass
+else:
+    import sphinx_cython
+    sphinx_cython.enable()
 
 LLFUSE_VERSION = '0.29'
 
