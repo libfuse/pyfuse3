@@ -74,7 +74,7 @@ def getxattr(path, name, int size_guess=128):
 
     cdef ssize_t ret
     cdef char *buf, *cname, *cpath
-    cdef int bufsize
+    cdef size_t bufsize
 
     cname = PyBytes_AsString(name)
     cpath = PyBytes_AsString(path)
@@ -94,7 +94,7 @@ def getxattr(path, name, int size_guess=128):
                 ret = xattr.getxattr(cpath, cname, NULL, 0)
             if ret < 0:
                 raise OSError(errno, os.strerror(errno), path)
-            bufsize = ret
+            bufsize = <size_t> ret
             stdlib.free(buf)
             buf = <char*> stdlib.malloc(bufsize * sizeof(char))
             if buf is NULL:
