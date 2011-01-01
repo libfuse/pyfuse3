@@ -53,7 +53,9 @@ def main():
     compile_args.extend(['-DFUSE_USE_VERSION=28',
                          '-DLLFUSE_VERSION="%s"' % LLFUSE_VERSION,
                          '-Werror', '-Wall', '-Wextra', '-Wconversion',
-                         '-Wno-unused-parameter', '-Wno-sign-conversion' ])
+                         '-Wno-unused-parameter', '-Wno-sign-conversion',
+			 # http://bugs.python.org/issue969718
+			 '-fno-static-aliasing' ])
     link_args = pkg_config('fuse', cflags=False, ldflags=True, min_ver='2.8.0')
 
     uname = subprocess.Popen(["uname", "-s"], stdout=subprocess.PIPE).communicate()[0].strip()
