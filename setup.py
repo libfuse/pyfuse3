@@ -45,7 +45,7 @@ def main():
                          '-Wno-unused-parameter', '-Wno-sign-conversion' ])
     if sys.version_info[0] == 2:
         # http://bugs.python.org/issue969718
-        compile_args.append('-fno-static-aliasing')
+        compile_args.append('-fno-strict-aliasing')
 
     link_args = pkg_config('fuse', cflags=False, ldflags=True, min_ver='2.8.0')
 
