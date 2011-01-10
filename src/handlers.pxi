@@ -477,7 +477,9 @@ cdef void fuse_fsyncdir (fuse_req_t req, fuse_ino_t ino, int datasync,
 cdef void fuse_statfs (fuse_req_t req, fuse_ino_t ino) with gil:
     cdef int ret
     cdef statvfs cstats
-    
+
+    # We don't set all the components
+    string.memset(&cstats, 0, sizeof(cstats))
     try:
         with lock:
             stats = operations.statfs()
