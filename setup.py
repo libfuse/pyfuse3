@@ -50,6 +50,7 @@ def main():
     link_args = pkg_config('fuse', cflags=False, ldflags=True, min_ver='2.8.0')
 
     uname = subprocess.Popen(["uname", "-s"], stdout=subprocess.PIPE).communicate()[0].strip()
+    uname = uname.decode('utf-8')
     if uname == 'Linux':
         compile_args.append('-DHAVE_STRUCT_STAT_ST_ATIM')
     elif uname == 'FreeBSD':
