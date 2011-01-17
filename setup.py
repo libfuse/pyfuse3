@@ -47,6 +47,10 @@ def main():
         # http://bugs.python.org/issue969718
         compile_args.append('-fno-strict-aliasing')
 
+    if sys.version_info[0] == 3 and sys.version_info[1] < 2:
+        # http://bugs.python.org/issue7576
+        compile_args.append('-Wno-missing-field-initializers')
+        
     link_args = pkg_config('fuse', cflags=False, ldflags=True, min_ver='2.8.0')
 
     uname = subprocess.Popen(["uname", "-s"], stdout=subprocess.PIPE).communicate()[0].strip()
