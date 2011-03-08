@@ -29,8 +29,9 @@ def listdir(path):
         errno.errno = 0
         with nogil:
             ret = dirent.readdir_r(dirp, &ent, &res)
+            
         if ret != 0:
-            raise OSError(errno, os.strerror(errno), path)
+            raise OSError(errno.errno, strerror(errno.errno), path)
         if res is NULL:
             break
         if string.strcmp(ent.d_name, b'.') == 0 or string.strcmp(ent.d_name, b'..') == 0:
@@ -59,7 +60,7 @@ def setxattr(path, name, value):
         ret = xattr.setxattr(cpath, cname, cvalue, len_, 0)
 
     if ret != 0:
-        raise OSError(errno, os.strerror(errno), path)
+        raise OSError(errno.errno, strerror(errno.errno), path)
 
 
 def getxattr(path, name, int size_guess=128):
@@ -93,7 +94,7 @@ def getxattr(path, name, int size_guess=128):
             with nogil:
                 ret = xattr.getxattr(cpath, cname, NULL, 0)
             if ret < 0:
-                raise OSError(errno, os.strerror(errno), path)
+                raise OSError(errno.errno, strerror(errno.errno), path)
             bufsize = <size_t> ret
             stdlib.free(buf)
             buf = <char*> stdlib.malloc(bufsize * sizeof(char))
@@ -104,7 +105,7 @@ def getxattr(path, name, int size_guess=128):
                 ret = xattr.getxattr(cpath, cname, buf, bufsize)
 
         if ret < 0:
-            raise OSError(errno, os.strerror(errno), path)
+            raise OSError(errno.errno, strerror(errno.errno), path)
 
         return PyBytes_FromStringAndSize(buf, ret)
     
@@ -308,7 +309,5 @@ class FUSEError(Exception):
         self.errno = errno_
 
     def __str__(self):
-        # errno may not have strings for all error codes
-        return errno.errorcode.get(self.errno, str(self.errno))
-
+        return strerror(self.errno)
     

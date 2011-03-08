@@ -57,6 +57,12 @@ cdef object fill_statvfs(object attr, statvfs* stat):
     stat.f_ffree = attr.f_ffree
     stat.f_favail = attr.f_favail
     
+cdef object strerror(errno):
+    try:
+        return os.strerror(errno)
+    except ValueError:
+        return 'errno: %d' % errno
+
 cdef int handle_exc(char* fn, object e, fuse_req_t req):
     '''Try to call operations.handle_exc and fuse_reply_err'''
     
