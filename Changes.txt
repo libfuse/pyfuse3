@@ -1,3 +1,7 @@
+xx, llfuse 0.31
+
+  * Use long for storing nanoseconds in file [amc]times, not int.
+
 2011-03-08, llfuse 0.30
 
   * Fixed compile errors with Python 3.0 and 3.1.

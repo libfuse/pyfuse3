@@ -43,13 +43,13 @@ cdef extern from "lock.c" nogil:
     int EPERM
 
 cdef extern from "time.c" nogil:
-    int GET_ATIME_NS(c_stat* buf)
-    int GET_CTIME_NS(c_stat* buf)
-    int GET_MTIME_NS(c_stat* buf)
+    long GET_ATIME_NS(c_stat* buf)
+    long GET_CTIME_NS(c_stat* buf)
+    long GET_MTIME_NS(c_stat* buf)
     
-    void SET_ATIME_NS(c_stat* buf, int val)
-    void SET_CTIME_NS(c_stat* buf, int val)
-    void SET_MTIME_NS(c_stat* buf, int val)
+    void SET_ATIME_NS(c_stat* buf, long val)
+    void SET_CTIME_NS(c_stat* buf, long val)
+    void SET_MTIME_NS(c_stat* buf, long val)
 
 cdef extern from "version.c":
     pass
