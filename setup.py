@@ -31,7 +31,7 @@ import setuptools
 from setuptools import Extension
 
 
-LLFUSE_VERSION = '0.30'
+LLFUSE_VERSION = '0.31'
 
 def main():
     

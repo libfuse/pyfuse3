@@ -1,4 +1,4 @@
-xx, llfuse 0.31
+2011-05-12, llfuse 0.31
 
   * Use long for storing nanoseconds in file [amc]times, not int.
 

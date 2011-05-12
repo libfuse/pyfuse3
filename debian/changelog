@@ -1,3 +1,9 @@
+python-llfuse (0.31) maverick; urgency=low
+
+  * New release.
+
+ -- Nikolaus Rath <Nikolaus@rath.org>  Thu, 12 May 2011 10:19:11 -0400
+
 python-llfuse (0.30) maverick; urgency=low
 
   * New release.
