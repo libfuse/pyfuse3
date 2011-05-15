@@ -7,3 +7,4 @@ graft util
 graft debian
 recursive-include src *.pyx *.pxd *.c
 exclude MANIFEST.in
+global-exclude *.pyc
