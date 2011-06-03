@@ -186,14 +186,14 @@ class Operations(llfuse.Operations):
 
     def _remove(self, inode_p, name, entry):
         if self.get_row("SELECT COUNT(inode) FROM contents WHERE parent_inode=?", 
-                        (entry.st_ino))[0] > 0:
+                        (entry.st_ino,))[0] > 0:
             raise llfuse.FUSEError(errno.ENOTEMPTY)
 
-        self.cur.execute("DELETE FROM contents WHERE name=? AND parent_inode=?",
+        self.cursor.execute("DELETE FROM contents WHERE name=? AND parent_inode=?",
                         (name, inode_p))
         
         if entry.st_nlink == 1 and entry.st_ino not in self.inode_open_count:
-            self.cur.execute("DELETE FROM inodes WHERE id=?", (entry.st_ino,))
+            self.cursor.execute("DELETE FROM inodes WHERE id=?", (entry.st_ino,))
 
     def symlink(self, inode_p, name, target, ctx):
         mode = (stat.S_IFLNK | stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR | 
@@ -234,7 +234,7 @@ class Operations(llfuse.Operations):
                         (name_old, inode_p_old))
 
         if entry_new.st_nlink == 1 and entry_new.st_ino not in self.inode_open_count:
-            self.cur.execute("DELETE FROM inodes WHERE id=?", (entry_new.st_ino,))
+            self.cursor.execute("DELETE FROM inodes WHERE id=?", (entry_new.st_ino,))
 
 
     def link(self, inode, new_inode_p, new_name):
@@ -372,7 +372,7 @@ class Operations(llfuse.Operations):
         if self.inode_open_count[fh] == 0:
             del self.inode_open_count[fh]
             if self.getattr(fh).st_nlink == 0:
-                self.cur.execute("DELETE FROM inodes WHERE id=?", (fh,))
+                self.cursor.execute("DELETE FROM inodes WHERE id=?", (fh,))
 
 class NoUniqueValueError(Exception):
     def __str__(self):
