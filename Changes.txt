@@ -1,10 +1,12 @@
-unreleased, llfuse HEAD
- 
+2011-06-04, llfuse 0.32
+
+   * Fixed unlink() bug in contrib/example.py
+
    * Include src/*.pxi files in release tarball. Were 
      accidentally omitted in previous version.
 
    * Moved debian/ directory into separate repository.
-    
+
 2011-05-12, llfuse 0.31
 
   * Use long for storing nanoseconds in file [amc]times, not int.
