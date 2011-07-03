@@ -1,3 +1,7 @@
+2011-07-03, llfuse 0.33
+
+   * Various small bugfixes.
+
 2011-06-04, llfuse 0.32
 
    * Fixed unlink() bug in contrib/example.py
