@@ -35,6 +35,8 @@ templates_path = ['_templates']
 # The suffix of source filenames.
 source_suffix = '.rst'
 
+autodoc_docstring_signature = True
+
 # The encoding of source files.
 source_encoding = 'utf-8'
 
