@@ -42,16 +42,17 @@ def main():
     compile_args.extend(['-DFUSE_USE_VERSION=28',
                          '-DLLFUSE_VERSION="%s"' % LLFUSE_VERSION,
                          '-Werror', '-Wall', '-Wextra', '-Wconversion',
-                         '-Wno-unused-parameter', '-Wno-sign-conversion',
-
-                         # Created by Cython 
-                         '-Wno-unused-but-set-variable' ])
-    if sys.version_info[0] == 2:
-        # http://bugs.python.org/issue969718
+                         '-Wno-unused-parameter', '-Wno-sign-conversion'])
+    
+    # http://trac.cython.org/cython_trac/ticket/704
+    compile_args.append('-Wno-unused-but-set-variable')
+    
+    # http://bugs.python.org/issue969718
+    if sys.version_info[0] == 2: 
         compile_args.append('-fno-strict-aliasing')
 
+    # http://bugs.python.org/issue7576
     if sys.version_info[0] == 3 and sys.version_info[1] < 2:
-        # http://bugs.python.org/issue7576
         compile_args.append('-Wno-missing-field-initializers')
         
     link_args = pkg_config('fuse', cflags=False, ldflags=True, min_ver='2.8.0')
