@@ -1,4 +1,4 @@
-UNRELEASED, llfuse TIP
+2011-08-10, llfuse 0.34
 
    * Explicitly cast S_* constants to mode_t to prevent compiler
      warnings on FreeBSD.
