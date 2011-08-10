@@ -134,7 +134,7 @@ cdef make_fuse_args(list args, fuse_args* f_args):
     cdef int i
     cdef ssize_t size
 
-    args_new = [ 'python-llfuse' ]
+    args_new = [ b'python-llfuse' ]
     for el in args:
         args_new.append('-o')
         args_new.append(el)
