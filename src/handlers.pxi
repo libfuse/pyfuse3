@@ -161,8 +161,9 @@ cdef void fuse_mkdir (fuse_req_t req, fuse_ino_t parent, const_char *name,
     cdef fuse_entry_param entry
     
     try:
-        # Force the entry type to directory
-        mode = (mode & ~S_IFMT) | S_IFDIR
+        # Force the entry type to directory. We need to explicitly cast,
+        # because on BSD the S_* are not of type mode_t.
+        mode = <mode_t> ((mode & ~S_IFMT) | S_IFDIR)
         ctx = get_request_context(req)
         with lock:
             attr = operations.mkdir(parent, PyBytes_FromString(name), mode, ctx)
