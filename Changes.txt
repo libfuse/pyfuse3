@@ -1,3 +1,10 @@
+UNRELEASED, llfuse HEAD
+
+   * Explicitly initialize Python thread support. Previously, calling
+     llfuse.main() resulted in a crash if no Python threads were used
+     before the call.
+
+
 2011-08-10, llfuse 0.34
 
    * Explicitly cast S_* constants to mode_t to prevent compiler
@@ -5,9 +12,11 @@
 
    * Fixed initialization error under Python 3.
 
+
 2011-07-03, llfuse 0.33
 
    * Various small bugfixes.
+
 
 2011-06-04, llfuse 0.32
 
@@ -18,9 +27,11 @@
 
    * Moved debian/ directory into separate repository.
 
+
 2011-05-12, llfuse 0.31
 
   * Use long for storing nanoseconds in file [amc]times, not int.
+
 
 2011-03-08, llfuse 0.30
 
@@ -28,6 +39,7 @@
   * Fixed error handling, errno is now read correctly.
   * Documentation is now shipped in tarball rather than generated
     during installation.
+
 
 2010-12-30, llfuse 0.29
 

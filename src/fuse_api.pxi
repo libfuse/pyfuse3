@@ -13,6 +13,9 @@ LLFUSE can be distributed under the terms of the GNU LGPL.
 ENOATTR = errno.ENOATTR
 ROOT_INODE = FUSE_ROOT_ID
 
+cdef extern from "Python.h" nogil:
+    void PyEval_InitThreads()
+
 def listdir(path):
     '''Like os.listdir(), but releases the GIL'''
     
@@ -141,6 +144,9 @@ def init(operations_, char* mountpoint_, list args):
     mountpoint = mountpoint_
     operations = operations_
 
+    # Initialize Python thread support
+    PyEval_InitThreads()
+    
     make_fuse_args(args, &f_args)
     log.debug('Calling fuse_mount')
     channel = fuse_mount(mountpoint, &f_args)
