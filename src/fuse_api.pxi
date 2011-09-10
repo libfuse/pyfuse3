@@ -192,8 +192,14 @@ def main(single=False):
         if ret != 0:
             raise RuntimeError("fuse_session_loop_mt() failed")
 
-def close():
-    '''Unmount file system and clean up'''
+def close(unmount=True):
+    '''Unmount file system and clean up
+
+    If `unmount` is False, the mount point is not freed completely,
+    but every attempt to access it results in ESHUTDOWN. This can
+    be used if the file system encountered some error that makes
+    further access impossible.
+    '''
 
     global mountpoint
     global session
@@ -205,8 +211,10 @@ def close():
     fuse_remove_signal_handlers(session)
     log.debug('Calling fuse_session_destroy')
     fuse_session_destroy(session)
-    log.debug('Calling fuse_unmount')
-    fuse_unmount(mountpoint, channel)
+
+    if unmount:
+        log.debug('Calling fuse_unmount')
+        fuse_unmount(mountpoint, channel)
 
     mountpoint = NULL
     session = NULL
