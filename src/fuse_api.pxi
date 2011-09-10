@@ -10,12 +10,6 @@ This file is part of LLFUSE (http://python-llfuse.googlecode.com).
 LLFUSE can be distributed under the terms of the GNU LGPL.
 '''
 
-ENOATTR = errno.ENOATTR
-ROOT_INODE = FUSE_ROOT_ID
-
-cdef extern from "Python.h" nogil:
-    void PyEval_InitThreads()
-
 def listdir(path):
     '''Like os.listdir(), but releases the GIL'''
     
@@ -173,20 +167,28 @@ def main(single=False):
     '''Run FUSE main loop'''
 
     cdef int ret
+    global exc_info
     
     if session == NULL:
         raise RuntimeError('Need to call init() before main()')
 
+    exc_info = None
     if single:
         log.debug('Calling fuse_session_loop')
         with nogil:
             ret = fuse_session_loop(session)
+        if exc_info:
+            # Re-raise expression from request handler
+            raise exc_info[0], exc_info[1], exc_info[2]
         if ret != 0:
             raise RuntimeError("fuse_session_loop() failed")
     else:
         log.debug('Calling fuse_session_loop_mt')
         with nogil:
             ret = fuse_session_loop_mt(session)
+        if exc_info:
+            # Re-raise expression from request handler
+            raise exc_info[0], exc_info[1], exc_info[2]
         if ret != 0:
             raise RuntimeError("fuse_session_loop_mt() failed")
 
@@ -234,12 +236,6 @@ def invalidate_entry(inode_p, name):
 
     PyBytes_AsStringAndSize(name, &cname, &len_)
     fuse_lowlevel_notify_inval_entry(channel, inode_p, cname, len_)
-
-    
-lock = Lock.__new__(Lock)
-lock_released = NoLockManager.__new__(NoLockManager)
-
-
 
 class RequestContext:
     '''

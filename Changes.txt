@@ -4,7 +4,10 @@ UNRELEASED, llfuse HEAD
      llfuse.main() resulted in a crash if no Python threads were used
      before the call.
 
-
+   * Removed handle_exc() method. If request handle raise an exception,
+     the main loop now terminates and the exception is re-raised and
+     passed to the caller of llfuse.main().
+   
 2011-08-10, llfuse 0.34
 
    * Explicitly cast S_* constants to mode_t to prevent compiler

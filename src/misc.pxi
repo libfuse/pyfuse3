@@ -10,16 +10,6 @@ This file is part of LLFUSE (http://python-llfuse.googlecode.com).
 LLFUSE can be distributed under the terms of the GNU LGPL.
 '''
 
-
-log = logging.getLogger("fuse")
-
-cdef object operations
-cdef char* mountpoint = NULL
-cdef fuse_session* session = NULL
-cdef fuse_chan* channel = NULL
-cdef fuse_lowlevel_ops fuse_ops
-
-
 cdef object fill_entry_param(object attr, fuse_entry_param* entry):
     entry.ino = attr.st_ino
     entry.generation = attr.generation
@@ -65,13 +55,13 @@ cdef object strerror(errno):
 
 cdef int handle_exc(char* fn, object e, fuse_req_t req):
     '''Try to call operations.handle_exc and fuse_reply_err'''
+    global exc_info
     
-    log.exception('operations.%s() raised exception.', fn)
-    try:
-        with lock:
-            operations.handle_exc(fn, e)
-    except BaseException as e:
-        log.exception('operations.handle_exc() raised exception itself')
+    if not exc_info:
+        exc_info = sys.exc_info()
+        kill(getpid(), SIGTERM)
+    else:
+        log.exception('Exception after kill:')
 
     if req is NULL:
         return 0
@@ -90,7 +80,6 @@ cdef object get_request_context(fuse_req_t req):
     ctx.gid = context.gid
 
     return ctx
-
 
 cdef void init_fuse_ops():
     '''Initialize fuse_lowlevel_ops structure'''

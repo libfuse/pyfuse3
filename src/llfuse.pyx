@@ -23,9 +23,11 @@ from libc.sys.stat cimport stat as c_stat, S_IFMT, S_IFDIR
 from libc.sys.types cimport mode_t, dev_t, off_t
 from libc.stdlib cimport const_char
 from libc cimport stdlib, string, errno, dirent, xattr
+from posix.unistd cimport getpid
 from cpython.bytes cimport (PyBytes_AsStringAndSize, PyBytes_FromStringAndSize,
                             PyBytes_AsString, PyBytes_FromString)
 cimport cpython.exc
+
 
 ######################
 # EXTERNAL DEFINITIONS
@@ -33,6 +35,10 @@ cimport cpython.exc
 
 cdef extern from "sched.h":
     int sched_yield() nogil
+
+cdef extern from "signal.h" nogil:
+    int kill(pid_t pid, int sig)
+    enum: SIGTERM
 
 # Include components written in plain C
 cdef extern from "lock.c" nogil:
@@ -51,6 +57,9 @@ cdef extern from "time.c" nogil:
     void SET_CTIME_NS(c_stat* buf, long val)
     void SET_MTIME_NS(c_stat* buf, long val)
 
+cdef extern from "Python.h" nogil:
+    void PyEval_InitThreads()
+
 cdef extern from "version.c":
     pass
 
@@ -60,6 +69,27 @@ cdef extern from "version.c":
 
 import os
 import logging
+import sys
+
+##################
+# GLOBAL VARIABLES
+##################
+
+log = logging.getLogger("fuse")
+
+cdef object operations
+cdef char* mountpoint = NULL
+cdef fuse_session* session = NULL
+cdef fuse_chan* channel = NULL
+cdef fuse_lowlevel_ops fuse_ops
+cdef object exc_info
+
+lock = Lock.__new__(Lock)
+lock_released = NoLockManager.__new__(NoLockManager)
+
+# Exported for access from Python code
+ROOT_INODE = FUSE_ROOT_ID
+ENOATTR = errno.ENOATTR
 
 #######################
 # FUSE REQUEST HANDLERS
@@ -78,7 +108,6 @@ include "misc.pxi"
 ####################
 
 include "fuse_api.pxi"
-
 
 ##################
 # Operations class

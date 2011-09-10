@@ -26,23 +26,6 @@ class Operations(object):
     returned by the syscall that is being handled.
     '''
     
-    # This is a dummy class, so all the methods could of course
-    # be functions
-    #pylint: disable=R0201
-    
-    def handle_exc(self, fn, exc):
-        '''Handle exceptions that occured during request processing. 
-        
-        This method will be called when things went seriously wrong.
-        This includes e.g. bugs in LLFUSE itself or request handlers
-        raising exceptions other than `FUSEError`, but *not* problems
-        with sending the reply once the request has been processed.
-
-        The type of the request that failed is passed in *fn*.
-        '''
-        
-        pass
-    
     def init(self):
         '''Initialize operations
         

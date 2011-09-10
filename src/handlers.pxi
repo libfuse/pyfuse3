@@ -10,8 +10,6 @@ This file is part of LLFUSE (http://python-llfuse.googlecode.com).
 LLFUSE can be distributed under the terms of the GNU LGPL.
 '''
 
-from libc.xattr cimport XATTR_REPLACE, XATTR_CREATE
-
 cdef void fuse_init (void *userdata, fuse_conn_info *conn) with gil:
     try:
         with lock:
@@ -487,11 +485,11 @@ cdef void fuse_setxattr (fuse_req_t req, fuse_ino_t ino, const_char *cname,
             operations.stacktrace()
         else:
             # Make sure we know all the flags
-            if flags & ~(XATTR_CREATE | XATTR_REPLACE):
+            if flags & ~(xattr.XATTR_CREATE | xattr.XATTR_REPLACE):
                 raise ValueError('unknown flag(s): %o' % flags)
 
             with lock:
-                if flags & XATTR_CREATE: # Attribute must not exist
+                if flags & xattr.XATTR_CREATE: # Attribute must not exist
                     try:
                         operations.getxattr(ino, name)
                     except FUSEError as e:
@@ -501,7 +499,7 @@ cdef void fuse_setxattr (fuse_req_t req, fuse_ino_t ino, const_char *cname,
                     else:
                         raise FUSEError(errno.EEXIST)
                 
-                elif flags & XATTR_REPLACE: # Attribute must exist
+                elif flags & xattr.XATTR_REPLACE: # Attribute must exist
                     operations.getxattr(ino, name)
                     
                 operations.setxattr(ino, name, value)
