@@ -12,6 +12,10 @@ UNRELEASED, llfuse HEAD
      state to signal a shutdown due to an internal file system
      error.
 
+   * The destroy() request handler is now called without the
+     global lock acquired. This makes sense, because it's not called
+     as part of the main loop but by llfuse.close().
+
 2011-08-10, llfuse 0.34
 
    * Explicitly cast S_* constants to mode_t to prevent compiler

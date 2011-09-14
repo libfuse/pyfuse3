@@ -188,7 +188,9 @@ def main(single=False):
             ret = fuse_session_loop_mt(session)
         if exc_info:
             # Re-raise expression from request handler
-            raise exc_info[0], exc_info[1], exc_info[2]
+            tmp = exc_info
+            exc_info = None
+            raise tmp[0], tmp[1], tmp[2]
         if ret != 0:
             raise RuntimeError("fuse_session_loop_mt() failed")
 
@@ -204,6 +206,7 @@ def close(unmount=True):
     global mountpoint
     global session
     global channel
+    global exc_info
 
     log.debug('Calling fuse_session_remove_chan')
     fuse_session_remove_chan(channel)
@@ -219,6 +222,12 @@ def close(unmount=True):
     mountpoint = NULL
     session = NULL
     channel = NULL
+
+    # destroy handler may have given us an exception
+    if exc_info:
+        tmp = exc_info
+        exc_info = None
+        raise tmp[0], tmp[1], tmp[2]
 
 def invalidate_inode(inode, attr_only=False):
     '''Invalidate cache for *inode*

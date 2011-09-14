@@ -18,10 +18,11 @@ cdef void fuse_init (void *userdata, fuse_conn_info *conn) with gil:
         handle_exc('init', e, NULL)
         
 cdef void fuse_destroy (void *userdata) with gil:
-    # Note: called by fuse_session_destroy()
+    # Note: called by fuse_session_destroy(), i.e. not as part of the
+    # main loop but only when llfuse.close() is called.
+    # (therefore we don't obtain the global lock)
     try:
-        with lock:
-            operations.destroy()
+        operations.destroy()
     except BaseException as e:
         handle_exc('destroy', e, NULL)
     

@@ -40,10 +40,16 @@ class Operations(object):
     def destroy(self):
         '''Clean up operations.
         
-        This method will be called after the last request has been
-        received and when the file system is about to be unmounted. It
-        must not raise any exceptions (including `FUSEError`, since
-        this method is not handling a particular syscall).
+        This method will be called when `llfuse.close` has been called
+        and the file system is about to be unmounted.
+
+        Since this handler is thus *not* run as part of the main loop,
+        it is also *not* called with the global lock acquired (unless
+        the caller of `llfuse.close` already holds the lock).
+
+        This method must not raise any exceptions (including
+        `FUSEError`, since this method is not handling a particular
+        syscall).
         '''
         
         pass
