@@ -21,10 +21,14 @@ cdef void fuse_destroy (void *userdata) with gil:
     # Note: called by fuse_session_destroy(), i.e. not as part of the
     # main loop but only when llfuse.close() is called.
     # (therefore we don't obtain the global lock)
+    global exc_info
     try:
         operations.destroy()
-    except BaseException as e:
-        handle_exc('destroy', e, NULL)
+    except:
+        if not exc_info:
+            exc_info = sys.exc_info()
+        else:
+            log.exception('Exception after kill:')
     
 cdef void fuse_lookup (fuse_req_t req, fuse_ino_t parent,
                        const_char *name) with gil:
