@@ -197,10 +197,11 @@ def main(single=False):
 def close(unmount=True):
     '''Unmount file system and clean up
 
-    If `unmount` is False, the mount point is not freed completely,
-    but every attempt to access it results in ESHUTDOWN. This can
-    be used if the file system encountered some error that makes
-    further access impossible.
+    If `unmount` is False, the only clean up operations are peformed,
+    but the file system is not unmounted. As long as the file system
+    process is still running, all requests will hang. Once the process
+    has terminated, these (and all future) requests fail with
+    ESHUTDOWN. 
     '''
 
     global mountpoint
