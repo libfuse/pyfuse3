@@ -188,6 +188,7 @@ def main(single=False):
             ret = fuse_session_loop_mt(session)
         if exc_info:
             # Re-raise expression from request handler
+            log.debug('Terminated main loop because request handler raised exception, re-raising..')
             tmp = exc_info
             exc_info = None
             raise tmp[0], tmp[1], tmp[2]
