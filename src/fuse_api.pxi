@@ -173,27 +173,26 @@ def main(single=False):
         raise RuntimeError('Need to call init() before main()')
 
     exc_info = None
+
     if single:
         log.debug('Calling fuse_session_loop')
         with nogil:
             ret = fuse_session_loop(session)
-        if exc_info:
-            # Re-raise expression from request handler
-            raise exc_info[0], exc_info[1], exc_info[2]
         if ret != 0:
-            raise RuntimeError("fuse_session_loop() failed")
+            raise RuntimeError("fuse_session_loop failed")
     else:
         log.debug('Calling fuse_session_loop_mt')
         with nogil:
             ret = fuse_session_loop_mt(session)
-        if exc_info:
-            # Re-raise expression from request handler
-            log.debug('Terminated main loop because request handler raised exception, re-raising..')
-            tmp = exc_info
-            exc_info = None
-            raise tmp[0], tmp[1], tmp[2]
         if ret != 0:
             raise RuntimeError("fuse_session_loop_mt() failed")
+
+    if exc_info:
+        # Re-raise expression from request handler
+        log.debug('Terminated main loop because request handler raised exception, re-raising..')
+        tmp = exc_info
+        exc_info = None
+        raise tmp[0], tmp[1], tmp[2]
 
 def close(unmount=True):
     '''Unmount file system and clean up
