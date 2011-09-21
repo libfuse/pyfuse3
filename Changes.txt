@@ -1,3 +1,13 @@
+2011-09-20, llfuse 0.36
+
+   * Don't send SIGHUP if exception is encountered in destroy()
+     handler (since at that point, main loop has already terminated
+     and signal handling been reset).
+
+   * Fix a problem with request handler exceptions being re-raised
+     not only in llfuse.main(), but also in llfuse.close() when
+     running single threaded.
+
 2011-09-14, llfuse 0.35
 
    * Explicitly initialize Python thread support. Previously, calling
