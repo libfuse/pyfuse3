@@ -219,6 +219,8 @@ def close(unmount=True):
     if unmount:
         log.debug('Calling fuse_unmount')
         fuse_unmount(mountpoint, channel)
+    else:
+        fuse_chan_destroy(channel)
 
     mountpoint = NULL
     session = NULL

@@ -1,3 +1,9 @@
+UNRELEASED, llfuse HEAD
+
+   * Explicitly call fuse_chan_destroy() in llfuse.close(), so
+     that the mountpoint becomes inaccessible right away, even
+     while the process is still running.
+
 2011-09-20, llfuse 0.36
 
    * Don't send SIGHUP if exception is encountered in destroy()
