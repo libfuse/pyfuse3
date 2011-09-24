@@ -404,6 +404,11 @@ if __name__ == '__main__':
                 [  b'fsname=llfuse_xmp', b"nonempty" ])
     
     # sqlite3 does not support multithreading
-    llfuse.main(single=True)
+    try:
+        llfuse.main(single=True)
+    except:
+        llfuse.close(unmount=False)
+        raise
+
     llfuse.close()
     
