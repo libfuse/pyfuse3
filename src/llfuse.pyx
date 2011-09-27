@@ -70,6 +70,7 @@ cdef extern from "version.c":
 import os
 import logging
 import sys
+import os.path
 
 ##################
 # GLOBAL VARIABLES

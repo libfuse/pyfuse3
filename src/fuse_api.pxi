@@ -135,7 +135,7 @@ def init(operations_, char* mountpoint_, list args):
     global session
     global channel
 
-    mountpoint = mountpoint_
+    mountpoint = os.path.abspath(mountpoint_)
     operations = operations_
 
     # Initialize Python thread support
