@@ -332,3 +332,19 @@ class FUSEError(Exception):
     def __str__(self):
         return strerror(self.errno)
     
+
+def get_ino_t_bytes():
+    '''Return number of bytes available for inode numbers
+
+    Attempts to use values for `EntryAttributes.st_ino` whose
+    representation needs more bytes will result in `OverflowError`.
+    '''
+    return sizeof(ino_t)
+
+def get_off_t_bytes():
+    '''Return number of bytes available for file offsets
+
+    Attempts to use values whose representation needs more bytes will
+    result in `OverflowError`.
+    '''
+    return sizeof(off_t)
