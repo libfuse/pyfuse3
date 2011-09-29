@@ -109,7 +109,6 @@ def getxattr(path, name, int size_guess=128):
     finally:
         stdlib.free(buf)
         
-
 def init(operations_, char* mountpoint_, list args):
     '''Initialize and mount FUSE file system
             
@@ -222,7 +221,7 @@ def close(unmount=True):
     else:
         fuse_chan_destroy(channel)
 
-    mountpoint = NULL
+    mountpoint = None
     session = NULL
     channel = NULL
 

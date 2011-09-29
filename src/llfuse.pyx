@@ -79,7 +79,7 @@ import os.path
 log = logging.getLogger("fuse")
 
 cdef object operations
-cdef char* mountpoint = NULL
+cdef object mountpoint
 cdef fuse_session* session = NULL
 cdef fuse_chan* channel = NULL
 cdef fuse_lowlevel_ops fuse_ops
