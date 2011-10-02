@@ -336,10 +336,10 @@ class FUSEError(Exception):
 def get_ino_t_bytes():
     '''Return number of bytes available for inode numbers
 
-    Attempts to use values for `EntryAttributes.st_ino` whose
-    representation needs more bytes will result in `OverflowError`.
+    Attempts to use inode values that need more bytes will result in
+    `OverflowError`.
     '''
-    return sizeof(ino_t)
+    return min(sizeof(ino_t), sizeof(fuse_ino_t))
 
 def get_off_t_bytes():
     '''Return number of bytes available for file offsets
@@ -348,3 +348,4 @@ def get_off_t_bytes():
     result in `OverflowError`.
     '''
     return sizeof(off_t)
+
