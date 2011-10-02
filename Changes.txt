@@ -4,6 +4,10 @@ UNRELEASED, llfuse HEAD
      that the mountpoint becomes inaccessible right away, even
      while the process is still running.
 
+   * Added get_ino_t_bytes() and get_off_t_bytes() that return
+     the number of bytes used for representing inode numbers 
+     and file offsets.
+
 2011-09-20, llfuse 0.36
 
    * Don't send SIGHUP if exception is encountered in destroy()
