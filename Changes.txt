@@ -8,6 +8,28 @@ UNRELEASED, llfuse HEAD
      the number of bytes used for representing inode numbers 
      and file offsets.
 
+   * The yield_() method of the global lock now takes an additional
+     *count* argument that can be used to yield the lock more than
+     once.
+   
+   * Changed implementation of global lock. The global lock is
+     no longer a mutex, but a boolean variable protected by a mutex,
+     and changes are tracked with a condition object. This allows
+     lock.yield() to work properly: if there are other threads waiting
+     for the lock, they are guaranteed to run. If there are no other
+     threads waiting for the lock, execution of the active thread
+     continues immediately.
+
+     The previous implementation using sched_yield() was mostly
+     broken: threads trying to acquire the global lock were calling
+     pthread_mutex_lock, so they got removed from the kernels
+     runqueue. However, calls to sched_yield() would just put the
+     active thread into the expired runqueue, and calls to
+     pthread_mutex_unlock apparently do not synchronously move the
+     threads waiting for the lock back to a runqueue. Therefore, most
+     of the time the active thread would be the only thread in any
+     runqueue and thus continue to run.
+
 2011-09-20, llfuse 0.36
 
    * Don't send SIGHUP if exception is encountered in destroy()

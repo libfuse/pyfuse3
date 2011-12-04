@@ -33,9 +33,6 @@ cimport cpython.exc
 # EXTERNAL DEFINITIONS
 ######################
 
-cdef extern from "sched.h":
-    int sched_yield() nogil
-
 cdef extern from "signal.h" nogil:
     int kill(pid_t pid, int sig)
     enum: SIGTERM
@@ -44,9 +41,13 @@ cdef extern from "signal.h" nogil:
 cdef extern from "lock.c" nogil:
     int acquire() nogil
     int release() nogil
+    int c_yield(int count) nogil
+    int init_lock() nogil
     int EINVAL
     int EDEADLK
     int EPERM
+    int EPROTO
+    int ENOMSG
 
 cdef extern from "time.c" nogil:
     long GET_ATIME_NS(c_stat* buf)
@@ -85,6 +86,7 @@ cdef fuse_chan* channel = NULL
 cdef fuse_lowlevel_ops fuse_ops
 cdef object exc_info
 
+init_lock()
 lock = Lock.__new__(Lock)
 lock_released = NoLockManager.__new__(NoLockManager)
 

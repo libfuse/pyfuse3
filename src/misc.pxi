@@ -178,8 +178,12 @@ cdef class Lock:
             return
         elif ret == EDEADLK:
             raise RuntimeError("Global lock cannot be acquired more than once")
+        elif ret == EPROTO:
+            raise RuntimeError("Lock still taken after receiving unlock notification")
+        elif ret == EINVAL:
+            raise RuntimeError("Lock not initialized")
         else:
-            raise RuntimeError("pthread_lock_mutex returned errorcode %d" % ret)
+            raise RuntimeError(strerror(ret))
 
     def release(self, *a):
         '''Release global lock'''
@@ -187,32 +191,40 @@ cdef class Lock:
         cdef int ret
         with nogil:
             ret = release()
-            
+
+        if ret == 0:
+             return
+        elif ret == EPERM:
+            raise RuntimeError("Lock can only be released by the holding thread")
+        elif ret == EINVAL:
+            raise RuntimeError("Lock not initialized")
+        else:
+            raise RuntimeError(strerror(ret))
+
+    def yield_(self, count=1):
+        '''Yield global lock to a different thread
+
+        The *count* argument may be used to yield the lock up to
+        *count* times if there are still other threads waiting for the
+        lock.
+        '''
+
+        cdef int ret
+        with nogil:
+            ret = c_yield(count)
+
         if ret == 0:
             return
         elif ret == EPERM:
-            raise RuntimeError("Global lock can only be released by the holding thread")
+            raise RuntimeError("Lock can only be released by the holding thread")
+        elif ret == EPROTO:
+            raise RuntimeError("Lock still taken after receiving unlock notification")
+        elif ret == ENOMSG:
+            raise RuntimeError("Other thread didn't take lock")
+        elif ret == EINVAL:
+            raise RuntimeError("Lock not initialized")
         else:
-            raise RuntimeError("pthread_unlock_mutex returned errorcode %d" % ret)
-
-    def yield_(self):
-        '''Yield global lock to a different thread'''
-
-        cdef int ret1, ret2
-
-        with nogil:
-            ret1 = release()
-            if ret1 ==  0:
-                sched_yield()
-                ret2 = acquire()
-
-        if ret1 != 0:
-            if ret1 == EPERM:
-                raise RuntimeError("Global lock can only be released by the holding thread")
-            else:
-                raise RuntimeError("pthread_unlock_mutex returned errorcode %d" % ret1)
-        elif ret2 != 0:
-            raise RuntimeError("pthread_lock_mutex returned errorcode %d" % ret2)
+            raise RuntimeError(strerror(ret))
 
     __enter__ = acquire
     __exit__ = release
