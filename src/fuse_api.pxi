@@ -163,7 +163,13 @@ def init(operations_, char* mountpoint_, list args):
     fuse_session_add_chan(session, channel)
 
 def main(single=False):
-    '''Run FUSE main loop'''
+    '''Run FUSE main loop
+    
+    Note that *single* merely enforces that at most one request
+    handler runs at a time. The main loop may still start background
+    threads to e.g. asynchronously send notifications submitted with
+    `invalidate_entry` and `invalidate_inode`.
+    '''
 
     cdef int ret
     global exc_info
@@ -171,18 +177,25 @@ def main(single=False):
     if session == NULL:
         raise RuntimeError('Need to call init() before main()')
 
+    # Start notification handling thread
+    t = threading.Thread(target=_notify_loop)
+    t.daemon = True
+    t.start()
+
     exc_info = None
 
     if single:
         log.debug('Calling fuse_session_loop')
         with nogil:
             ret = fuse_session_loop(session)
+        _notify_queue.put(None, block=True, timeout=5) # Stop notification thread
         if ret != 0:
             raise RuntimeError("fuse_session_loop failed")
     else:
         log.debug('Calling fuse_session_loop_mt')
         with nogil:
             ret = fuse_session_loop_mt(session)
+        _notify_queue.put(None, block=True, timeout=5) # Stop notification thread
         if ret != 0:
             raise RuntimeError("fuse_session_loop_mt() failed")
 
@@ -237,12 +250,9 @@ def invalidate_inode(inode, attr_only=False):
     Instructs the FUSE kernel module to forgot cached attributes and
     data (unless *attr_only* is True) for *inode*.
     '''
-       
-    if attr_only:
-        fuse_lowlevel_notify_inval_inode(channel, inode, -1, 0)
-    else:
-        fuse_lowlevel_notify_inval_inode(channel, inode, 0, 0)
-      
+
+    _notify_queue.put(inval_inode_req(inode, attr_only))
+    
 def invalidate_entry(inode_p, name):
     '''Invalidate directory entry
 
@@ -250,11 +260,7 @@ def invalidate_entry(inode_p, name):
     directory entry *name* in the directory with inode *inode_p*
     '''
 
-    cdef ssize_t len_
-    cdef char *cname
-
-    PyBytes_AsStringAndSize(name, &cname, &len_)
-    fuse_lowlevel_notify_inval_entry(channel, inode_p, cname, len_)
+    _notify_queue.put(inval_entry_req(inode_p, name))
 
 class RequestContext:
     '''

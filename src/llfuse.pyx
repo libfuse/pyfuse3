@@ -71,6 +71,9 @@ import os
 import logging
 import sys
 import os.path
+from Queue import Queue
+import threading
+from collections import namedtuple
 
 ##################
 # GLOBAL VARIABLES
@@ -87,6 +90,10 @@ cdef object exc_info
 
 lock = Lock.__new__(Lock)
 lock_released = NoLockManager.__new__(NoLockManager)
+
+_notify_queue = Queue(maxsize=1000)
+inval_inode_req = namedtuple('inval_inode_req', [ 'inode', 'attr_only' ])
+inval_entry_req = namedtuple('inval_entry_req', [ 'inode_p', 'name' ])
 
 # Exported for access from Python code
 ROOT_INODE = FUSE_ROOT_ID

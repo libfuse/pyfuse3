@@ -8,6 +8,10 @@ UNRELEASED, llfuse HEAD
      the number of bytes used for representing inode numbers 
      and file offsets.
 
+   * invalidate_entry() and invalidate_inode() no longer work
+     synchronously. Instead, the message is put in a queue and send by
+     a background thread.
+
 2011-09-20, llfuse 0.36
 
    * Don't send SIGHUP if exception is encountered in destroy()
