@@ -61,6 +61,13 @@ class Operations(object):
         `FUSEError` with an errno of `errno.ENOENT`. Otherwise it must
         return an `EntryAttributes` instance.
 
+        Once an inode has been returned by `lookup`, it must be kept
+        by the file system until it receives a `forget` request for
+        the inode. If `unlink` or `rmdir` requests are received after
+        `lookup`, they are expect to remove only the directory entry
+        for the inode and defer removal of the inode itself until the
+        `forget` call.
+
         The file system must be able to handle lookups for :file:`.`
         and :file:`..`, no matter if these entries are returned by
         `readdir` or not.
@@ -68,16 +75,25 @@ class Operations(object):
         
         raise FUSEError(errno.ENOSYS)
     
-    def forget(self, inode, nlookup):
-        '''Notify about inode being removed from the kernel cache
+    def forget(self, inode_list):
+        '''Notify about inodes being removed from the kernel cache
 
-        This method is called when the kernel removes *inode* from
-        its internal caches. *nlookup* is the number of times that
-        `lookup` has been called for this inode.
+        *inode_list* is a list of ``(inode, nlookup)`` tuples. This
+        method is called when the kernel removes the listed inodes
+        from its internal caches. *nlookup* is the number of times
+        that `lookup` has been called for the respective inode.
 
         Once the file system has received a `forget` call for an inode,
         no other request handlers will be called for this inode without
         a prior `lookup` call.
+
+        If all references to an inode have been deleted, this method
+        is expected to delete the inode.
+
+        If the file system is unmounted, it will may not receive
+        `forget` calls for inodes that are still cached. The `destroy`
+        method may be used to clean up any remaining inodes for which
+        no `forget` call has been received.
         '''
         
         pass
@@ -140,9 +156,11 @@ class Operations(object):
     def unlink(self, parent_inode, name):
         '''Remove a (possibly special) file
 
-        If the file is currently opened, the file system must defer
-        removing the actual file contents and metadata until the file
-        is no longer opened by any application.
+        If the file system has received a `lookup`, but no `forget`
+        call for this file yet, `unlink` is expected to remove only
+        the directory entry and defer removal of the inode with the
+        actual file contents and metadata until the `forget` call is
+        received.
 
         Note that an unlinked file may also appear again if it gets a
         new directory entry by the `link` method.
@@ -151,7 +169,14 @@ class Operations(object):
         raise FUSEError(errno.ENOSYS)
 
     def rmdir(self, inode_parent, name):
-        '''Remove a directory'''
+        '''Remove a directory
+
+        If the file system has received a `lookup`, but no `forget`
+        call for this file yet, `unlink` is expected to remove only
+        the directory entry and defer removal of the inode with the
+        actual file contents and metadata until the `forget` call is
+        received.
+        '''
         
         raise FUSEError(errno.ENOSYS)
 
@@ -166,7 +191,16 @@ class Operations(object):
         raise FUSEError(errno.ENOSYS)
     
     def rename(self, inode_parent_old, name_old, inode_parent_new, name_new):
-        '''Rename a directory entry'''
+        '''Rename a directory entry
+
+        If *name_new* already exists, it should be overwritten.
+        
+        If the file system has received a `lookup`, but no `forget`
+        call for the file that is about to be overwritten, `rename` is
+        expected to only overwrite the directory entry and defer
+        removal of the old inode with the its contents and metadata
+        until the `forget` call is received.
+        '''
         
         raise FUSEError(errno.ENOSYS)
     

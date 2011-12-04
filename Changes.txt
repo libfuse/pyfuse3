@@ -12,6 +12,9 @@ UNRELEASED, llfuse HEAD
      synchronously. Instead, the message is put in a queue and send by
      a background thread.
 
+   * The Operations.forget() method now receives a list of
+     (inode, nlookup) tuples rather than just one such tuple.
+     
 2011-09-20, llfuse 0.36
 
    * Don't send SIGHUP if exception is encountered in destroy()
