@@ -243,3 +243,30 @@ cdef class NoLockManager:
     def __exit__(self, *a):
         lock.acquire()
 
+def _notify_loop():
+    '''Read notifications from queue and send to FUSE kernel module'''
+
+    cdef ssize_t len_
+    cdef ino_t ino
+    cdef char *cname
+   
+    while True:
+        req = _notify_queue.get()
+        if req is None:
+            return
+
+        if isinstance(req, inval_inode_req):
+            ino = req.inode
+            if req.attr_only:
+                with nogil:
+                    fuse_lowlevel_notify_inval_inode(channel, ino, -1, 0)
+            else:
+                with nogil:
+                    fuse_lowlevel_notify_inval_inode(channel, ino, 0, 0)
+        elif isinstance(req, inval_entry_req):
+            PyBytes_AsStringAndSize(req.name, &cname, &len_)
+            ino = req.inode_p
+            with nogil:
+                fuse_lowlevel_notify_inval_entry(channel, ino, cname, len_)
+        else:
+            raise RuntimeError("Weird request received: %r", req)
