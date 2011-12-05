@@ -615,7 +615,7 @@ cdef void fuse_create (fuse_req_t req, fuse_ino_t parent, const_char *cname,
         ctx = get_request_context(req)
         name = PyBytes_FromString(cname)
         with lock:
-            (fi.fh, attr) = operations.create(parent, name, mode, ctx)
+            (fi.fh, attr) = operations.create(parent, name, mode, fi.flags, ctx)
 
         # Cached file data does not need to be invalidated.
         # http://article.gmane.org/gmane.comp.file-systems.fuse.devel/5325/

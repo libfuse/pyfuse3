@@ -40,6 +40,9 @@ UNRELEASED, llfuse HEAD
    * The acquire() method of the global lock now has an optional
      *timeout* parameter.
 
+   * The create() request handler now receives the open flags
+     as an additional parameter.
+
 2011-09-20, llfuse 0.36
 
    * Don't send SIGHUP if exception is encountered in destroy()
