@@ -56,6 +56,8 @@ def main():
         compile_args.append('-Wno-missing-field-initializers')
         
     link_args = pkg_config('fuse', cflags=False, ldflags=True, min_ver='2.8.0')
+    link_args.append('-lpthread')
+    link_args.append('-lrt')
 
     uname = subprocess.Popen(["uname", "-s"], stdout=subprocess.PIPE).communicate()[0].strip()
     uname = uname.decode('utf-8')

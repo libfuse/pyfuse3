@@ -11,7 +11,7 @@ UNRELEASED, llfuse HEAD
    * The yield_() method of the global lock now takes an additional
      *count* argument that can be used to yield the lock more than
      once.
-   
+
    * Changed implementation of global lock. The global lock is
      no longer a mutex, but a boolean variable protected by a mutex,
      and changes are tracked with a condition object. This allows
@@ -32,10 +32,13 @@ UNRELEASED, llfuse HEAD
 
    * The Operations.forget() method now receives a list of
      (inode, nlookup) tuples rather than just one such tuple.
-     
+
    * invalidate_entry() and invalidate_inode() no longer work
      synchronously. Instead, the message is put in a queue and send by
      a background thread.
+
+   * The acquire() method of the global lock now has an optional
+     *timeout* parameter.
 
 2011-09-20, llfuse 0.36
 

@@ -39,7 +39,7 @@ cdef extern from "signal.h" nogil:
 
 # Include components written in plain C
 cdef extern from "lock.c" nogil:
-    int acquire() nogil
+    int acquire(double timeout) nogil
     int release() nogil
     int c_yield(int count) nogil
     int init_lock() nogil
@@ -47,6 +47,7 @@ cdef extern from "lock.c" nogil:
     int EDEADLK
     int EPERM
     int EPROTO
+    int ETIMEDOUT
     int ENOMSG
 
 cdef extern from "time.c" nogil:

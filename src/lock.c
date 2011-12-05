@@ -13,8 +13,11 @@ python-llfuse can be distributed under the terms of the GNU LGPL.
 #define FALSE (0==1)
 
 #include <pthread.h>
+#include <time.h>
 
-int acquire(void);
+#define GIGA ((long)1e9)
+
+int acquire(double timeout);
 int release(void);
 int c_yield(int count);
 
@@ -40,10 +43,22 @@ void init_lock(void) {
     pthread_mutex_init(&mutex, NULL);
 }
 
-int acquire(void) {
+int acquire(double timeout) {
     int ret;
+    struct timespec abstime;
     pthread_t me = pthread_self();
 
+    if(timeout != 0) {
+        ret = clock_gettime(CLOCK_REALTIME, &abstime);
+        if(ret != 0) return ret;
+        abstime.tv_nsec += (long)(timeout - (int) timeout) * GIGA;
+        if(abstime.tv_nsec >= GIGA) {
+            abstime.tv_sec += abstime.tv_nsec / GIGA;
+            abstime.tv_nsec = abstime.tv_nsec % GIGA;
+        }
+        abstime.tv_sec += (int) timeout;
+    }
+    
     ret = pthread_mutex_lock(&mutex);
     if(ret != 0) return ret;
     if(lock_taken) {
@@ -57,8 +72,19 @@ int acquire(void) {
          * only one thread:
          * http://stackoverflow.com/questions/8378789/forcing-a-thread-context-switch
          * http://en.wikipedia.org/wiki/Spurious_wakeup */
-        while(lock_taken) pthread_cond_wait(&cond, &mutex);
-
+        if(timeout == 0) 
+            while(lock_taken) pthread_cond_wait(&cond, &mutex);
+        else
+            while(lock_taken) {
+                ret = pthread_cond_timedwait(&cond, &mutex, &abstime);
+                if(ret == ETIMEDOUT) {
+                    lock_wanted--;
+                    pthread_mutex_unlock(&mutex);
+                    return ret;
+                }
+                
+            }
+        
         lock_wanted--;
     }
     lock_taken = TRUE;

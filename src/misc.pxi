@@ -168,15 +168,25 @@ cdef class Lock:
         raise TypeError('You should not instantiate this class, use the '
                         'provided instance instead.')
 
-    def acquire(self):
-        '''Acquire global lock'''
+    def acquire(self, timeout=None):
+        '''Acquire global lock
+
+        If *timeout* is not None, and the lock could not be acquired
+        after waiting for *timeout* seconds, return False. Otherwise
+        return True.
+        '''
         
         cdef int ret
+        if timeout is None:
+            timeout = 0
+            
         with nogil:
-            ret = acquire()
+            ret = acquire(timeout)
 
         if ret == 0:
-            return
+            return True
+        elif ret == ETIMEDOUT and timeout != 0:
+            return False
         elif ret == EDEADLK:
             raise RuntimeError("Global lock cannot be acquired more than once")
         elif ret == EPROTO:
