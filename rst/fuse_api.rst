@@ -11,4 +11,6 @@
 .. autofunction:: getxattr
 .. autofunction:: listdir
 .. autofunction:: close
+.. autofunction:: invalidate_inode
+.. autofunction:: invalidate_entry
 
