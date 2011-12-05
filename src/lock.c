@@ -99,7 +99,7 @@ int c_yield(int count) {
         lock_wanted++;
         pthread_cond_signal(&cond);
         // See acquire() for why 'while' is required
-        while(lock_taken) pthread_cond_wait(&cond, &mutex); 
+        do { pthread_cond_wait(&cond, &mutex); } while(lock_taken);
         lock_wanted--;
         if(lock_taken) {
             pthread_mutex_unlock(&mutex);
