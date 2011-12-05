@@ -209,7 +209,7 @@ def main(single=False):
 def close(unmount=True):
     '''Unmount file system and clean up
 
-    If `unmount` is False, the only clean up operations are peformed,
+    If *unmount* is False, the only clean up operations are peformed,
     but the file system is not unmounted. As long as the file system
     process is still running, all requests will hang. Once the process
     has terminated, these (and all future) requests fail with
