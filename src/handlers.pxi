@@ -53,7 +53,7 @@ cdef void fuse_forget (fuse_req_t req, fuse_ino_t ino,
                        ulong_t nlookup) with gil:
     try:
         with lock:
-            operations.forget([ino, nlookup])
+            operations.forget([(ino, nlookup)])
     except BaseException as e:
         handle_exc('forget', e, NULL)
     fuse_reply_none(req)
