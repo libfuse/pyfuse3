@@ -54,7 +54,8 @@ cdef object strerror(errno):
         return 'errno: %d' % errno
 
 cdef int handle_exc(char* fn, object e, fuse_req_t req):
-    '''Try to call operations.handle_exc and fuse_reply_err'''
+    '''Try to call fuse_reply_err and terminate main loop'''
+
     global exc_info
     
     if not exc_info:
