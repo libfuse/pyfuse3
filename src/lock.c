@@ -105,8 +105,10 @@ int c_yield(int count) {
             pthread_mutex_unlock(&mutex);
             return EPROTO;
         }
-        if(pthread_equal(lock_owner, me)) 
+        if(pthread_equal(lock_owner, me)) {
+            pthread_mutex_unlock(&mutex);
             return ENOMSG;
+        }
         lock_taken = TRUE;
         lock_owner = me;
     }
