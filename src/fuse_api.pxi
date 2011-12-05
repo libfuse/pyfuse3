@@ -20,6 +20,9 @@ def listdir(path):
 
     with nogil:
         dirp = dirent.opendir(path)
+    if dirp == NULL:
+        raise OSError(errno.errno, strerror(errno.errno), path)
+
     names = list()
 
     while True:
