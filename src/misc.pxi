@@ -258,7 +258,7 @@ def _notify_loop():
     '''Read notifications from queue and send to FUSE kernel module'''
 
     cdef ssize_t len_
-    cdef ino_t ino
+    cdef fuse_ino_t ino
     cdef char *cname
    
     while True:
