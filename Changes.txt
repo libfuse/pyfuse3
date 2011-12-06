@@ -1,4 +1,4 @@
-UNRELEASED, llfuse HEAD
+2011-12-05, llfuse 0.37
 
    * Explicitly call fuse_chan_destroy() in llfuse.close(), so
      that the mountpoint becomes inaccessible right away, even
