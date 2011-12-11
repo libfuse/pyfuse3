@@ -1,3 +1,8 @@
+UNRELEASED, llfuse TIP
+
+   * Fixed a segfault-causing race condition in Lock.acquire() and
+     Lock.yield().
+
 2011-12-05, llfuse 0.37
 
    * Explicitly call fuse_chan_destroy() in llfuse.close(), so

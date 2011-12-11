@@ -177,11 +177,15 @@ cdef class Lock:
         '''
         
         cdef int ret
+        cdef int timeout_c
+        
         if timeout is None:
-            timeout = 0
+            timeout_c = 0
+        else:
+            timeout_c = timeout
             
         with nogil:
-            ret = acquire(timeout)
+            ret = acquire(timeout_c)
 
         if ret == 0:
             return True
@@ -221,8 +225,11 @@ cdef class Lock:
         '''
 
         cdef int ret
+        cdef int count_c
+
+        count_c = count
         with nogil:
-            ret = c_yield(count)
+            ret = c_yield(count_c)
 
         if ret == 0:
             return
