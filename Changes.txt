@@ -1,4 +1,4 @@
-UNRELEASED, llfuse TIP
+2011-12-10, llfuse 0.37.1
 
    * Fixed a segfault-causing race condition in Lock.acquire() and
      Lock.yield().
