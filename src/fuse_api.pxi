@@ -17,9 +17,12 @@ def listdir(path):
     cdef dirent.dirent ent
     cdef dirent.dirent* res
     cdef int ret
-
+    cdef char* path_c
+    
+    path_c = PyBytes_AsString(path)
     with nogil:
-        dirp = dirent.opendir(path)
+
+        dirp = dirent.opendir(path_c)
     if dirp == NULL:
         raise OSError(errno.errno, strerror(errno.errno), path)
 
