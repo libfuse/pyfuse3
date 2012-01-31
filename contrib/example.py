@@ -328,7 +328,7 @@ class Operations(llfuse.Operations):
         #pylint: disable=R0201,W0613
         return True
 
-    def create(self, inode_parent, name, mode, ctx):
+    def create(self, inode_parent, name, mode, flags, ctx):
         entry = self._create(inode_parent, name, mode, ctx)
         self.inode_open_count[entry.st_ino] += 1
         return (entry.st_ino, entry)

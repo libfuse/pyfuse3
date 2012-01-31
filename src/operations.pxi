@@ -445,8 +445,8 @@ class Operations(object):
         
         raise FUSEError(errno.ENOSYS)
     
-    def create(self, inode_parent, name, mode, ctx):
-        '''Create a file with permissions *mode* and open it
+    def create(self, inode_parent, name, mode, flags, ctx):
+        '''Create a file with permissions *mode* and open it with *flags*
                 
         *ctx* will be a `RequestContext` instance.
 
