@@ -14,6 +14,9 @@ python-llfuse can be distributed under the terms of the GNU LGPL.
 
 #include <pthread.h>
 #include <time.h>
+#ifdef __MACH__
+#include <sys/time.h>
+#endif
 
 #define GIGA ((long)1e9)
 
@@ -46,11 +49,21 @@ void init_lock(void) {
 int acquire(double timeout) {
     int ret;
     struct timespec abstime;
+#ifdef __MACH__
+    struct timeval tv;
+#endif
     pthread_t me = pthread_self();
 
     if(timeout != 0) {
+#ifdef __MACH__
+        ret = gettimeofday(&tv, NULL);
+        if(ret != 0) return ret;
+        abstime.tv_sec = tv.tv_sec;
+        abstime.tv_nsec = tv.tv_usec * 1000;
+#else
         ret = clock_gettime(CLOCK_REALTIME, &abstime);
         if(ret != 0) return ret;
+#endif
         abstime.tv_nsec += (long)(timeout - (int) timeout) * GIGA;
         if(abstime.tv_nsec >= GIGA) {
             abstime.tv_sec += abstime.tv_nsec / GIGA;
