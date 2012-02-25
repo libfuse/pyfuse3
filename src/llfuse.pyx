@@ -21,6 +21,7 @@ __version__ = LLFUSE_VERSION
 from fuse_lowlevel cimport *
 from libc.sys.stat cimport stat as c_stat, S_IFMT, S_IFDIR
 from libc.sys.types cimport mode_t, dev_t, off_t
+from libc.stdint cimport uint32_t
 from libc.stdlib cimport const_char
 from libc cimport stdlib, string, errno, dirent, xattr
 from posix.unistd cimport getpid

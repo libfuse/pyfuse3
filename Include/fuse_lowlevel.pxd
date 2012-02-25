@@ -14,6 +14,7 @@ from libc.sys.stat cimport *
 from libc.sys.types cimport *
 from libc.sys.statvfs cimport *
 from libc.stdlib cimport const_char
+from libc.stdint cimport uint32_t
 
 # Based on fuse sources, revision tag fuse_2_8_3
 cdef extern from "fuse_lowlevel.h" nogil:
@@ -49,6 +50,18 @@ cdef extern from "fuse_lowlevel.h" nogil:
     int FUSE_SET_ATTR_MTIME
     int FUSE_SET_ATTR_ATIME_NOW
     int FUSE_SET_ATTR_MTIME_NOW
+
+    IF UNAME_SYSNAME == "Darwin":
+        ctypedef void(*setxattr_fn_t)(fuse_req_t req, fuse_ino_t ino, const_char *name,
+                                      const_char *value, size_t size, int flags,
+                                      uint32_t position)
+        ctypedef void(*getxattr_fn_t)(fuse_req_t req, fuse_ino_t ino, const_char *name,
+                                      size_t size, uint32_t position)
+    ELSE:
+        ctypedef void(*setxattr_fn_t)(fuse_req_t req, fuse_ino_t ino, const_char *name,
+                                      const_char *value, size_t size, int flags)
+        ctypedef void(*getxattr_fn_t)(fuse_req_t req, fuse_ino_t ino, const_char *name,
+                                      size_t size)
 
     struct fuse_lowlevel_ops:
         void (*init) (void *userdata, fuse_conn_info *conn)
@@ -93,10 +106,8 @@ cdef extern from "fuse_lowlevel.h" nogil:
         void (*fsyncdir) (fuse_req_t req, fuse_ino_t ino, int datasync,
                           fuse_file_info *fi)
         void (*statfs) (fuse_req_t req, fuse_ino_t ino)
-        void (*setxattr) (fuse_req_t req, fuse_ino_t ino, const_char *name,
-                          const_char *value, size_t size, int flags)
-        void (*getxattr) (fuse_req_t req, fuse_ino_t ino, const_char *name,
-                          size_t size)
+        setxattr_fn_t setxattr
+        getxattr_fn_t getxattr
         void (*listxattr) (fuse_req_t req, fuse_ino_t ino, size_t size)
         void (*removexattr) (fuse_req_t req, fuse_ino_t ino, const_char *name)
         void (*access) (fuse_req_t req, fuse_ino_t ino, int mask)

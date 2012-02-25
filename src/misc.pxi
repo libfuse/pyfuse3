@@ -119,8 +119,12 @@ cdef void init_fuse_ops():
     fuse_ops.releasedir = fuse_releasedir
     fuse_ops.fsyncdir = fuse_fsyncdir
     fuse_ops.statfs = fuse_statfs
-    fuse_ops.setxattr = fuse_setxattr
-    fuse_ops.getxattr = fuse_getxattr
+    IF UNAME_SYSNAME == "Darwin":
+        fuse_ops.setxattr = fuse_setxattr_darwin
+        fuse_ops.getxattr = fuse_getxattr_darwin
+    ELSE:
+        fuse_ops.setxattr = fuse_setxattr
+        fuse_ops.getxattr = fuse_getxattr
     fuse_ops.listxattr = fuse_listxattr
     fuse_ops.removexattr = fuse_removexattr
     fuse_ops.access = fuse_access

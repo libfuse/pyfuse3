@@ -477,6 +477,19 @@ cdef void fuse_statfs (fuse_req_t req, fuse_ino_t ino) with gil:
     if ret != 0:
         log.error('fuse_statfs(): fuse_reply_* failed with %s', strerror(-ret))
 
+cdef void fuse_setxattr_darwin (fuse_req_t req, fuse_ino_t ino, const_char *cname,
+                                const_char *cvalue, size_t size, int flags,
+                                uint32_t position) with gil:
+    cdef int ret
+
+    if position != 0:
+        log.error('fuse_setxattr(): non-zero position (%d) not supported', position)
+        ret = fuse_reply_err(req, errno.EIO)
+        if ret != 0:
+            log.error('fuse_setxattr(): fuse_reply_err failed with %s', strerror(-ret))
+    else:
+        fuse_setxattr(req, ino, cname, cvalue, size, flags)
+
 cdef void fuse_setxattr (fuse_req_t req, fuse_ino_t ino, const_char *cname,
                          const_char *cvalue, size_t size, int flags) with gil:
     cdef int ret
@@ -517,6 +530,18 @@ cdef void fuse_setxattr (fuse_req_t req, fuse_ino_t ino, const_char *cname,
 
     if ret != 0:
         log.error('fuse_setxattr(): fuse_reply_* failed with %s', strerror(-ret))
+
+cdef void fuse_getxattr_darwin (fuse_req_t req, fuse_ino_t ino, const_char *cname,
+                                size_t size, uint32_t position) with gil:
+    cdef int ret
+
+    if position != 0:
+        log.error('fuse_getxattr(): non-zero position (%d) not supported' % position)
+        ret = fuse_reply_err(req, errno.EIO)
+        if ret != 0:
+            log.error('fuse_getxattr(): fuse_reply_* failed with %s', strerror(-ret))
+    else:
+        fuse_getxattr(req, ino, cname, size)
 
 cdef void fuse_getxattr (fuse_req_t req, fuse_ino_t ino, const_char *cname,
                          size_t size) with gil:
