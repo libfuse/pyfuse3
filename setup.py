@@ -42,10 +42,10 @@ def main():
     compile_args.extend(['-DFUSE_USE_VERSION=28',
                          '-DLLFUSE_VERSION="%s"' % LLFUSE_VERSION,
                          '-Werror', '-Wall', '-Wextra', '-Wconversion',
-                         '-Wno-unused-parameter', '-Wno-sign-conversion'])
+                         '-Wno-sign-conversion' ])
     
-    # http://trac.cython.org/cython_trac/ticket/704
-    compile_args.append('-Wno-unused-but-set-variable')
+    # http://trac.cython.org/cython_trac/ticket/769
+    compile_args.append('-Wno-unused-parameter')
     
     # http://bugs.python.org/issue969718
     if sys.version_info[0] == 2: 
@@ -155,14 +155,19 @@ class build_cython(setuptools.Command):
     def run(self):
         try:
             from Cython.Compiler.Main import compile as cython_compile
+            from Cython.Compiler import Options as CythonOptions
         except ImportError:
             raise SystemExit('Cython needs to be installed for this command')
 
         options = { 'include_path': [ os.path.join(basedir, 'Include') ],
                     'recursive': False, 'verbose': True,
-                    'timestamps': False,
+                    'timestamps': False, 'warning_errors': True,
                     'compiler_directives': { 'embedsignature': True }
                      }
+        options['compiler_directives'].update(CythonOptions.extra_warnings)
+
+        # http://trac.cython.org/cython_trac/ticket/714
+        options['compiler_directives']['warn.maybe_uninitialized'] = False
         
         for extension in self.extensions:
             for file_ in extension.sources:
