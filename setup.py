@@ -57,17 +57,16 @@ def main():
         
     link_args = pkg_config('fuse', cflags=False, ldflags=True, min_ver='2.8.0')
     link_args.append('-lpthread')
-    link_args.append('-lrt')
 
-    uname = subprocess.Popen(["uname", "-s"], stdout=subprocess.PIPE).communicate()[0].strip()
-    uname = uname.decode('utf-8')
-    if uname == 'Linux':
+    if os.uname()[0] == 'Linux':
+        link_args.append('-lrt')
         compile_args.append('-DHAVE_STRUCT_STAT_ST_ATIM')
-    elif uname == 'FreeBSD':
+
+    elif os.uname()[0] in ('Darwin', 'FreeBSD'):
         compile_args.append('-DHAVE_STRUCT_STAT_ST_ATIMESPEC')
     else:
-        print("NOTE: unknown system (%s), " % uname +
-              "nanosecond resolution file times will not be available")
+        print("NOTE: unknown system (%s), nanosecond resolution file times "
+              "will not be available" % os.uname()[0])
 
     setuptools.setup(
           name='llfuse',
@@ -86,8 +85,10 @@ def main():
                        'Topic :: Software Development :: Libraries :: Python Modules',
                        'Topic :: System :: Filesystems',
                        'License :: OSI Approved :: GNU Library or Lesser General Public License (LGPL)',
-                       'Operating System :: POSIX' ],
-          platforms=[ 'POSIX', 'UNIX', 'Linux' ],
+                       'Operating System :: POSIX :: Linux',
+                       'Operating System :: MacOS :: MacOS X',
+                       'Operating System :: POSIX :: BSD :: FreeBSD'],
+          platforms=[ 'Linux', 'FreeBSD', 'OS X' ],
           keywords=['FUSE', 'python' ],
           package_dir={'': 'src'},
           packages=setuptools.find_packages('src'),
