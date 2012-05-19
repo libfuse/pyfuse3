@@ -74,9 +74,13 @@ import os
 import logging
 import sys
 import os.path
-from Queue import Queue
 import threading
 from collections import namedtuple
+
+try:
+    from Queue import Queue
+except ImportError: # Renamed in Python 3
+    from queue import Queue
 
 ##################
 # GLOBAL VARIABLES
