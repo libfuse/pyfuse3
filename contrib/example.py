@@ -306,7 +306,7 @@ class Operations(llfuse.Operations):
         size = self.get_row('SELECT SUM(size) FROM inodes')[0]
         stat_.f_blocks = size // stat_.f_frsize
         stat_.f_bfree = max(size // stat_.f_frsize, 1024)
-        stat_.f_bavail = stat_["f_bfree"]
+        stat_.f_bavail = stat_.f_bfree
 
         inodes = self.get_row('SELECT COUNT(id) FROM inodes')[0]
         stat_.f_files = inodes
