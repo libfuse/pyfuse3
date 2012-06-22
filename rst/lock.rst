@@ -27,10 +27,10 @@ lock. For this reason it is crucial that every method that directly or
 indirectly releases the lock is explicitly marked as such.
 
 
-The global lock is controlled with the `lock` and `lock_disabled`
+The global lock is controlled with the `lock` and `lock_released`
 attributes of the `llfuse` module:
 
-.. py:attribute:: lock_disabled
+.. py:attribute:: lock_released
 
    Controls the global lock. This object can be used as a context
    manager for the ``with`` statement to execute a block of code
