@@ -11,28 +11,36 @@ Dependencies
 In order to build and run LLFUSE you need the following software:
 
 * Linux, FreeBSD or MacOS X system
-* **Linux only**: Kernel 2.6.9 or newer. Starting with kernel
+* Python_ 2.6 or newer (including Python 3.x), installed with
+  development headers
+* the `pkg-config`_ tool
+* the `attr`_ library
+* A C compiler (only for building)
+
+When using Linux, you also need:
+
+* Kernel 2.6.9 or newer. Starting with kernel
   2.6.26 you will get significantly better write performance, so under
   Linux you should actually use *2.6.26 or newer whenever possible*.
-* **Linux only**: Version 2.8.0 or newer of the `FUSE
-  <http://fuse.sourceforge.net/>`_ library.
-* **FreeBSD only**: The `FUSE4BSD
-  <http://www.freshports.org/sysutils/fusefs-kmod/>`_ kernel module.
-* **OS-X only**: the `FUSE4X <http://fuse4x.org/>`_ package,
-  version 0.9.1 or newer.
-* `Python <http://www.python.org/>`_ 2.6 or newer (including Python
-  3.x), installed with development headers
-* `pkg-config <http://www.freedesktop.org/wiki/Software/pkg-config>`_ (only for building)
-* A C compiler (only for building)
+* Version 2.8.0 or newer of the FUSE_ library.
+
+In case of FreeBSD, you will need:
+
+* The FUSE4BSD_ kernel module.
+
+For OS-X, you need:
+
+* the FUSE4X_ package, version 0.9.1 or newer.
 
 
 Stable releases
 ===============
 
 LLFUSE can be installed like any other Python extension. Make sure
-that you have the Python, FUSE and extended attribute ("xattr")
-development headers installed, then download and extract the LLFUSE
-tarball and run ::
+that you have all necessary dependencies installed (when installing
+packages from a distribution, make sure to also install the
+corresponding *-dev* or *-devel* development packages), then download
+and extract the LLFUSE tarball and run ::
 
   sudo python setup.py install
 
@@ -40,7 +48,6 @@ or ::
 
   python setup.py install --user
 
-Note that LLFUSE requires at least FUSE 2.8.0 and Python 2.6.
 
 Development Version
 ===================
@@ -58,3 +65,9 @@ the necessary commands are::
   
 .. _Cython: http://www.cython.org/
 .. _Sphinx: http://sphinx.pocoo.org/
+.. _Python: http://www.python.org/
+.. _FUSE: http://fuse.sourceforge.net/
+.. _attr: http://savannah.nongnu.org/projects/attr/
+.. _`pkg-config`: http://www.freedesktop.org/wiki/Software/pkg-config
+.. _FUSE4BSD: http://www.freshports.org/sysutils/fusefs-kmod/
+.. _FUSE4X: http://fuse4x.org/
