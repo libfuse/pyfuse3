@@ -39,22 +39,28 @@ def main():
         long_desc = fh.read()
 
     compile_args = pkg_config('fuse', cflags=True, ldflags=False, min_ver='2.8.0')
-    compile_args.extend(['-DFUSE_USE_VERSION=28',
-                         '-DLLFUSE_VERSION="%s"' % LLFUSE_VERSION,
-                         '-Werror', '-Wall', '-Wextra', '-Wconversion',
-                         '-Wno-sign-conversion' ])
+    compile_args += ['-DFUSE_USE_VERSION=28', '-Wall',
+                     '-DLLFUSE_VERSION="%s"' % LLFUSE_VERSION]
     
-    # http://trac.cython.org/cython_trac/ticket/769
-    compile_args.append('-Wno-unused-parameter')
-    
-    # http://bugs.python.org/issue969718
-    if sys.version_info[0] == 2: 
-        compile_args.append('-fno-strict-aliasing')
-
-    # http://bugs.python.org/issue7576
-    if sys.version_info[0] == 3 and sys.version_info[1] < 2:
-        compile_args.append('-Wno-missing-field-initializers')
+    # Enable fatal warnings only when compiling from Mercurial tip.
+    # Otherwise, this breaks both forward and backward compatibility
+    # (because compilation with newer compiler may fail if additional
+    # warnings are added, and compilation with older compiler may fail
+    # if it doesn't know about a newer -Wno-* option).
+    if os.path.exists(os.path.join(basedir, 'MANIFEST.in')):
+        print('MANIFEST.in exists, compiling with developer options')
+        compile_args += [ '-Werror', '-Wextra', '-Wconversion',
+                          '-Wno-sign-conversion' ]
         
+        # http://bugs.python.org/issue969718
+        if sys.version_info[0] == 2:
+            compile_args.append('-fno-strict-aliasing')
+
+        # http://bugs.python.org/issue7576
+        if sys.version_info[0] == 3 and sys.version_info[1] < 2:
+            compile_args.append('-Wno-missing-field-initializers')
+            
+                        
     link_args = pkg_config('fuse', cflags=False, ldflags=True, min_ver='2.8.0')
     link_args.append('-lpthread')
 
