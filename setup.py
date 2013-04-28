@@ -30,10 +30,16 @@ use_setuptools(version='0.6.12', download_delay=5)
 import setuptools
 from setuptools import Extension
 
-
 LLFUSE_VERSION = '0.38'
 
 def main():
+
+    try:
+        from sphinx.application import Sphinx
+    except ImportError:
+        pass
+    else:
+        fix_docutils()
     
     with open(os.path.join(basedir, 'rst', 'about.rst'), 'r') as fh:
         long_desc = fh.read()
@@ -207,6 +213,30 @@ class upload_docs(setuptools.Command):
         subprocess.check_call(['rsync', '-aHv', '--del', os.path.join(basedir, 'doc', 'html') + '/',
                                'ebox.rath.org:/var/www/llfuse-docs/'])
 
-
+def fix_docutils():
+    '''Work around https://bitbucket.org/birkenfeld/sphinx/issue/1154/'''
+    
+    import docutils.parsers 
+    from docutils.parsers import rst
+    old_getclass = docutils.parsers.get_parser_class
+    
+    # Check if bug is there
+    try:
+        old_getclass('rst')
+    except AttributeError:
+        pass
+    else:
+        return
+     
+    def get_parser_class(parser_name):
+        """Return the Parser class from the `parser_name` module."""
+        if parser_name in ('rst', 'restructuredtext'):
+            return rst.Parser
+        else:
+            return old_getclass(parser_name)
+    docutils.parsers.get_parser_class = get_parser_class
+    
+    assert docutils.parsers.get_parser_class('rst') is rst.Parser
+    
 if __name__ == '__main__':
     main()
