@@ -58,15 +58,20 @@ def main():
         compile_args += [ '-Werror', '-Wextra', '-Wconversion',
                           '-Wno-sign-conversion' ]
         
-        # http://bugs.python.org/issue969718
-        if sys.version_info[0] == 2:
-            compile_args.append('-fno-strict-aliasing')
+    # http://bugs.python.org/issue969718
+    if sys.version_info[0] == 2:
+        compile_args.append('-fno-strict-aliasing')
 
-        # http://bugs.python.org/issue7576
-        if sys.version_info[0] == 3 and sys.version_info[1] < 2:
-            compile_args.append('-Wno-missing-field-initializers')
+    # http://bugs.python.org/issue7576
+    if sys.version_info[0] == 3 and sys.version_info[1] < 2:
+        compile_args.append('-Wno-missing-field-initializers')
             
-                        
+    # http://trac.cython.org/cython_trac/ticket/811
+    compile_args.append('-Wno-unused-but-set-variable')
+    
+    # http://trac.cython.org/cython_trac/ticket/813
+    compile_args.append('-Wno-maybe-uninitialized')
+            
     link_args = pkg_config('fuse', cflags=False, ldflags=True, min_ver='2.8.0')
     link_args.append('-lpthread')
 
@@ -167,19 +172,19 @@ class build_cython(setuptools.Command):
     def run(self):
         try:
             from Cython.Compiler.Main import compile as cython_compile
-            from Cython.Compiler import Options as CythonOptions
+            from Cython.Compiler.Options import extra_warnings
         except ImportError:
             raise SystemExit('Cython needs to be installed for this command')
-
-        options = { 'include_path': [ os.path.join(basedir, 'Include') ],
-                    'recursive': False, 'verbose': True,
-                    'timestamps': False, 'warning_errors': True,
-                    'compiler_directives': { 'embedsignature': True }
-                     }
-        options['compiler_directives'].update(CythonOptions.extra_warnings)
-
+        
+        directives = dict(extra_warnings)
+        directives['embedsignature'] = True
+        
         # http://trac.cython.org/cython_trac/ticket/714
-        options['compiler_directives']['warn.maybe_uninitialized'] = False
+        directives['warn.maybe_uninitialized'] = False
+        
+        options = {'include_path': [ os.path.join(basedir, 'Include') ],
+                   'recursive': False, 'verbose': True, 'timestamps': False,
+                   'compiler_directives': directives, 'warning_errors': True }
         
         for extension in self.extensions:
             for file_ in extension.sources:
