@@ -27,7 +27,7 @@ extensions = ['sphinx.ext.autodoc', 'sphinx.ext.intersphinx',
               'sphinx_cython' ]
 
 # Link to Python standard library
-intersphinx_mapping = {'python': ('http://docs.python.org/', None)}
+intersphinx_mapping = {'python': ('http://docs.python.org/3/', None) }
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -48,7 +48,7 @@ nitpicky = True
 
 # General information about the project.
 project = u'LLFUSE'
-copyright = u'2010, Nikolaus Rath'
+copyright = u'2010-2013, Nikolaus Rath'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -78,6 +78,7 @@ exclude_trees = []
 
 # The reST default role (used for this markup: `text`) to use for all documents.
 default_role = 'py:obj'
+primary_domain = 'py'
 
 # If true, '()' will be appended to :func: etc. cross-reference text.
 add_function_parentheses = True
