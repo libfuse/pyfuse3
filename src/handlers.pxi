@@ -614,7 +614,6 @@ cdef void fuse_removexattr (fuse_req_t req, fuse_ino_t ino, const_char *cname) w
 
 cdef void fuse_access (fuse_req_t req, fuse_ino_t ino, int mask) with gil:
     cdef int ret
-    cdef fuse_entry_param entry
     
     try:
         ctx = get_request_context(req)
