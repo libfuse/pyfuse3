@@ -178,6 +178,7 @@ class build_cython(setuptools.Command):
         
         directives = dict(extra_warnings)
         directives['embedsignature'] = True
+        directives['language_level'] = 3
         
         # http://trac.cython.org/cython_trac/ticket/714
         directives['warn.maybe_uninitialized'] = False

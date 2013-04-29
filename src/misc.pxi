@@ -86,6 +86,7 @@ cdef object get_request_context(fuse_req_t req):
     ctx.pid = context.pid
     ctx.uid = context.uid
     ctx.gid = context.gid
+    ctx.umask = context.umask
 
     return ctx
 
@@ -137,8 +138,10 @@ cdef make_fuse_args(list args, fuse_args* f_args):
 
     args_new = [ b'python-llfuse' ]
     for el in args:
-        args_new.append('-o')
-        args_new.append(el)
+        if not isinstance(el, str):
+            raise TypeError('fuse options must be of type str')
+        args_new.append(b'-o')
+        args_new.append(el.encode('us-ascii'))
     args = args_new
     
     f_args.argc = <int> len(args)
@@ -211,7 +214,7 @@ cdef class Lock:
         else:
             raise RuntimeError(strerror(ret))
 
-    def release(self, *a):
+    def release(self):
         '''Release global lock'''
         
         cdef int ret
@@ -255,9 +258,12 @@ cdef class Lock:
         else:
             raise RuntimeError(strerror(ret))
 
-    __enter__ = acquire
-    __exit__ = release
+    def __enter__(self):
+        self.acquire()
 
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.release()
+        
 
 cdef class NoLockManager:
     '''Context manager to execute code while the global lock is released'''
@@ -299,3 +305,28 @@ def _notify_loop():
                 fuse_lowlevel_notify_inval_entry(channel, ino, cname, len_)
         else:
             raise RuntimeError("Weird request received: %r", req)
+
+cdef str2bytes(str s):
+    '''Convert *s* to bytes
+
+    Under Python 2.x, just returns *s*. Under Python 3.x, converts
+    to file system encoding using surrogateescape.
+    '''
+    
+    if sys.version_info < (3,):
+        return s
+    else:
+        return s.encode(fse, 'surrogateescape')
+
+
+cdef bytes2str(bytes s):
+    '''Convert *s* to str
+
+    Under Python 2.x, just returns *s*. Under Python 3.x, converts
+    from file system encoding using surrogateescape.
+    '''
+    
+    if sys.version_info < (3,):
+        return s
+    else:
+        return s.decode(fse, 'surrogateescape')

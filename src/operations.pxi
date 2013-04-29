@@ -16,7 +16,7 @@ class Operations(object):
     has not been implemented, it must raise `FUSEError` with an errorcode of
     `errno.ENOSYS`.
 
-    It has recommended that file systems are derived from this class
+    It is recommended that file systems are derived from this class
     and only overwrite the handlers that they actually implement. (The
     default implementations defined in this class all just raise the
     not-implemented exception).
@@ -24,6 +24,11 @@ class Operations(object):
     The only exception that request handlers are allowed to raise is
     `FUSEError`. This will cause the specified errno to be
     returned by the syscall that is being handled.
+
+    Note that all character data (directory entry names, extended
+    attribute names and values, symbolic link targets etc) are passed
+    as `bytes` and must be returned as `bytes`. This applies to both
+    running under Python 2.x and 3.x
     '''
     
     def init(self):
@@ -57,9 +62,10 @@ class Operations(object):
     def lookup(self, parent_inode, name):
         '''Look up a directory entry by name and get its attributes.
     
-        If the entry does not exist, this method must raise
-        `FUSEError` with an errno of `errno.ENOENT`. Otherwise it must
-        return an `EntryAttributes` instance.
+        If the entry *name* does not exist in the directory with inode
+        *parent_inode*, this method must raise `FUSEError` with an
+        errno of `errno.ENOENT`. Otherwise it must return an
+        `EntryAttributes` instance.
 
         Once an inode has been returned by `lookup`, `create`,
         `symlink`, `link`, `mknod` or `mkdir`, it must be kept by the
@@ -134,7 +140,10 @@ class Operations(object):
         raise FUSEError(errno.ENOSYS)
 
     def readlink(self, inode):
-        '''Return target of symbolic link'''
+        '''Return target of symbolic link
+
+        The return value must have type `bytes`.
+        '''
         
         raise FUSEError(errno.ENOSYS)
 
@@ -333,6 +342,7 @@ class Operations(object):
         
         This method should return an iterator over the contents of
         directory *fh*, starting at the entry identified by *off*.
+        Directory entries must be of type `bytes`.
         
         The iterator must yield tuples of the form :samp:`({name}, {attr},
         {next_})`, where *attr* is an `EntryAttributes` instance and

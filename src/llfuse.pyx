@@ -77,9 +77,9 @@ import os.path
 import threading
 from collections import namedtuple
 
-try:
+if sys.version_info < (3,):
     from Queue import Queue
-except ImportError: # Renamed in Python 3
+else:
     from queue import Queue
 
 ##################
@@ -87,6 +87,7 @@ except ImportError: # Renamed in Python 3
 ##################
 
 log = logging.getLogger("fuse")
+fse = sys.getfilesystemencoding()
 
 cdef object operations
 cdef object mountpoint

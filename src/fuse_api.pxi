@@ -10,24 +10,35 @@ This file is part of LLFUSE (http://python-llfuse.googlecode.com).
 LLFUSE can be distributed under the terms of the GNU LGPL.
 '''
 
-def listdir(path):
-    '''Like os.listdir(), but releases the GIL'''
+def listdir(str path):
+    '''Like `os.listdir`, but releases the GIL.
+
+    This function returns an iterator over the directory entries in
+    *path*. The returned values are of type :ref:`str
+    <python:textseq>` in both Python 2.x and 3.x.
+
+    In Python 2.x :class:`str` is equivalent to `bytes` so all names
+    can be represented. In Python 3.x, surrogate escape coding (cf.
+    `PEP 383 <http://www.python.org/dev/peps/pep-0383/>`_) is used for
+    directory names that do not have a string representation.
+    '''
     
     cdef dirent.DIR* dirp
     cdef dirent.dirent ent
     cdef dirent.dirent* res
     cdef int ret
-    cdef char* path_c
+    cdef char* buf
     
-    path_c = PyBytes_AsString(path)
+    path_b = str2bytes(path)
+    buf = <char*> path_b
+    
     with nogil:
+        dirp = dirent.opendir(buf)
 
-        dirp = dirent.opendir(path_c)
     if dirp == NULL:
         raise OSError(errno.errno, strerror(errno.errno), path)
 
     names = list()
-
     while True:
         errno.errno = 0
         with nogil:
@@ -40,7 +51,7 @@ def listdir(path):
         if string.strcmp(ent.d_name, b'.') == 0 or string.strcmp(ent.d_name, b'..') == 0:
             continue
 
-        names.append(ent.d_name)
+        names.append(bytes2str(PyBytes_FromString(ent.d_name)))
         
     with nogil:
         dirent.closedir(dirp)
@@ -48,17 +59,23 @@ def listdir(path):
     return names
 
 
-def setxattr(path, name, value):
-    '''Set extended attribute'''
+def setxattr(str path, str name, bytes value):
+    '''Set extended attribute
+
+    *path* and *name* have to be of type `str`. In Python 3.x, they may
+    contain surrogates. *value* has to be of type `bytes`.
+    '''
 
     cdef int ret
     cdef Py_ssize_t len_
-    cdef char *cvalue, *cname, *cpath
+    cdef char *cvalue, *cpath, *cname
 
+    path_b = str2bytes(path)
+    name_b = str2bytes(name)
     PyBytes_AsStringAndSize(value, &cvalue, &len_)
-    cname = PyBytes_AsString(name)
-    cpath = PyBytes_AsString(path)
-
+    cpath = <char*> path_b
+    cname = <char*> name_b
+    
     with nogil:
         ret = xattr.setxattr(cpath, cname, cvalue, len_, 0)
 
@@ -68,6 +85,9 @@ def setxattr(path, name, value):
 
 def getxattr(path, name, int size_guess=128):
     '''Get extended attribute
+
+    *path* and *name* have to be of type `str`. In Python 3.x, they may
+    contain surrogates. Returns a value of type `bytes`.
     
     If the caller knows the approximate size of the attribute value,
     it should be supplied in *size_guess*. If the guess turns out
@@ -77,11 +97,13 @@ def getxattr(path, name, int size_guess=128):
     '''
 
     cdef ssize_t ret
-    cdef char *buf, *cname, *cpath
+    cdef char *buf, *cpath, *cname
     cdef size_t bufsize
 
-    cname = PyBytes_AsString(name)
-    cpath = PyBytes_AsString(path)
+    path_b = str2bytes(path)
+    name_b = str2bytes(name)
+    cpath = <char*> path_b
+    cname = <char*> name_b
 
     bufsize = size_guess
     buf = <char*> stdlib.malloc(bufsize * sizeof(char))
@@ -115,7 +137,7 @@ def getxattr(path, name, int size_guess=128):
     finally:
         stdlib.free(buf)
         
-def init(operations_, char* mountpoint_, list args):
+def init(operations_, str mountpoint_, list args):
     '''Initialize and mount FUSE file system
             
     *operations_* has to be an instance of the `Operations` class (or another
@@ -123,9 +145,9 @@ def init(operations_, char* mountpoint_, list args):
     
     *args* has to be a list of strings. Valid options are listed under ``struct
     fuse_opt fuse_mount_opts[]``
-    (`mount.c:82 <http://fuse.git.sourceforge.net/git/gitweb.cgi?p=fuse/fuse;a=blob;f=lib/mount.c;h=224ae9d5f299e3e497475d24400587f031e41d78;hb=HEAD#l82>`_)
+    (`mount.c:82 <http://fuse.git.sourceforge.net/git/gitweb.cgi?p=fuse/fuse;f=lib/mount.c;hb=HEAD#l82>`_)
     and ``struct fuse_opt fuse_ll_opts[]``
-    (`fuse_lowlevel_c:2209 <http://fuse.git.sourceforge.net/git/gitweb.cgi?p=fuse/fuse;a=blob;f=lib/fuse_lowlevel.c;h=a19d429fc51417f4d55797f6c8f10b7db316b1de;hb=HEAD#l2209>`_).
+    (`fuse_lowlevel_c:2209 <http://fuse.git.sourceforge.net/git/gitweb.cgi?p=fuse/fuse;f=lib/fuse_lowlevel.c;hb=HEAD#l2532>`_).
     '''
 
     log.debug('Initializing llfuse')
@@ -141,6 +163,7 @@ def init(operations_, char* mountpoint_, list args):
     global channel
 
     mountpoint = os.path.abspath(mountpoint_)
+    mountpoint_b = str2bytes(mountpoint)
     operations = operations_
 
     # Initialize Python thread support
@@ -148,7 +171,7 @@ def init(operations_, char* mountpoint_, list args):
     
     make_fuse_args(args, &f_args)
     log.debug('Calling fuse_mount')
-    channel = fuse_mount(mountpoint, &f_args)
+    channel = fuse_mount(<char*>mountpoint_b, &f_args)
     if not channel:
         raise RuntimeError('fuse_mount failed')
 
@@ -156,13 +179,13 @@ def init(operations_, char* mountpoint_, list args):
     init_fuse_ops()
     session = fuse_lowlevel_new(&f_args, &fuse_ops, sizeof(fuse_ops), NULL)
     if not session:
-        fuse_unmount(mountpoint, channel)
+        fuse_unmount(<char*>mountpoint_b, channel)
         raise RuntimeError("fuse_lowlevel_new() failed")
 
     log.debug('Calling fuse_set_signal_handlers')
     if fuse_set_signal_handlers(session) == -1:
         fuse_session_destroy(session)
-        fuse_unmount(mountpoint, channel)
+        fuse_unmount(<char*>mountpoint_b, channel)
         raise RuntimeError("fuse_set_signal_handlers() failed")
 
     log.debug('Calling fuse_session_add_chan')
@@ -171,10 +194,9 @@ def init(operations_, char* mountpoint_, list args):
 def main(single=False):
     '''Run FUSE main loop
     
-    Note that *single* merely enforces that at most one request
-    handler runs at a time. The main loop may still start background
-    threads to e.g. asynchronously send notifications submitted with
-    `invalidate_entry` and `invalidate_inode`.
+    If *single* is True, all requests will be handled sequentially by
+    the thread that has called `main`. If *single* is False, multiple
+    worker threads will be started and work on requests concurrently.
     '''
 
     cdef int ret
@@ -215,11 +237,10 @@ def main(single=False):
 def close(unmount=True):
     '''Unmount file system and clean up
 
-    If *unmount* is False, the only clean up operations are peformed,
-    but the file system is not unmounted. As long as the file system
+    If *unmount* is False, only clean up operations are peformed, but
+    the file system is not unmounted. As long as the file system
     process is still running, all requests will hang. Once the process
-    has terminated, these (and all future) requests fail with
-    ESHUTDOWN. 
+    has terminated, these (and all future) requests fail with ESHUTDOWN.
     '''
 
     global mountpoint
@@ -235,8 +256,9 @@ def close(unmount=True):
     fuse_session_destroy(session)
 
     if unmount:
+        mountpoint_b = str2bytes(mountpoint)
         log.debug('Calling fuse_unmount')
-        fuse_unmount(mountpoint, channel)
+        fuse_unmount(<char*>mountpoint_b, channel)
     else:
         fuse_chan_destroy(channel)
 
@@ -250,29 +272,33 @@ def close(unmount=True):
         exc_info = None
         raise tmp[0], tmp[1], tmp[2]
 
-def invalidate_inode(inode, attr_only=False):
+def invalidate_inode(int inode, attr_only=False):
     '''Invalidate cache for *inode*
     
     Instructs the FUSE kernel module to forgot cached attributes and
-    data (unless *attr_only* is True) for *inode*.
+    data (unless *attr_only* is True) for *inode*. This operation is
+    carried out asynchronously, i.e. the method may return before the
+    kernel has executed the request.
     '''
 
     _notify_queue.put(inval_inode_req(inode, attr_only))
     
-def invalidate_entry(inode_p, name):
+def invalidate_entry(int inode_p, bytes name):
     '''Invalidate directory entry
 
-    Instructs the FUSE kernel module to forget about the
-    directory entry *name* in the directory with inode *inode_p*
+    Instructs the FUSE kernel module to forget about the directory
+    entry *name* in the directory with inode *inode_p*. This operation
+    is carried out asynchronously, i.e. the method may return before
+    the kernel has executed the request.
     '''
 
     _notify_queue.put(inval_entry_req(inode_p, name))
 
 class RequestContext:
     '''
-    Instances of this class provide information about the caller
-    of the syscall that triggered a request. The attributes should be
-    self-explanatory.
+    Instances of this class are passed to some `Operations` methods to
+    provide information about the caller of the syscall that initiated
+    the request.
     '''
 
     __slots__ = [ 'uid', 'pid', 'gid', 'umask' ]
@@ -329,10 +355,11 @@ class StatvfsData:
             setattr(self, name, None)
         
 class FUSEError(Exception):
-    '''Wrapped errno value to be returned to the fuse kernel module
-
-    This exception can store only an errno. Request handlers should raise
-    it to return a specific errno to the fuse kernel module.
+    '''
+    This exception may be raised by request handlers to indicate that
+    the requested operation could not be carried out. The system call
+    that resulted in the request (if any) will then fail with error
+    code *errno_*.
     '''
 
     __slots__ = [ 'errno' ]
