@@ -10,7 +10,9 @@
 .. autofunction:: setxattr
 .. autofunction:: getxattr
 .. autofunction:: listdir
-.. autofunction:: close
 .. autofunction:: invalidate_inode
 .. autofunction:: invalidate_entry
+.. autofunction:: get_ino_t_bytes
+.. autofunction:: get_off_t_bytes
+                  
 
