@@ -19,7 +19,7 @@ import sys
 # that we use modules from this directory
 basedir = os.path.abspath(os.path.join(os.path.dirname(sys.argv[0]), '..'))
 if (os.path.exists(os.path.join(basedir, 'setup.py')) and
-    os.path.exists(os.path.join(basedir, 'src', 'llfuse.so'))):
+    os.path.exists(os.path.join(basedir, 'src', 'llfuse.pyx'))):
     sys.path = [os.path.join(basedir, 'src')] + sys.path
     
     
@@ -37,10 +37,10 @@ log = logging.getLogger()
 class Operations(llfuse.Operations):
     '''An example filesystem that stores all data in memory
     
-    This is a very simple implementation with terrible
-    performance. Don't try to store significant amounts of
-    data. Also, there are some other flaws that have not been
-    fixed to keep the code easier to understand:
+    This is a very simple implementation with terrible performance.
+    Don't try to store significant amounts of data. Also, there are
+    some other flaws that have not been fixed to keep the code easier
+    to understand:
     
     * atime, mtime and ctime are not updated
     * generation numbers are not supported
