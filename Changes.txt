@@ -17,6 +17,9 @@ UNRELEASED, llfuse tip
      encoding using the surrogatescape handler as described in PEP 383
      (http://www.python.org/dev/peps/pep-0383/)
    
+   * Renamed get_off_t_bytes() and get_ino_t_bytes() to
+     get_off_t_bits() and get_ino_t_bits() and documented them.
+     
 2013-01-05, llfuse 0.38
 
    * Various small bugfixes.

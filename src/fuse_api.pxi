@@ -390,19 +390,19 @@ class FUSEError(Exception):
         return strerror(self.errno)
     
 
-def get_ino_t_bytes():
-    '''Return number of bytes available for inode numbers
+def get_ino_t_bits():
+    '''Return number of bits available for inode numbers
 
     Attempts to use inode values that need more bytes will result in
     `OverflowError`.
     '''
-    return min(sizeof(ino_t), sizeof(fuse_ino_t))
+    return min(sizeof(ino_t), sizeof(fuse_ino_t)) * 8
 
-def get_off_t_bytes():
+def get_off_t_bits():
     '''Return number of bytes available for file offsets
 
     Attempts to use values whose representation needs more bytes will
     result in `OverflowError`.
     '''
-    return sizeof(off_t)
+    return sizeof(off_t) * 8
 
