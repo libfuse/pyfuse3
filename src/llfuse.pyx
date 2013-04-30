@@ -28,6 +28,7 @@ from posix.unistd cimport getpid
 from cpython.bytes cimport (PyBytes_AsStringAndSize, PyBytes_FromStringAndSize,
                             PyBytes_AsString, PyBytes_FromString)
 cimport cpython.exc
+from cpython.version cimport PY_MAJOR_VERSION
 
 
 ######################
@@ -77,10 +78,12 @@ import os.path
 import threading
 from collections import namedtuple
 
-if sys.version_info < (3,):
+if PY_MAJOR_VERSION < 3:
     from Queue import Queue
+    str_t = bytes
 else:
     from queue import Queue
+    str_t = str
 
 ##################
 # GLOBAL VARIABLES

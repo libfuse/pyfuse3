@@ -138,7 +138,7 @@ cdef make_fuse_args(list args, fuse_args* f_args):
 
     args_new = [ b'python-llfuse' ]
     for el in args:
-        if not isinstance(el, str):
+        if not isinstance(el, str_t):
             raise TypeError('fuse options must be of type str')
         args_new.append(b'-o')
         args_new.append(el.encode('us-ascii'))
@@ -306,27 +306,26 @@ def _notify_loop():
         else:
             raise RuntimeError("Weird request received: %r", req)
 
-cdef str2bytes(str s):
+cdef str2bytes(s):
     '''Convert *s* to bytes
 
     Under Python 2.x, just returns *s*. Under Python 3.x, converts
     to file system encoding using surrogateescape.
     '''
     
-    if sys.version_info < (3,):
+    if PY_MAJOR_VERSION < 3:
         return s
     else:
         return s.encode(fse, 'surrogateescape')
 
-
-cdef bytes2str(bytes s):
+cdef bytes2str(s):
     '''Convert *s* to str
 
     Under Python 2.x, just returns *s*. Under Python 3.x, converts
     from file system encoding using surrogateescape.
     '''
     
-    if sys.version_info < (3,):
+    if PY_MAJOR_VERSION < 3:
         return s
     else:
         return s.decode(fse, 'surrogateescape')

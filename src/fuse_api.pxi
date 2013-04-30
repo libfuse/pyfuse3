@@ -10,7 +10,7 @@ This file is part of LLFUSE (http://python-llfuse.googlecode.com).
 LLFUSE can be distributed under the terms of the GNU LGPL.
 '''
 
-def listdir(str path):
+def listdir(path):
     '''Like `os.listdir`, but releases the GIL.
 
     This function returns an iterator over the directory entries in
@@ -22,6 +22,9 @@ def listdir(str path):
     `PEP 383 <http://www.python.org/dev/peps/pep-0383/>`_) is used for
     directory names that do not have a string representation.
     '''
+
+    if not isinstance(path, str_t):
+        raise TypeError('*path* argument must be of type str')
     
     cdef dirent.DIR* dirp
     cdef dirent.dirent ent
@@ -59,12 +62,18 @@ def listdir(str path):
     return names
 
 
-def setxattr(str path, str name, bytes value):
+def setxattr(path, name, bytes value):
     '''Set extended attribute
 
     *path* and *name* have to be of type `str`. In Python 3.x, they may
     contain surrogates. *value* has to be of type `bytes`.
     '''
+
+    if not isinstance(path, str_t):
+        raise TypeError('*path* argument must be of type str')
+
+    if not isinstance(name, str_t):
+        raise TypeError('*name* argument must be of type str')
 
     cdef int ret
     cdef Py_ssize_t len_
@@ -95,6 +104,12 @@ def getxattr(path, name, int size_guess=128):
     (the first call will fail, the second determines the size and
     the third finally gets the value).
     '''
+
+    if not isinstance(path, str_t):
+        raise TypeError('*path* argument must be of type str')
+
+    if not isinstance(name, str_t):
+        raise TypeError('*name* argument must be of type str')
 
     cdef ssize_t ret
     cdef char *buf, *cpath, *cname
@@ -137,7 +152,7 @@ def getxattr(path, name, int size_guess=128):
     finally:
         stdlib.free(buf)
         
-def init(operations_, str mountpoint_, list args):
+def init(operations_, mountpoint_, list args):
     '''Initialize and mount FUSE file system
             
     *operations_* has to be an instance of the `Operations` class (or another
@@ -155,6 +170,9 @@ def init(operations_, str mountpoint_, list args):
 
     if not isinstance(operations_, Operations):
         raise TypeError("first parameter must be Operations instance!")
+
+    if not isinstance(mountpoint_, str_t):
+        raise TypeError('*mountpoint_* argument must be of type str')
 
     global operations
     global fuse_ops
