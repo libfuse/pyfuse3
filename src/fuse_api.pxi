@@ -152,10 +152,10 @@ def getxattr(path, name, int size_guess=128):
     finally:
         stdlib.free(buf)
         
-def init(operations_, mountpoint_, list args):
+def init(ops, mountpoint, list args):
     '''Initialize and mount FUSE file system
             
-    *operations_* has to be an instance of the `Operations` class (or another
+    *ops* has to be an instance of the `Operations` class (or another
     class defining the same methods).
     
     *args* has to be a list of strings. Valid options are listed under ``struct
@@ -168,21 +168,20 @@ def init(operations_, mountpoint_, list args):
     log.debug('Initializing llfuse')
     cdef fuse_args f_args
 
-    if not isinstance(operations_, Operations):
+    if not isinstance(ops, Operations):
         raise TypeError("first parameter must be Operations instance!")
 
-    if not isinstance(mountpoint_, str_t):
+    if not isinstance(mountpoint, str_t):
         raise TypeError('*mountpoint_* argument must be of type str')
 
     global operations
     global fuse_ops
-    global mountpoint
+    global mountpoint_b
     global session
     global channel
 
-    mountpoint = os.path.abspath(mountpoint_)
-    mountpoint_b = str2bytes(mountpoint)
-    operations = operations_
+    mountpoint_b = str2bytes(os.path.abspath(mountpoint))
+    operations = ops
 
     # Initialize Python thread support
     PyEval_InitThreads()
@@ -261,7 +260,7 @@ def close(unmount=True):
     has terminated, these (and all future) requests fail with ESHUTDOWN.
     '''
 
-    global mountpoint
+    global mountpoint_b
     global session
     global channel
     global exc_info
@@ -274,13 +273,12 @@ def close(unmount=True):
     fuse_session_destroy(session)
 
     if unmount:
-        mountpoint_b = str2bytes(mountpoint)
         log.debug('Calling fuse_unmount')
         fuse_unmount(<char*>mountpoint_b, channel)
     else:
         fuse_chan_destroy(channel)
 
-    mountpoint = None
+    mountpoint_b = None
     session = NULL
     channel = NULL
 

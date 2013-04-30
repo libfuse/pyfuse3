@@ -93,7 +93,7 @@ log = logging.getLogger("fuse")
 fse = sys.getfilesystemencoding()
 
 cdef object operations
-cdef object mountpoint
+cdef object mountpoint_b
 cdef fuse_session* session = NULL
 cdef fuse_chan* channel = NULL
 cdef fuse_lowlevel_ops fuse_ops
