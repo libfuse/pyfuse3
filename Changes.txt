@@ -1,11 +1,11 @@
-UNRELEASED, llfuse tip
+2013-05-11, llfuse 0.39
 
    * When running under Python 3.x, several functions now work with
      string objects rather than byte objects:
 
      - llfuse.init(): the *mountpoint* argument, and the elements of
        the *fuse_opts* argument are expected to be of type str.
-       
+
      - llfuse.listdir(): the *path* argument is expected to be of
        type str, and the values returned by the iterator will be of
        type str as well.
@@ -16,10 +16,10 @@ UNRELEASED, llfuse tip
      When necessary, values will be converted to the file system
      encoding using the surrogatescape handler as described in PEP 383
      (http://www.python.org/dev/peps/pep-0383/)
-   
+
    * Renamed get_off_t_bytes() and get_ino_t_bytes() to
      get_off_t_bits() and get_ino_t_bits() and documented them.
-     
+
 2013-01-05, llfuse 0.38
 
    * Various small bugfixes.

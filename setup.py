@@ -30,7 +30,7 @@ use_setuptools(version='0.6.12', download_delay=5)
 import setuptools
 from setuptools import Extension
 
-LLFUSE_VERSION = '0.38'
+LLFUSE_VERSION = '0.39'
 
 def main():
 
