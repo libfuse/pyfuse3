@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 '''
-llfuse_example.py
+tmpfs.py - Example file system for python-llfuse.
 
-Example file system that uses python-llfuse.
+This file system stores all data in memory. 
 
 Copyright (C) Nikolaus Rath <Nikolaus@rath.org>
 
@@ -329,6 +329,7 @@ class Operations(llfuse.Operations):
         return True
 
     def create(self, inode_parent, name, mode, flags, ctx):
+        #pylint: disable=W0612 
         entry = self._create(inode_parent, name, mode, ctx)
         self.inode_open_count[entry.st_ino] += 1
         return (entry.st_ino, entry)
@@ -401,7 +402,7 @@ if __name__ == '__main__':
     operations = Operations()
     
     llfuse.init(operations, mountpoint, 
-                [  b'fsname=llfuse_xmp', b"nonempty" ])
+                [  b'fsname=tmpfs', b"nonempty" ])
     
     # sqlite3 does not support multithreading
     try:

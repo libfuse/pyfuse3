@@ -4,10 +4,10 @@
  Example File System
 =====================
 
-The following is an example of a very simple file system that uses
-LLFUSE (this example is also included in the LLFUSE tarball as
-:file:`contrib/example.py`).
+The following is an example of a very simple in-memry file system 
+based on LLFUSE (this example is also included in the LLFUSE tarball as
+:file:`contrib/tmpfs.py`).
 
-.. literalinclude:: ../contrib/example.py
+.. literalinclude:: ../contrib/tmpfs.py
    :linenos:
    :lines: 12-
