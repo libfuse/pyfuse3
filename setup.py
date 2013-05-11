@@ -35,7 +35,7 @@ LLFUSE_VERSION = '0.38'
 def main():
 
     try:
-        from sphinx.application import Sphinx
+        from sphinx.application import Sphinx #pylint: disable-msg=W0612
     except ImportError:
         pass
     else:
