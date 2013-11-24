@@ -249,7 +249,14 @@ def main(single=False):
         log.debug('Terminated main loop because request handler raised exception, re-raising..')
         tmp = exc_info
         exc_info = None
-        raise tmp[0], tmp[1], tmp[2]
+
+        # The explicit version check works around a Cython bug with
+        # the 3-parameter version of the raise statement, c.f.
+        # https://github.com/cython/cython/commit/a6195f1a44ab21f5aa4b2a1b1842dd93115a3f42
+        if PY_MAJOR_VERSION < 3:
+            raise tmp[0], tmp[1], tmp[2]
+        else:
+            raise tmp[1].with_traceback(tmp[2])
 
 def close(unmount=True):
     '''Unmount file system and clean up
@@ -286,7 +293,14 @@ def close(unmount=True):
     if exc_info:
         tmp = exc_info
         exc_info = None
-        raise tmp[0], tmp[1], tmp[2]
+        
+        # The explicit version check works around a Cython bug with
+        # the 3-parameter version of the raise statement, c.f.
+        # https://github.com/cython/cython/commit/a6195f1a44ab21f5aa4b2a1b1842dd93115a3f42
+        if PY_MAJOR_VERSION < 3:
+            raise tmp[0], tmp[1], tmp[2]
+        else:
+            raise tmp[1].with_traceback(tmp[2])
 
 def invalidate_inode(int inode, attr_only=False):
     '''Invalidate cache for *inode*

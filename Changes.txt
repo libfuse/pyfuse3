@@ -1,3 +1,9 @@
+UNRELEASED, llfuse tip
+
+   * Re-raising an exception from a request handler now works
+     correctly under Python 3. Problems were caused by a Cython bug,
+     but llfuse now works around the issue.
+
 2013-05-11, llfuse 0.39
 
    * When running under Python 3.x, several functions now work with
