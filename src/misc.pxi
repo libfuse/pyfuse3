@@ -67,6 +67,7 @@ cdef int handle_exc(char* fn, object e, fuse_req_t req):
     
     if not exc_info:
         exc_info = sys.exc_info()
+        log.debug('handler raised exception, sending SIGTERM to self.')
         kill(getpid(), SIGTERM)
     else:
         log.exception('Exception after kill:')
