@@ -344,20 +344,28 @@ class EntryAttributes:
     C struct as returned by e.g. ``fstat`` and should be
     self-explanatory.
     
-    Note that the  *st_Xtime* attributes support floating point numbers to
-    allow for nanosecond resolution.
+    The access, modification and creation times may be specified
+    either in nanoseconds (via the *st_Xtime_ns* attributes) or in
+    seconds (via the *st_Xtime* attributes). When times are specified
+    both in seconds and nanoseconds, the nanosecond representation
+    takes precedence. If times are represented in seconds, floating
+    point numbers may be used to achieve sub-second
+    resolution. Nanosecond time stamps must be integers. Note that
+    using integer nanoseconds is more accurately than using float
+    seconds.
 
     Request handlers do not need to return objects that inherit from 
     `EntryAttributes` directly as long as they provide the required
     attributes.
     '''
 
-    # Attributes are documented in rst/operations.rst
+    # Attributes are documented in rst/data.rst
     
     __slots__ = [ 'st_ino', 'generation', 'entry_timeout',
                   'attr_timeout', 'st_mode', 'st_nlink', 'st_uid', 'st_gid',
                   'st_rdev', 'st_size', 'st_blksize', 'st_blocks',
-                  'st_atime', 'st_mtime', 'st_ctime' ]
+                  'st_atime', 'st_atime_ns', 'st_mtime', 'st_mtime_ns',
+                  'st_ctime', 'st_ctime_ns' ]
 
 
     def __init__(self):

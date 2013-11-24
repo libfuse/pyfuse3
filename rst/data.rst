@@ -78,9 +78,29 @@
    .. attribute:: st_blocks
 
    .. attribute:: st_atime
+ 
+      Time of access time in seconds. Floating point numbers may be used.
 
    .. attribute:: st_ctime
 
+      Time of last status change in seconds. Floating point numbers may be used.
+
    .. attribute:: st_mtime
 
+      Time of last modification in seconds. Floating point numbers may be used.
+
+   .. attribute:: st_atime_ns
+
+      Time of last access in nanoseconds. Only integer values
+      may be used. If specified, takes precedence over `st_atime`.
+
+   .. attribute:: st_ctime_ns
+
+      Time of last status change in nanoseconds. Only integer values
+      may be used. If specified, takes precedence over `st_ctime`.
+
+   .. attribute:: st_mtime_ns
+
+      Time of last modification in nanoseconds. Only integer values
+      may be used. If specified, takes precedence over `st_mtime`.
 

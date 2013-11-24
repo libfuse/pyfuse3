@@ -36,13 +36,27 @@ cdef object fill_c_stat(object attr, c_stat* stat):
     stat.st_blksize = attr.st_blksize
     stat.st_blocks = attr.st_blocks
 
-    stat.st_atime = attr.st_atime
-    stat.st_ctime = attr.st_ctime
-    stat.st_mtime = attr.st_mtime
-    
-    SET_ATIME_NS(stat, (attr.st_atime - stat.st_atime) * 1e9)
-    SET_CTIME_NS(stat, (attr.st_ctime - stat.st_ctime) * 1e9)
-    SET_MTIME_NS(stat, (attr.st_mtime - stat.st_mtime) * 1e9)
+    if attr.st_atime_ns is not None:
+        stat.st_atime = attr.st_atime_ns / 10**9
+        SET_ATIME_NS(stat, attr.st_atime_ns % 10**9)
+    else:
+        stat.st_atime = attr.st_atime
+        SET_ATIME_NS(stat, (attr.st_atime - stat.st_atime) * 1e9)
+
+    if attr.st_ctime_ns is not None:
+        stat.st_ctime = attr.st_ctime_ns / 10**9
+        SET_CTIME_NS(stat, attr.st_ctime_ns % 10**9)
+    else:
+        stat.st_ctime = attr.st_ctime
+        SET_CTIME_NS(stat, (attr.st_ctime - stat.st_ctime) * 1e9)
+
+    if attr.st_mtime_ns is not None:
+        stat.st_mtime = attr.st_mtime_ns / 10**9
+        SET_MTIME_NS(stat, attr.st_mtime_ns % 10**9)
+    else:
+        stat.st_mtime = attr.st_mtime
+        SET_MTIME_NS(stat, (attr.st_mtime - stat.st_mtime) * 1e9)
+
 
 cdef object fill_statvfs(object attr, statvfs* stat):
     stat.f_bsize = attr.f_bsize

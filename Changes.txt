@@ -4,6 +4,10 @@ UNRELEASED, llfuse tip
      correctly under Python 3. Problems were caused by a Cython bug,
      but llfuse now works around the issue.
 
+   * File atime, ctime and mtime can now also be represented as
+     nanosecond integer values for increased resolution. Thanks to
+     nagy.attila@gmail.com for the initial patch.
+   
 2013-05-11, llfuse 0.39
 
    * When running under Python 3.x, several functions now work with
