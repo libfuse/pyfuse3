@@ -34,6 +34,13 @@ from llfuse import FUSEError
 
 log = logging.getLogger()
 
+# For Python 2 + 3 compatibility
+if sys.version_info[0] == 2:
+    def next(it):
+        return it.next()
+else:
+    buffer = memoryview
+    
 class Operations(llfuse.Operations):
     '''An example filesystem that stores all data in memory
     
@@ -99,11 +106,11 @@ class Operations(llfuse.Operations):
     def get_row(self, *a, **kw):
         self.cursor.execute(*a, **kw) 
         try:
-            row = self.cursor.next()
+            row = next(self.cursor)
         except StopIteration:
             raise NoSuchRowError()
         try:
-            self.cursor.next()
+            next(self.cursor)
         except StopIteration:
             pass
         else:
@@ -256,7 +263,7 @@ class Operations(llfuse.Operations):
             if data is None:
                 data = ''
             if len(data) < attr.st_size:
-                data = data + '\0' * (attr.st_size - len(data))
+                data = data + b'\0' * (attr.st_size - len(data))
             else:
                 data = data[:attr.st_size]
             self.cursor.execute('UPDATE inodes SET data=?, size=? WHERE id=?',
@@ -353,14 +360,14 @@ class Operations(llfuse.Operations):
     def read(self, fh, offset, length):
         data = self.get_row('SELECT data FROM inodes WHERE id=?', (fh,))[0]
         if data is None:
-            data = ''
+            data = b''
         return data[offset:offset+length]
 
                 
     def write(self, fh, offset, buf):
         data = self.get_row('SELECT data FROM inodes WHERE id=?', (fh,))[0]
         if data is None:
-            data = ''
+            data = b''
         data = data[:offset] + buf + data[offset+len(buf):]
         
         self.cursor.execute('UPDATE inodes SET data=?, size=? WHERE id=?',
@@ -402,7 +409,7 @@ if __name__ == '__main__':
     operations = Operations()
     
     llfuse.init(operations, mountpoint, 
-                [  b'fsname=tmpfs', b"nonempty" ])
+                [  'fsname=tmpfs', "nonempty" ])
     
     # sqlite3 does not support multithreading
     try:
