@@ -58,21 +58,21 @@ def main():
         print('MANIFEST.in exists, compiling with developer options')
         compile_args += [ '-Werror', '-Wextra', '-Wconversion',
                           '-Wno-sign-conversion' ]
-        
+
+        # http://bugs.python.org/issue7576
+        if sys.version_info[0] == 3 and sys.version_info[1] < 2:
+            compile_args.append('-Wno-missing-field-initializers')
+
+        # http://trac.cython.org/cython_trac/ticket/811
+        compile_args.append('-Wno-unused-but-set-variable')
+
+        # http://trac.cython.org/cython_trac/ticket/813
+        compile_args.append('-Wno-maybe-uninitialized')
+
     # http://bugs.python.org/issue969718
     if sys.version_info[0] == 2:
         compile_args.append('-fno-strict-aliasing')
 
-    # http://bugs.python.org/issue7576
-    if sys.version_info[0] == 3 and sys.version_info[1] < 2:
-        compile_args.append('-Wno-missing-field-initializers')
-            
-    # http://trac.cython.org/cython_trac/ticket/811
-    compile_args.append('-Wno-unused-but-set-variable')
-    
-    # http://trac.cython.org/cython_trac/ticket/813
-    compile_args.append('-Wno-maybe-uninitialized')
-            
     link_args = pkg_config('fuse', cflags=False, ldflags=True, min_ver='2.8.0')
     link_args.append('-lpthread')
 
