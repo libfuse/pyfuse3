@@ -7,7 +7,11 @@ UNRELEASED, llfuse tip
    * File atime, ctime and mtime can now also be represented as
      nanosecond integer values for increased resolution. Thanks to
      nagy.attila@gmail.com for the initial patch.
-   
+
+   * Python-llfuse no longer includes the setuptools/distribute
+     bootstrap script. This module thus has to be installed manually
+     if not already present on the system.
+     
 2013-05-11, llfuse 0.39
 
    * When running under Python 3.x, several functions now work with

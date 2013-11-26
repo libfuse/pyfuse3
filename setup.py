@@ -16,6 +16,13 @@ import sys
 import os
 import subprocess
 
+try:
+    import setuptools
+except ImportError:
+    raise SystemExit('Setuptools package not found. Please install from '
+                     'https://pypi.python.org/pypi/setuptools')
+from setuptools import Extension
+
 # Add util to load path
 basedir = os.path.abspath(os.path.dirname(sys.argv[0]))
 sys.path.insert(0, os.path.join(basedir, 'util'))
@@ -23,12 +30,6 @@ sys.path.insert(0, os.path.join(basedir, 'util'))
 # Add src to load path, important for Sphinx autodoc
 # to work properly
 sys.path.insert(0, os.path.join(basedir, 'src'))
-
-# Import distribute
-from distribute_setup import use_setuptools
-use_setuptools(version='0.6.12', download_delay=5)
-import setuptools
-from setuptools import Extension
 
 LLFUSE_VERSION = '0.39'
 

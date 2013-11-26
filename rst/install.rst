@@ -13,6 +13,7 @@ In order to build and run LLFUSE you need the following software:
 * Linux, FreeBSD or MacOS X system
 * Python_ 2.6 or newer (including Python 3.x), installed with
   development headers
+* The `setuptools`_ Python module, version 1.0 or newer.
 * the `pkg-config`_ tool
 * the `attr`_ library
 * A C compiler (only for building)
@@ -71,3 +72,4 @@ the necessary commands are::
 .. _`pkg-config`: http://www.freedesktop.org/wiki/Software/pkg-config
 .. _FUSE4BSD: http://www.freshports.org/sysutils/fusefs-kmod/
 .. _FUSE4X: http://fuse4x.org/
+.. _setuptools: https://pypi.python.org/pypi/setuptools
