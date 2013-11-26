@@ -11,7 +11,9 @@ UNRELEASED, llfuse tip
    * Python-llfuse no longer includes the setuptools/distribute
      bootstrap script. This module thus has to be installed manually
      if not already present on the system.
-     
+
+   * Duck-typing of the Operations instance is now supported.
+   
 2013-05-11, llfuse 0.39
 
    * When running under Python 3.x, several functions now work with

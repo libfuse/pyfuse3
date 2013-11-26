@@ -176,9 +176,6 @@ def init(ops, mountpoint, list args):
     log.debug('Initializing llfuse')
     cdef fuse_args f_args
 
-    if not isinstance(ops, Operations):
-        raise TypeError("first parameter must be Operations instance!")
-
     if not isinstance(mountpoint, str_t):
         raise TypeError('*mountpoint_* argument must be of type str')
 
