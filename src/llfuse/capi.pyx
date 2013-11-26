@@ -1,5 +1,5 @@
 '''
-llfuse.pyx
+capi.pyx
 
 Copyright (C) Nikolaus Rath <Nikolaus@rath.org>
 
