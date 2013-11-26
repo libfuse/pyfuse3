@@ -18,6 +18,8 @@ UNRELEASED, llfuse tip
      Cython code (setup.py build_cython step) when compiling for MacOS
      or FreeBSD.
 
+   * Extended attributes are now properly supported under FreeBSD.
+
 2013-05-11, llfuse 0.39
 
    * When running under Python 3.x, several functions now work with

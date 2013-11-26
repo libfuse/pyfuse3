@@ -493,6 +493,7 @@ IF TARGET_PLATFORM == 'darwin':
         else:
             fuse_setxattr(req, ino, cname, cvalue, size, flags)
 
+
 cdef void fuse_setxattr (fuse_req_t req, fuse_ino_t ino, const_char *cname,
                          const_char *cvalue, size_t size, int flags) with gil:
     cdef int ret
@@ -505,25 +506,26 @@ cdef void fuse_setxattr (fuse_req_t req, fuse_ino_t ino, const_char *cname,
         if ino == FUSE_ROOT_ID and string.strcmp(cname, 'fuse_stacktrace') == 0:
             operations.stacktrace()
         else:
-            # Make sure we know all the flags
-            if flags & ~(xattr.XATTR_CREATE | xattr.XATTR_REPLACE):
-                raise ValueError('unknown flag(s): %o' % flags)
+            IF TARGET_PLATFORM != 'freebsd':
+                # Make sure we know all the flags
+                if flags & ~(xattr.XATTR_CREATE | xattr.XATTR_REPLACE):
+                    raise ValueError('unknown flag(s): %o' % flags)
 
-            with lock:
-                if flags & xattr.XATTR_CREATE: # Attribute must not exist
-                    try:
+                with lock:
+                    if flags & xattr.XATTR_CREATE: # Attribute must not exist
+                        try:
+                            operations.getxattr(ino, name)
+                        except FUSEError as e:
+                            if e.errno == errno.ENOATTR:
+                                pass
+                            raise
+                        else:
+                            raise FUSEError(errno.EEXIST)
+
+                    elif flags & xattr.XATTR_REPLACE: # Attribute must exist
                         operations.getxattr(ino, name)
-                    except FUSEError as e:
-                        if e.errno == errno.ENOATTR:
-                            pass
-                        raise
-                    else:
-                        raise FUSEError(errno.EEXIST)
-                
-                elif flags & xattr.XATTR_REPLACE: # Attribute must exist
-                    operations.getxattr(ino, name)
                     
-                operations.setxattr(ino, name, value)
+            operations.setxattr(ino, name, value)
                 
         ret = fuse_reply_err(req, 0)
     except FUSEError as e:

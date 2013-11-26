@@ -33,6 +33,20 @@ IF TARGET_PLATFORM == 'darwin':
                               void *value, int size) nogil:
         return c_getxattr(path, name, value, size, 0, 0)
 
+ELIF TARGET_PLATFORM == 'freebsd':
+    cdef extern from "sys/types.h":
+        pass
+    
+    cdef extern from "sys/extattr.h" nogil:
+
+        int extattr_set_file(char *path, int attrnamespace,
+                             char *attrname, void *data, int nbytes)
+        int extattr_get_file(char *path, int attrnamespace,
+                             char *attrname, void *data, int nbytes)
+
+        int EXTATTR_NAMESPACE_USER
+        int EXTATTR_NAMESPACE_SYSTEM
+
 ELSE:
     cdef extern from "attr/xattr.h" nogil:
         int setxattr (char *path, char *name,

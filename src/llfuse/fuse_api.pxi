@@ -62,12 +62,16 @@ def listdir(path):
     return names
 
 
-def setxattr(path, name, bytes value):
+def setxattr(path, name, bytes value, namespace='user'):
     '''Set extended attribute
 
     *path* and *name* have to be of type `str`. In Python 3.x, they may
     contain surrogates. *value* has to be of type `bytes`.
 
+    Under FreeBSD, the *namespace* parameter may be set to *system* or *user* to
+    select the namespace for the extended attribute. For other platforms, this
+    parameter is ignored.
+    
     In contrast the `os.setxattr` function from the standard library,
     the method provided by llfuse is also available for non-Linux
     systems.
@@ -79,24 +83,40 @@ def setxattr(path, name, bytes value):
     if not isinstance(name, str_t):
         raise TypeError('*name* argument must be of type str')
 
+    if namespace not in ('system', 'user'):
+        raise ValueError('*namespace* parameter must be "system" or "user", not %s'
+                         % namespace)
+    
     cdef int ret
     cdef Py_ssize_t len_
     cdef char *cvalue, *cpath, *cname
+    
+    IF TARGET_PLATFORM == 'freebsd':
+        cdef int cnamespace
+        if namespace == 'system':
+            cnamespace = xattr.EXTATTR_NAMESPACE_SYSTEM
+        else:
+            cnamespace = xattr.EXTATTR_NAMESPACE_USER
 
     path_b = str2bytes(path)
     name_b = str2bytes(name)
     PyBytes_AsStringAndSize(value, &cvalue, &len_)
     cpath = <char*> path_b
     cname = <char*> name_b
+
     
     with nogil:
-        ret = xattr.setxattr(cpath, cname, cvalue, len_, 0)
+        IF TARGET_PLATFORM == 'freebsd':
+            ret = xattr.extattr_set_file(cpath, cnamespace, cname,
+                                         cvalue, len_)
+        ELSE:
+            ret = xattr.setxattr(cpath, cname, cvalue, len_, 0)
 
     if ret != 0:
         raise OSError(errno.errno, strerror(errno.errno), path)
 
 
-def getxattr(path, name, int size_guess=128):
+def getxattr(path, name, int size_guess=128, namespace='user'):
     '''Get extended attribute
 
     *path* and *name* have to be of type `str`. In Python 3.x, they may
@@ -108,6 +128,10 @@ def getxattr(path, name, int size_guess=128):
     (the first call will fail, the second determines the size and
     the third finally gets the value).
 
+    Under FreeBSD, the *namespace* parameter may be set to *system* or *user* to
+    select the namespace for the extended attribute. For other platforms, this
+    parameter is ignored.
+
     In contrast the `os.setxattr` function from the standard library,
     the method provided by llfuse is also available for non-Linux
     systems.
@@ -119,10 +143,21 @@ def getxattr(path, name, int size_guess=128):
     if not isinstance(name, str_t):
         raise TypeError('*name* argument must be of type str')
 
+    if namespace not in ('system', 'user'):
+        raise ValueError('*namespace* parameter must be "system" or "user", not %s'
+                         % namespace)
+    
     cdef ssize_t ret
     cdef char *buf, *cpath, *cname
     cdef size_t bufsize
 
+    IF TARGET_PLATFORM == 'freebsd':
+        cdef int cnamespace
+        if namespace == 'system':
+            cnamespace = xattr.EXTATTR_NAMESPACE_SYSTEM
+        else:
+            cnamespace = xattr.EXTATTR_NAMESPACE_USER
+    
     path_b = str2bytes(path)
     name_b = str2bytes(name)
     cpath = <char*> path_b
@@ -136,11 +171,22 @@ def getxattr(path, name, int size_guess=128):
 
     try:
         with nogil:
-            ret = xattr.getxattr(cpath, cname, buf, bufsize)
+            IF TARGET_PLATFORM == 'freebsd':
+                ret = xattr.extattr_get_file(cpath, cnamespace, cname,
+                                             buf, bufsize)
+                if ret == bufsize:
+                    ret = -1
+                    errno.errno = errno.ERANGE
+            ELSE:
+                ret = xattr.getxattr(cpath, cname, buf, bufsize)
 
         if ret < 0 and errno.errno == errno.ERANGE:
             with nogil:
-                ret = xattr.getxattr(cpath, cname, NULL, 0)
+                IF TARGET_PLATFORM == 'freebsd':
+                    ret = xattr.extattr_get_file(cpath, cnamespace, cname,
+                                                 NULL, 0)
+                ELSE:
+                    ret = xattr.getxattr(cpath, cname, NULL, 0)
             if ret < 0:
                 raise OSError(errno.errno, strerror(errno.errno), path)
             bufsize = <size_t> ret
@@ -150,7 +196,11 @@ def getxattr(path, name, int size_guess=128):
                 cpython.exc.PyErr_NoMemory()
 
             with nogil:
-                ret = xattr.getxattr(cpath, cname, buf, bufsize)
+                IF TARGET_PLATFORM == 'freebsd':
+                    ret = xattr.extattr_get_file(cpath, cnamespace, cname,
+                                                 buf, bufsize)
+                ELSE:
+                    ret = xattr.getxattr(cpath, cname, buf, bufsize)
 
         if ret < 0:
             raise OSError(errno.errno, strerror(errno.errno), path)
