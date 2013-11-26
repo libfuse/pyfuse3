@@ -76,6 +76,7 @@ import logging
 import sys
 import os.path
 import threading
+from llfuse.pyapi import FUSEError, strerror, Operations, RequestContext, EntryAttributes
 from collections import namedtuple
 
 if PY_MAJOR_VERSION < 3:
@@ -89,7 +90,7 @@ else:
 # GLOBAL VARIABLES
 ##################
 
-log = logging.getLogger("fuse")
+log = logging.getLogger("llfuse")
 fse = sys.getfilesystemencoding()
 
 cdef object operations
@@ -128,10 +129,3 @@ include "misc.pxi"
 ####################
 
 include "fuse_api.pxi"
-
-##################
-# Operations class
-##################
-        
-include "operations.pxi"
-

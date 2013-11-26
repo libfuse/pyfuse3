@@ -1,7 +1,5 @@
 '''
-operations.pxi
-
-This file defines the Operations class.  It is included by llfuse.pyx.
+pyapi.py
 
 Copyright (C) Nikolaus Rath <Nikolaus@rath.org>
 
@@ -9,6 +7,105 @@ This file is part of LLFUSE (http://python-llfuse.googlecode.com).
 LLFUSE can be distributed under the terms of the GNU LGPL.
 '''
 
+from __future__ import division, print_function, absolute_import
+
+import os
+import errno
+import logging
+
+log = logging.getLogger('llfuse')
+
+def strerror(errno):
+    try:
+        return os.strerror(errno)
+    except ValueError:
+        return 'errno: %d' % errno
+
+class RequestContext:
+    '''
+    Instances of this class are passed to some `Operations` methods to
+    provide information about the caller of the syscall that initiated
+    the request.
+    '''
+
+    __slots__ = [ 'uid', 'pid', 'gid', 'umask' ]
+
+    def __init__(self):
+        for name in self.__slots__:
+            setattr(self, name, None)
+
+class EntryAttributes:
+    '''
+    Instances of this class store attributes of directory entries.
+    Most of the attributes correspond to the elements of the ``stat``
+    C struct as returned by e.g. ``fstat`` and should be
+    self-explanatory.
+    
+    The access, modification and creation times may be specified
+    either in nanoseconds (via the *st_Xtime_ns* attributes) or in
+    seconds (via the *st_Xtime* attributes). When times are specified
+    both in seconds and nanoseconds, the nanosecond representation
+    takes precedence. If times are represented in seconds, floating
+    point numbers may be used to achieve sub-second
+    resolution. Nanosecond time stamps must be integers. Note that
+    using integer nanoseconds is more accurately than using float
+    seconds.
+
+    Request handlers do not need to return objects that inherit from 
+    `EntryAttributes` directly as long as they provide the required
+    attributes.
+    '''
+
+    # Attributes are documented in rst/data.rst
+    
+    __slots__ = [ 'st_ino', 'generation', 'entry_timeout',
+                  'attr_timeout', 'st_mode', 'st_nlink', 'st_uid', 'st_gid',
+                  'st_rdev', 'st_size', 'st_blksize', 'st_blocks',
+                  'st_atime', 'st_atime_ns', 'st_mtime', 'st_mtime_ns',
+                  'st_ctime', 'st_ctime_ns' ]
+
+
+    def __init__(self):
+        for name in self.__slots__:
+            setattr(self, name, None)
+      
+class StatvfsData:
+    '''
+    Instances of this class store information about the file system.
+    The attributes correspond to the elements of the ``statvfs``
+    struct, see :manpage:`statvfs(2)` for details.
+    
+    Request handlers do not need to return objects that inherit from
+    `StatvfsData` directly as long as they provide the required
+    attributes.
+    '''
+
+    # Attributes are documented in rst/operations.rst
+    
+    __slots__ = [ 'f_bsize', 'f_frsize', 'f_blocks', 'f_bfree',
+                  'f_bavail', 'f_files', 'f_ffree', 'f_favail' ]
+
+    def __init__(self):
+        for name in self.__slots__:
+            setattr(self, name, None)
+        
+class FUSEError(Exception):
+    '''
+    This exception may be raised by request handlers to indicate that
+    the requested operation could not be carried out. The system call
+    that resulted in the request (if any) will then fail with error
+    code *errno_*.
+    '''
+
+    __slots__ = [ 'errno' ]
+
+    def __init__(self, errno_):
+        super(FUSEError, self).__init__()
+        self.errno = errno_
+
+    def __str__(self):
+        return strerror(self.errno)
+    
 class Operations(object):
     '''
     This class defines the general and request handler methods that an

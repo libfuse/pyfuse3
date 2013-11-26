@@ -111,7 +111,7 @@ def main():
           package_dir={'': 'src'},
           packages=setuptools.find_packages('src'),
           provides=['llfuse'],
-          ext_modules=[Extension('llfuse', ['src/llfuse.c'], 
+          ext_modules=[Extension('llfuse.capi', ['src/llfuse/capi.c'], 
                                   extra_compile_args=compile_args,
                                   extra_link_args=link_args)],
           cmdclass={'build_cython': build_cython,
