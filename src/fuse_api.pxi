@@ -67,6 +67,10 @@ def setxattr(path, name, bytes value):
 
     *path* and *name* have to be of type `str`. In Python 3.x, they may
     contain surrogates. *value* has to be of type `bytes`.
+
+    In contrast the `os.setxattr` function from the standard library,
+    the method provided by llfuse is also available for non-Linux
+    systems.
     '''
 
     if not isinstance(path, str_t):
@@ -103,6 +107,10 @@ def getxattr(path, name, int size_guess=128):
     to be wrong, the system call has to be carried out three times
     (the first call will fail, the second determines the size and
     the third finally gets the value).
+
+    In contrast the `os.setxattr` function from the standard library,
+    the method provided by llfuse is also available for non-Linux
+    systems.
     '''
 
     if not isinstance(path, str_t):
