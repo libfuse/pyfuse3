@@ -31,7 +31,7 @@ sys.path.insert(0, os.path.join(basedir, 'util'))
 # to work properly
 sys.path.insert(0, os.path.join(basedir, 'src'))
 
-LLFUSE_VERSION = '0.39'
+LLFUSE_VERSION = '0.40'
 
 def main():
 

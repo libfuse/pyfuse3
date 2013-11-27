@@ -1,4 +1,4 @@
-UNRELEASED, llfuse tip
+2013-11-26, python-llfuse 0.40
 
    * Re-raising an exception from a request handler now works
      correctly under Python 3. Problems were caused by a Cython bug,
