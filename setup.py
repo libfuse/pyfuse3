@@ -211,7 +211,7 @@ class upload_docs(setuptools.Command):
 
     def run(self):
         subprocess.check_call(['rsync', '-aHv', '--del', os.path.join(basedir, 'doc', 'html') + '/',
-                               'ebox.rath.org:/var/www/llfuse-docs/'])
+                               'ebox.rath.org:/srv/www.rath.org/public_html/llfuse-docs/'])
 
 def fix_docutils():
     '''Work around https://bitbucket.org/birkenfeld/sphinx/issue/1154/'''
