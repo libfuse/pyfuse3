@@ -479,7 +479,7 @@ cdef void fuse_statfs (fuse_req_t req, fuse_ino_t ino) with gil:
     if ret != 0:
         log.error('fuse_statfs(): fuse_reply_* failed with %s', strerror(-ret))
 
-IF UNAME_SYSNAME == "Darwin":
+IF TARGET_PLATFORM == 'darwin':        
     cdef void fuse_setxattr_darwin (fuse_req_t req, fuse_ino_t ino, const_char *cname,
                                     const_char *cvalue, size_t size, int flags,
                                     uint32_t position) with gil:
@@ -534,7 +534,7 @@ cdef void fuse_setxattr (fuse_req_t req, fuse_ino_t ino, const_char *cname,
     if ret != 0:
         log.error('fuse_setxattr(): fuse_reply_* failed with %s', strerror(-ret))
 
-IF UNAME_SYSNAME == "Darwin":
+IF TARGET_PLATFORM == 'darwin':        
     cdef void fuse_getxattr_darwin (fuse_req_t req, fuse_ino_t ino, const_char *cname,
                                     size_t size, uint32_t position) with gil:
         cdef int ret

@@ -51,7 +51,7 @@ cdef extern from "fuse_lowlevel.h" nogil:
     int FUSE_SET_ATTR_ATIME_NOW
     int FUSE_SET_ATTR_MTIME_NOW
 
-    IF UNAME_SYSNAME == "Darwin":
+    IF TARGET_PLATFORM == 'darwin':        
         ctypedef void(*setxattr_fn_t)(fuse_req_t req, fuse_ino_t ino, const_char *name,
                                       const_char *value, size_t size, int flags,
                                       uint32_t position)

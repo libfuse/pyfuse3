@@ -166,10 +166,8 @@ class build_cython(setuptools.Command):
         pass
 
     def finalize_options(self):
-        # Attribute defined outside init
-        #pylint: disable=W0201
-        self.extensions = self.distribution.ext_modules
-
+        pass
+    
     def run(self):
         try:
             from Cython.Compiler.Main import compile as cython_compile
@@ -186,25 +184,20 @@ class build_cython(setuptools.Command):
         
         options = {'include_path': [ os.path.join(basedir, 'Include') ],
                    'recursive': False, 'verbose': True, 'timestamps': False,
-                   'compiler_directives': directives, 'warning_errors': True }
-        
-        for extension in self.extensions:
-            for file_ in extension.sources:
-                (file_, ext) = os.path.splitext(file_)
-                path = os.path.join(basedir, file_)
-                if ext != '.c':
-                    continue 
-                if os.path.exists(path + '.pyx'):
-                    print('compiling %s to %s' % (file_ + '.pyx', file_ + ext))
-                    res = cython_compile(path + '.pyx', full_module_name=extension.name,
-                                         **options)
-                    if res.num_errors != 0:
-                        raise SystemExit('Cython encountered errors.')
-                else:
-                    print('%s is up to date' % (file_ + ext,))
+                   'compiler_directives': directives, 'warning_errors': True,
+                   'compile_time_env': {} }
+
+        for sysname in ('linux', 'freebsd', 'darwin'):
+            print('compiling capi.pyx to capi_%s.c...' % (sysname,))
+            options['compile_time_env']['TARGET_PLATFORM'] = sysname
+            options['output_file'] = os.path.join(basedir, 'src', 'llfuse',
+                                                  'capi_%s.c' % (sysname,))
+            res = cython_compile(os.path.join(basedir, 'src', 'llfuse', 'capi.pyx'),
+                                 full_module_name='llfuse.capi', **options)
+            if res.num_errors != 0:
+                raise SystemExit('Cython encountered errors.')
 
 
-        
 class upload_docs(setuptools.Command):
     user_options = []
     boolean_options = []

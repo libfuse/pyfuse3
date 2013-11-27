@@ -5,6 +5,7 @@ syntax: regexp
 ^dist$
 ^doc/html$
 ^doc/doctrees$
-^src/llfuse/capi.c$
 
-glob:src/llfuse/*.so
+syntax: glob
+src/llfuse/capi_*.c
+src/llfuse/*.so

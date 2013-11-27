@@ -130,7 +130,7 @@ cdef void init_fuse_ops():
     fuse_ops.releasedir = fuse_releasedir
     fuse_ops.fsyncdir = fuse_fsyncdir
     fuse_ops.statfs = fuse_statfs
-    IF UNAME_SYSNAME == "Darwin":
+    IF TARGET_PLATFORM == 'darwin':        
         fuse_ops.setxattr = fuse_setxattr_darwin
         fuse_ops.getxattr = fuse_getxattr_darwin
     ELSE:
