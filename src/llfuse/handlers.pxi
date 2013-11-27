@@ -506,7 +506,11 @@ cdef void fuse_setxattr (fuse_req_t req, fuse_ino_t ino, const_char *cname,
         if ino == FUSE_ROOT_ID and string.strcmp(cname, 'fuse_stacktrace') == 0:
             operations.stacktrace()
         else:
-            IF TARGET_PLATFORM != 'freebsd':
+            IF TARGET_PLATFORM == 'freebsd':
+	        # No known flags
+                with lock:
+                    operations.setxattr(ino, name, value)
+            ELSE:
                 # Make sure we know all the flags
                 if flags & ~(xattr.XATTR_CREATE | xattr.XATTR_REPLACE):
                     raise ValueError('unknown flag(s): %o' % flags)
@@ -516,17 +520,16 @@ cdef void fuse_setxattr (fuse_req_t req, fuse_ino_t ino, const_char *cname,
                         try:
                             operations.getxattr(ino, name)
                         except FUSEError as e:
-                            if e.errno == errno.ENOATTR:
-                                pass
-                            raise
+                            if e.errno != errno.ENOATTR:
+                                raise
                         else:
                             raise FUSEError(errno.EEXIST)
 
                     elif flags & xattr.XATTR_REPLACE: # Attribute must exist
                         operations.getxattr(ino, name)
-                    
-            operations.setxattr(ino, name, value)
-                
+			
+                    operations.setxattr(ino, name, value)
+
         ret = fuse_reply_err(req, 0)
     except FUSEError as e:
         ret = fuse_reply_err(req, e.errno)
