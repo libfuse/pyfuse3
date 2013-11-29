@@ -490,8 +490,15 @@ IF TARGET_PLATFORM == 'darwin':
             ret = fuse_reply_err(req, errno.EIO)
             if ret != 0:
                 log.error('fuse_setxattr(): fuse_reply_err failed with %s', strerror(-ret))
-        else:
-            fuse_setxattr(req, ino, cname, cvalue, size, flags)
+            return
+
+        # Filter out flags that don't make any sense for a FUSE
+        # file system, but that FUSE4x nevertheless stupidly
+        # passes through.
+        # (cf. https://groups.google.com/d/msg/fuse4x/bRnh7J_nsts/Z7raJ06DB4sJ)
+        flags &= ~(xattr.XATTR_NOFOLLOW | xattr.XATTR_NODEFAULT |
+                   xattr.XATTR_NOSECURITY)
+        fuse_setxattr(req, ino, cname, cvalue, size, flags)
 
 
 cdef void fuse_setxattr (fuse_req_t req, fuse_ino_t ino, const_char *cname,
@@ -507,7 +514,7 @@ cdef void fuse_setxattr (fuse_req_t req, fuse_ino_t ino, const_char *cname,
             operations.stacktrace()
         else:
             IF TARGET_PLATFORM == 'freebsd':
-	        # No known flags
+                # No known flags
                 with lock:
                     operations.setxattr(ino, name, value)
             ELSE:
@@ -527,7 +534,7 @@ cdef void fuse_setxattr (fuse_req_t req, fuse_ino_t ino, const_char *cname,
 
                     elif flags & xattr.XATTR_REPLACE: # Attribute must exist
                         operations.getxattr(ino, name)
-			
+                        
                     operations.setxattr(ino, name, value)
 
         ret = fuse_reply_err(req, 0)
