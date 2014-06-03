@@ -71,7 +71,7 @@ int acquire(double timeout) {
         }
         abstime.tv_sec += (int) timeout;
     }
-    
+
     ret = pthread_mutex_lock(&mutex);
     if(ret != 0) return ret;
     if(lock_taken) {
@@ -85,7 +85,7 @@ int acquire(double timeout) {
          * only one thread:
          * http://stackoverflow.com/questions/8378789/forcing-a-thread-context-switch
          * http://en.wikipedia.org/wiki/Spurious_wakeup */
-        if(timeout == 0) 
+        if(timeout == 0)
             while(lock_taken) pthread_cond_wait(&cond, &mutex);
         else
             while(lock_taken) {
@@ -95,9 +95,9 @@ int acquire(double timeout) {
                     pthread_mutex_unlock(&mutex);
                     return ret;
                 }
-                
+
             }
-        
+
         lock_wanted--;
     }
     lock_taken = TRUE;
@@ -109,7 +109,7 @@ int release(void) {
     int ret;
     if(!lock_taken)
         return EPERM;
-    if(!pthread_equal(lock_owner, pthread_self())) 
+    if(!pthread_equal(lock_owner, pthread_self()))
         return EPERM;
     ret = pthread_mutex_lock(&mutex);
     if(ret != 0) return ret;
@@ -124,8 +124,8 @@ int c_yield(int count) {
     int ret;
     int i;
     pthread_t me = pthread_self();
-    
-    if(!lock_taken || !pthread_equal(lock_owner, me)) 
+
+    if(!lock_taken || !pthread_equal(lock_owner, me))
         return EPERM;
     ret = pthread_mutex_lock(&mutex);
     if(ret != 0) return ret;
@@ -133,7 +133,7 @@ int c_yield(int count) {
     for(i=0; i < count; i++) {
         if(lock_wanted == 0)
             break;
-        
+
         lock_taken = FALSE;
         lock_wanted++;
         pthread_cond_signal(&cond);

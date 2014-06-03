@@ -25,7 +25,7 @@ def process_signature(app, what, name, obj, options, signature, return_annotatio
 
     if signature is None:
         return (signature, return_annotation)
-    
+
     new_params = list()
     for param in (x.strip() for x in signature[1:-1].split(',')):
         hit = TYPE_RE.match(param)
@@ -33,5 +33,5 @@ def process_signature(app, what, name, obj, options, signature, return_annotatio
             new_params.append(hit.group(2))
         else:
             new_params.append(param)
-            
+
     return ('(%s)' % ', '.join(new_params), return_annotation)

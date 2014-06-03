@@ -45,7 +45,7 @@
 2013-01-05, llfuse 0.38
 
    * Various small bugfixes.
-   
+
 2011-12-10, llfuse 0.37.1
 
    * Fixed a segfault-causing race condition in Lock.acquire() and
@@ -58,7 +58,7 @@
      while the process is still running.
 
    * Added get_ino_t_bytes() and get_off_t_bytes() that return
-     the number of bytes used for representing inode numbers 
+     the number of bytes used for representing inode numbers
      and file offsets.
 
    * The yield_() method of the global lock now takes an additional
@@ -115,7 +115,7 @@
    * Removed handle_exc() method. If request handle raise an exception,
      the main loop now terminates and the exception is re-raised and
      passed to the caller of llfuse.main().
-   
+
    * llfuse.close() can now leave the mountpoint in an inaccessible
      state to signal a shutdown due to an internal file system
      error.
@@ -141,7 +141,7 @@
 
    * Fixed unlink() bug in contrib/example.py
 
-   * Include src/*.pxi files in release tarball. Were 
+   * Include src/*.pxi files in release tarball. Were
      accidentally omitted in previous version.
 
    * Moved debian/ directory into separate repository.

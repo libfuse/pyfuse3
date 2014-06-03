@@ -2,7 +2,7 @@
 '''
 tmpfs.py - Example file system for python-llfuse.
 
-This file system stores all data in memory. 
+This file system stores all data in memory.
 
 Copyright (C) Nikolaus Rath <Nikolaus@rath.org>
 
@@ -21,8 +21,8 @@ basedir = os.path.abspath(os.path.join(os.path.dirname(sys.argv[0]), '..'))
 if (os.path.exists(os.path.join(basedir, 'setup.py')) and
     os.path.exists(os.path.join(basedir, 'src', 'llfuse.pyx'))):
     sys.path = [os.path.join(basedir, 'src')] + sys.path
-    
-    
+
+
 import llfuse
 import errno
 import stat
@@ -40,32 +40,32 @@ if sys.version_info[0] == 2:
         return it.next()
 else:
     buffer = memoryview
-    
+
 class Operations(llfuse.Operations):
     '''An example filesystem that stores all data in memory
-    
+
     This is a very simple implementation with terrible performance.
     Don't try to store significant amounts of data. Also, there are
     some other flaws that have not been fixed to keep the code easier
     to understand:
-    
+
     * atime, mtime and ctime are not updated
     * generation numbers are not supported
     '''
-    
-    
-    def __init__(self):      
+
+
+    def __init__(self):
         super(Operations, self).__init__()
         self.db = sqlite3.connect(':memory:')
         self.db.text_factory = str
         self.db.row_factory = sqlite3.Row
-        self.cursor = self.db.cursor()        
+        self.cursor = self.db.cursor()
         self.inode_open_count = defaultdict(int)
         self.init_tables()
-             
+
     def init_tables(self):
         '''Initialize file system tables'''
-        
+
         self.cursor.execute("""
         CREATE TABLE inodes (
             id        INTEGER PRIMARY KEY,
@@ -81,30 +81,30 @@ class Operations(llfuse.Operations):
             data      BLOB
         )
         """)
-    
+
         self.cursor.execute("""
         CREATE TABLE contents (
             rowid     INTEGER PRIMARY KEY AUTOINCREMENT,
             name      BLOB(256) NOT NULL,
             inode     INT NOT NULL REFERENCES inodes(id),
             parent_inode INT NOT NULL REFERENCES inodes(id),
-            
+
             UNIQUE (name, parent_inode)
         )""")
-        
+
         # Insert root directory
         self.cursor.execute("INSERT INTO inodes (id,mode,uid,gid,mtime,atime,ctime) "
                             "VALUES (?,?,?,?,?,?,?)",
                             (llfuse.ROOT_INODE, stat.S_IFDIR | stat.S_IRUSR | stat.S_IWUSR
-                              | stat.S_IXUSR | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH 
-                              | stat.S_IXOTH, os.getuid(), os.getgid(), time(), 
+                              | stat.S_IXUSR | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH
+                              | stat.S_IXOTH, os.getuid(), os.getgid(), time(),
                               time(), time()))
         self.cursor.execute("INSERT INTO contents (name, parent_inode, inode) VALUES (?,?,?)",
                             (b'..', llfuse.ROOT_INODE, llfuse.ROOT_INODE))
-        
-                
+
+
     def get_row(self, *a, **kw):
-        self.cursor.execute(*a, **kw) 
+        self.cursor.execute(*a, **kw)
         try:
             row = next(self.cursor)
         except StopIteration:
@@ -117,7 +117,7 @@ class Operations(llfuse.Operations):
             raise NoUniqueValueError()
 
         return row
-                    
+
     def lookup(self, inode_p, name):
         if name == '.':
             inode = inode_p
@@ -130,13 +130,13 @@ class Operations(llfuse.Operations):
                                      (name, inode_p))['inode']
             except NoSuchRowError:
                 raise(llfuse.FUSEError(errno.ENOENT))
-        
+
         return self.getattr(inode)
-        
+
 
     def getattr(self, inode):
         row = self.get_row('SELECT * FROM inodes WHERE id=?', (inode,))
-        
+
         entry = llfuse.EntryAttributes()
         entry.st_ino = inode
         entry.generation = 0
@@ -149,29 +149,29 @@ class Operations(llfuse.Operations):
         entry.st_gid = row['gid']
         entry.st_rdev = row['rdev']
         entry.st_size = row['size']
-        
+
         entry.st_blksize = 512
         entry.st_blocks = 1
-        entry.st_atime = row['atime']                          
+        entry.st_atime = row['atime']
         entry.st_mtime = row['mtime']
         entry.st_ctime = row['ctime']
-        
+
         return entry
 
     def readlink(self, inode):
         return self.get_row('SELECT * FROM inodes WHERE id=?', (inode,))['target']
-    
+
     def opendir(self, inode):
         return inode
 
     def readdir(self, inode, off):
         if off == 0:
             off = -1
-            
+
         cursor2 = self.db.cursor()
         cursor2.execute("SELECT * FROM contents WHERE parent_inode=? "
                         'AND rowid > ? ORDER BY rowid', (inode, off))
-        
+
         for row in cursor2:
             yield (row['name'], self.getattr(row['inode']), row['rowid'])
 
@@ -192,23 +192,23 @@ class Operations(llfuse.Operations):
         self._remove(inode_p, name, entry)
 
     def _remove(self, inode_p, name, entry):
-        if self.get_row("SELECT COUNT(inode) FROM contents WHERE parent_inode=?", 
+        if self.get_row("SELECT COUNT(inode) FROM contents WHERE parent_inode=?",
                         (entry.st_ino,))[0] > 0:
             raise llfuse.FUSEError(errno.ENOTEMPTY)
 
         self.cursor.execute("DELETE FROM contents WHERE name=? AND parent_inode=?",
                         (name, inode_p))
-        
+
         if entry.st_nlink == 1 and entry.st_ino not in self.inode_open_count:
             self.cursor.execute("DELETE FROM inodes WHERE id=?", (entry.st_ino,))
 
     def symlink(self, inode_p, name, target, ctx):
-        mode = (stat.S_IFLNK | stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR | 
-                stat.S_IRGRP | stat.S_IWGRP | stat.S_IXGRP | 
+        mode = (stat.S_IFLNK | stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR |
+                stat.S_IRGRP | stat.S_IWGRP | stat.S_IXGRP |
                 stat.S_IROTH | stat.S_IWOTH | stat.S_IXOTH)
         return self._create(inode_p, name, mode, ctx, target=target)
 
-    def rename(self, inode_p_old, name_old, inode_p_new, name_new):     
+    def rename(self, inode_p_old, name_old, inode_p_new, name_new):
         entry_old = self.lookup(inode_p_old, name_old)
 
         try:
@@ -231,10 +231,10 @@ class Operations(llfuse.Operations):
     def _replace(self, inode_p_old, name_old, inode_p_new, name_new,
                  entry_old, entry_new):
 
-        if self.get_row("SELECT COUNT(inode) FROM contents WHERE parent_inode=?", 
+        if self.get_row("SELECT COUNT(inode) FROM contents WHERE parent_inode=?",
                         (entry_new.st_ino))[0] > 0:
             raise llfuse.FUSEError(errno.ENOTEMPTY)
-   
+
         self.cursor.execute("UPDATE contents SET inode=? WHERE name=? AND parent_inode=?",
                             (entry_old.st_ino, name_new, inode_p_new))
         self.db.execute('DELETE FROM contents WHERE name=? AND parent_inode=?',
@@ -326,7 +326,7 @@ class Operations(llfuse.Operations):
         # Yeah, unused arguments
         #pylint: disable=W0613
         self.inode_open_count[inode] += 1
-        
+
         # Use inodes as a file handles
         return inode
 
@@ -336,12 +336,12 @@ class Operations(llfuse.Operations):
         return True
 
     def create(self, inode_parent, name, mode, flags, ctx):
-        #pylint: disable=W0612 
+        #pylint: disable=W0612
         entry = self._create(inode_parent, name, mode, ctx)
         self.inode_open_count[entry.st_ino] += 1
         return (entry.st_ino, entry)
 
-    def _create(self, inode_p, name, mode, ctx, rdev=0, target=None):             
+    def _create(self, inode_p, name, mode, ctx, rdev=0, target=None):
         if self.getattr(inode_p).st_nlink == 0:
             log.warn('Attempted to create entry %s with unlinked parent %d',
                      name, inode_p)
@@ -363,17 +363,17 @@ class Operations(llfuse.Operations):
             data = b''
         return data[offset:offset+length]
 
-                
+
     def write(self, fh, offset, buf):
         data = self.get_row('SELECT data FROM inodes WHERE id=?', (fh,))[0]
         if data is None:
             data = b''
         data = data[:offset] + buf + data[offset+len(buf):]
-        
+
         self.cursor.execute('UPDATE inodes SET data=?, size=? WHERE id=?',
                             (buffer(data), len(data), fh))
         return len(buf)
-   
+
     def release(self, fh):
         self.inode_open_count[fh] -= 1
 
@@ -385,32 +385,32 @@ class Operations(llfuse.Operations):
 class NoUniqueValueError(Exception):
     def __str__(self):
         return 'Query generated more than 1 result row'
-    
-    
+
+
 class NoSuchRowError(Exception):
     def __str__(self):
         return 'Query produced 0 result rows'
-    
+
 def init_logging():
-    formatter = logging.Formatter('%(message)s') 
+    formatter = logging.Formatter('%(message)s')
     handler = logging.StreamHandler()
     handler.setFormatter(formatter)
     handler.setLevel(logging.INFO)
-    log.setLevel(logging.INFO)    
-    log.addHandler(handler)    
-        
+    log.setLevel(logging.INFO)
+    log.addHandler(handler)
+
 if __name__ == '__main__':
-    
+
     if len(sys.argv) != 2:
         raise SystemExit('Usage: %s <mountpoint>' % sys.argv[0])
-    
+
     init_logging()
     mountpoint = sys.argv[1]
     operations = Operations()
-    
-    llfuse.init(operations, mountpoint, 
+
+    llfuse.init(operations, mountpoint,
                 [  'fsname=tmpfs', "nonempty" ])
-    
+
     # sqlite3 does not support multithreading
     try:
         llfuse.main(single=True)
@@ -419,4 +419,4 @@ if __name__ == '__main__':
         raise
 
     llfuse.close()
-    
+

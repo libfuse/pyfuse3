@@ -67,13 +67,13 @@ cdef object fill_statvfs(object attr, statvfs* stat):
     stat.f_files = attr.f_files
     stat.f_ffree = attr.f_ffree
     stat.f_favail = attr.f_favail
-    
+
 
 cdef int handle_exc(char* fn, object e, fuse_req_t req):
     '''Try to call fuse_reply_err and terminate main loop'''
 
     global exc_info
-    
+
     if not exc_info:
         exc_info = sys.exc_info()
         log.debug('handler raised exception, sending SIGTERM to self.')
@@ -85,10 +85,10 @@ cdef int handle_exc(char* fn, object e, fuse_req_t req):
         return 0
     else:
         return fuse_reply_err(req, errno.EIO)
-        
+
 cdef object get_request_context(fuse_req_t req):
     '''Get RequestContext() object'''
-    
+
     cdef const_fuse_ctx* context
 
     context = fuse_req_ctx(req)
@@ -130,7 +130,7 @@ cdef void init_fuse_ops():
     fuse_ops.releasedir = fuse_releasedir
     fuse_ops.fsyncdir = fuse_fsyncdir
     fuse_ops.statfs = fuse_statfs
-    IF TARGET_PLATFORM == 'darwin':        
+    IF TARGET_PLATFORM == 'darwin':
         fuse_ops.setxattr = fuse_setxattr_darwin
         fuse_ops.getxattr = fuse_getxattr_darwin
     ELSE:
@@ -153,7 +153,7 @@ cdef make_fuse_args(list args, fuse_args* f_args):
         args_new.append(b'-o')
         args_new.append(el.encode('us-ascii'))
     args = args_new
-    
+
     f_args.argc = <int> len(args)
     if f_args.argc == 0:
         f_args.argv = NULL
@@ -181,7 +181,7 @@ cdef make_fuse_args(list args, fuse_args* f_args):
             stdlib.free(f_args.argv[i])
         stdlib.free(f_args.argv)
         raise
-    
+
 cdef class Lock:
     '''
     This is the class of lock itself as well as a context manager to
@@ -199,15 +199,15 @@ cdef class Lock:
         after waiting for *timeout* seconds, return False. Otherwise
         return True.
         '''
-        
+
         cdef int ret
         cdef int timeout_c
-        
+
         if timeout is None:
             timeout_c = 0
         else:
             timeout_c = timeout
-            
+
         with nogil:
             ret = acquire(timeout_c)
 
@@ -226,7 +226,7 @@ cdef class Lock:
 
     def release(self):
         '''Release global lock'''
-        
+
         cdef int ret
         with nogil:
             ret = release()
@@ -273,7 +273,7 @@ cdef class Lock:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.release()
-        
+
 
 cdef class NoLockManager:
     '''Context manager to execute code while the global lock is released'''
@@ -284,7 +284,7 @@ cdef class NoLockManager:
 
     def __enter__ (self):
         lock.release()
-        
+
     def __exit__(self, *a):
         lock.acquire()
 
@@ -294,7 +294,7 @@ def _notify_loop():
     cdef ssize_t len_
     cdef fuse_ino_t ino
     cdef char *cname
-   
+
     while True:
         req = _notify_queue.get()
         if req is None:
@@ -322,7 +322,7 @@ cdef str2bytes(s):
     Under Python 2.x, just returns *s*. Under Python 3.x, converts
     to file system encoding using surrogateescape.
     '''
-    
+
     if PY_MAJOR_VERSION < 3:
         return s
     else:
@@ -334,7 +334,7 @@ cdef bytes2str(s):
     Under Python 2.x, just returns *s*. Under Python 3.x, converts
     from file system encoding using surrogateescape.
     '''
-    
+
     if PY_MAJOR_VERSION < 3:
         return s
     else:

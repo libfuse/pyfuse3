@@ -41,7 +41,7 @@ attributes of the `llfuse` module:
    Controls the global lock. This object can be used as a context
    manager for the ``with`` statement to execute a block of code
    with the global lock acquired.
-   
+
    Note that this object resembles a ``threading.Lock`` instance but
    is an instance of the `llfuse.Lock` class which is quite different from
    ``threading.Lock``.

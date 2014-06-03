@@ -18,7 +18,7 @@ from libc.stdint cimport uint32_t
 
 # Based on fuse sources, revision tag fuse_2_8_3
 cdef extern from "fuse_lowlevel.h" nogil:
-    int FUSE_ROOT_ID 
+    int FUSE_ROOT_ID
 
     ctypedef int fuse_ino_t
     ctypedef struct fuse_req:
@@ -26,7 +26,7 @@ cdef extern from "fuse_lowlevel.h" nogil:
     ctypedef fuse_req* fuse_req_t
 
     ctypedef int ulong_t "unsigned long"
-    
+
     struct fuse_entry_param:
         fuse_ino_t ino
         unsigned long generation
@@ -41,7 +41,7 @@ cdef extern from "fuse_lowlevel.h" nogil:
         mode_t umask
 
     ctypedef fuse_ctx const_fuse_ctx "const struct fuse_ctx"
-    
+
     int FUSE_SET_ATTR_MODE
     int FUSE_SET_ATTR_UID
     int FUSE_SET_ATTR_GID
@@ -51,7 +51,7 @@ cdef extern from "fuse_lowlevel.h" nogil:
     int FUSE_SET_ATTR_ATIME_NOW
     int FUSE_SET_ATTR_MTIME_NOW
 
-    IF TARGET_PLATFORM == 'darwin':        
+    IF TARGET_PLATFORM == 'darwin':
         ctypedef void(*setxattr_fn_t)(fuse_req_t req, fuse_ino_t ino, const_char *name,
                                       const_char *value, size_t size, int flags,
                                       uint32_t position)
@@ -136,7 +136,7 @@ cdef extern from "fuse_lowlevel.h" nogil:
                                          off_t off, off_t len)
     int fuse_lowlevel_notify_inval_entry(fuse_chan *ch, fuse_ino_t parent,
                                          const_char *name, size_t namelen)
-    
+
     void *fuse_req_userdata(fuse_req_t req)
     fuse_ctx *fuse_req_ctx(fuse_req_t req)
     int fuse_req_getgroups(fuse_req_t req, size_t size, gid_t list[])

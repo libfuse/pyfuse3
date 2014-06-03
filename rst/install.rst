@@ -45,7 +45,7 @@ and extract the LLFUSE tarball and run ::
 
   sudo python setup.py install
 
-or :: 
+or ::
 
   python setup.py install --user
 
@@ -62,8 +62,8 @@ the necessary commands are::
   python setup.py build_ext --inplace
   python setup.py build_sphinx
   python setup.py install
-  
-  
+
+
 .. _Cython: http://www.cython.org/
 .. _Sphinx: http://sphinx.pocoo.org/
 .. _Python: http://www.python.org/

@@ -12,8 +12,8 @@ python-llfuse can be distributed under the terms of the GNU LGPL.
 cdef extern from "sys/statvfs.h" nogil:
     ctypedef int fsblkcnt_t
     ctypedef int fsfilcnt_t
-    
-    struct statvfs: 
+
+    struct statvfs:
         int f_bsize
         int f_frsize
         fsblkcnt_t     f_blocks

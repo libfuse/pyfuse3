@@ -17,7 +17,7 @@ cdef extern from * nogil: # fuse_common.h should not be included
 
     struct fuse_file_info:
         int flags
-        unsigned int direct_io 
+        unsigned int direct_io
         unsigned int keep_cache
         unsigned int nonseekable
         uint64_t fh

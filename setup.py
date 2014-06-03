@@ -41,14 +41,14 @@ def main():
         pass
     else:
         fix_docutils()
-    
+
     with open(os.path.join(basedir, 'rst', 'about.rst'), 'r') as fh:
         long_desc = fh.read()
 
     compile_args = pkg_config('fuse', cflags=True, ldflags=False, min_ver='2.8.0')
     compile_args += ['-DFUSE_USE_VERSION=28', '-Wall',
                      '-DLLFUSE_VERSION="%s"' % LLFUSE_VERSION]
-    
+
     # Enable fatal warnings only when compiling from Mercurial tip.
     # Otherwise, this breaks both forward and backward compatibility
     # (because compilation with newer compiler may fail if additional
@@ -111,7 +111,7 @@ def main():
           package_dir={'': 'src'},
           packages=setuptools.find_packages('src'),
           provides=['llfuse'],
-          ext_modules=[Extension('llfuse.capi', ['src/llfuse/capi.c'], 
+          ext_modules=[Extension('llfuse.capi', ['src/llfuse/capi.c'],
                                   extra_compile_args=compile_args,
                                   extra_link_args=link_args)],
           cmdclass={'build_cython': build_cython,
@@ -129,7 +129,7 @@ def pkg_config(pkg, cflags=True, ldflags=False, min_ver=None):
 
     if min_ver:
         cmd = ['pkg-config', pkg, '--atleast-version', min_ver ]
-        
+
         if subprocess.call(cmd) != 0:
             cmd = ['pkg-config', '--modversion', pkg ]
             proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
@@ -137,9 +137,9 @@ def pkg_config(pkg, cflags=True, ldflags=False, min_ver=None):
             if not version:
                 raise SystemExit() # pkg-config generates error message already
             else:
-                raise SystemExit('%s version too old (found: %s, required: %s)' 
+                raise SystemExit('%s version too old (found: %s, required: %s)'
                                  % (pkg, version, min_ver))
-    
+
     cmd = ['pkg-config', pkg ]
     if cflags:
         cmd.append('--cflags')
@@ -156,7 +156,7 @@ def pkg_config(pkg, cflags=True, ldflags=False, min_ver=None):
 
     return cflags.decode('us-ascii').split()
 
-        
+
 class build_cython(setuptools.Command):
     user_options = []
     boolean_options = []
@@ -167,21 +167,21 @@ class build_cython(setuptools.Command):
 
     def finalize_options(self):
         pass
-    
+
     def run(self):
         try:
             from Cython.Compiler.Main import compile as cython_compile
             from Cython.Compiler.Options import extra_warnings
         except ImportError:
             raise SystemExit('Cython needs to be installed for this command')
-        
+
         directives = dict(extra_warnings)
         directives['embedsignature'] = True
         directives['language_level'] = 3
-        
+
         # http://trac.cython.org/cython_trac/ticket/714
         directives['warn.maybe_uninitialized'] = False
-        
+
         options = {'include_path': [ os.path.join(basedir, 'Include') ],
                    'recursive': False, 'verbose': True, 'timestamps': False,
                    'compiler_directives': directives, 'warning_errors': True,
@@ -215,11 +215,11 @@ class upload_docs(setuptools.Command):
 
 def fix_docutils():
     '''Work around https://bitbucket.org/birkenfeld/sphinx/issue/1154/'''
-    
-    import docutils.parsers 
+
+    import docutils.parsers
     from docutils.parsers import rst
     old_getclass = docutils.parsers.get_parser_class
-    
+
     # Check if bug is there
     try:
         old_getclass('rst')
@@ -227,7 +227,7 @@ def fix_docutils():
         pass
     else:
         return
-     
+
     def get_parser_class(parser_name):
         """Return the Parser class from the `parser_name` module."""
         if parser_name in ('rst', 'restructuredtext'):
@@ -235,8 +235,8 @@ def fix_docutils():
         else:
             return old_getclass(parser_name)
     docutils.parsers.get_parser_class = get_parser_class
-    
+
     assert docutils.parsers.get_parser_class('rst') is rst.Parser
-    
+
 if __name__ == '__main__':
     main()

@@ -14,5 +14,5 @@
 .. autofunction:: invalidate_entry
 .. autofunction:: get_ino_t_bits
 .. autofunction:: get_off_t_bits
-                  
+
 

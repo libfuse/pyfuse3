@@ -14,7 +14,7 @@ cdef extern from "dirent.h" nogil:
         pass
     cdef struct dirent:
         char* d_name
-        
+
     dirent* readdir(DIR* dirp)
     int readdir_r(DIR *dirp, dirent *entry, dirent **result)
 
