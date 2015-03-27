@@ -94,8 +94,8 @@ def main():
           long_description=long_desc,
           author='Nikolaus Rath',
           author_email='Nikolaus@rath.org',
-          url='http://python-llfuse.googlecode.com/',
-          download_url='http://code.google.com/p/python-llfuse/downloads/',
+          url='https://bitbucket.org/nikratio/python-llfuse/',
+          download_url='https://bitbucket.org/nikratio/python-llfuse/downloads',
           license='LGPL',
           classifiers=['Development Status :: 4 - Beta',
                        'Intended Audience :: Developers',
@@ -114,13 +114,12 @@ def main():
           ext_modules=[Extension('llfuse.capi', ['src/llfuse/capi.c'],
                                   extra_compile_args=compile_args,
                                   extra_link_args=link_args)],
-          cmdclass={'build_cython': build_cython,
-                    'upload_docs': upload_docs },
+          cmdclass={'build_cython': build_cython },
           command_options={
             'build_sphinx': {
                 'version': ('setup.py', LLFUSE_VERSION),
                 'release': ('setup.py', LLFUSE_VERSION),
-	    }}
+            }}
           )
 
 
@@ -197,21 +196,6 @@ class build_cython(setuptools.Command):
             if res.num_errors != 0:
                 raise SystemExit('Cython encountered errors.')
 
-
-class upload_docs(setuptools.Command):
-    user_options = []
-    boolean_options = []
-    description = "Upload documentation"
-
-    def initialize_options(self):
-        pass
-
-    def finalize_options(self):
-        pass
-
-    def run(self):
-        subprocess.check_call(['rsync', '-aHv', '--del', os.path.join(basedir, 'doc', 'html') + '/',
-                               'ebox.rath.org:/srv/www.rath.org/public_html/llfuse-docs/'])
 
 def fix_docutils():
     '''Work around https://bitbucket.org/birkenfeld/sphinx/issue/1154/'''

@@ -15,11 +15,11 @@ Please report any bugs on the `issue tracker`_. For discussion and
 questions, please use the general `FUSE mailing list`_. A searchable
 `mailing list archive`_ is kindly provided by Gmane_.
 
-.. __: http://www.rath.org/llfuse-docs/.
+.. __: http://pythonhosted.org/llfuse/
 .. _FUSE: http://fuse.sourceforge.net/
-.. _LLFUSE homepage: http://code.google.com/p/python-llfuse/
+.. _LLFUSE homepage: https://bitbucket.org/nikratio/python-llfuse/
 .. _FUSE mailing list: https://lists.sourceforge.net/lists/listinfo/fuse-devel
-.. _issue tracker: http://code.google.com/p/python-llfuse/issues/
+.. _issue tracker: https://bitbucket.org/nikratio/python-llfuse/issues
 .. _mailing list archive: http://dir.gmane.org/gmane.comp.file-systems.fuse.devel
 .. _Gmane: http://www.gmane.org/
-.. _S3QL: http://code.google.com/p/s3ql
+.. _S3QL: https://bitbucket.org/nikratio/s3ql/
