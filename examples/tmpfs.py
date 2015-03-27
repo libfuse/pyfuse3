@@ -232,7 +232,7 @@ class Operations(llfuse.Operations):
                  entry_old, entry_new):
 
         if self.get_row("SELECT COUNT(inode) FROM contents WHERE parent_inode=?",
-                        (entry_new.st_ino))[0] > 0:
+                        (entry_new.st_ino,))[0] > 0:
             raise llfuse.FUSEError(errno.ENOTEMPTY)
 
         self.cursor.execute("UPDATE contents SET inode=? WHERE name=? AND parent_inode=?",
@@ -419,4 +419,3 @@ if __name__ == '__main__':
         raise
 
     llfuse.close()
-

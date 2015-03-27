@@ -1,3 +1,7 @@
+UNRELEASED, python-llfuse tip
+
+   * Fixed a syntax error in contrib/tmpfs.py
+
 2013-11-26, python-llfuse 0.40
 
    * Re-raising an exception from a request handler now works
