@@ -6,8 +6,8 @@ method docstrings. It also works around http://trac.cython.org/cython_trac/ticke
 
 Copyright (C) Nikolaus Rath <Nikolaus@rath.org>
 
-This file is part of LLFUSE (http://python-llfuse.googlecode.com).
-LLFUSE can be distributed under the terms of the GNU LGPL.
+This file is part of Python-LLFUSE (http://python-llfuse.googlecode.com).
+Python-LLFUSE can be distributed under the terms of the GNU LGPL.
 '''
 
 from __future__ import division, print_function, absolute_import

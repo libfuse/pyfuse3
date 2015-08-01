@@ -6,8 +6,8 @@ LLFUSE. It is included by llfuse.pyx.
 
 Copyright (C) Nikolaus Rath <Nikolaus@rath.org>
 
-This file is part of LLFUSE (http://python-llfuse.googlecode.com).
-LLFUSE can be distributed under the terms of the GNU LGPL.
+This file is part of Python-LLFUSE (http://python-llfuse.googlecode.com).
+Python-LLFUSE can be distributed under the terms of the GNU LGPL.
 '''
 
 cdef object fill_entry_param(object attr, fuse_entry_param* entry):
@@ -146,7 +146,7 @@ cdef make_fuse_args(list args, fuse_args* f_args):
     cdef int i
     cdef ssize_t size
 
-    args_new = [ b'python-llfuse' ]
+    args_new = [ b'Python-LLFUSE' ]
     for el in args:
         if not isinstance(el, str_t):
             raise TypeError('fuse options must be of type str')

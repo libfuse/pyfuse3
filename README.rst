@@ -2,15 +2,15 @@
   NOTE: We cannot use sophisticated ReST syntax here because this
   file is rendered by Bitbucket.
 
-About LLFUSE
-============
+About Python-LLFUSE
+===================
 
-LLFUSE is a set of Python bindings for the low level FUSE_ API. It
+Python-LLFUSE is a set of Python bindings for the low level FUSE_ API. It
 requires at least FUSE 2.8.0 and supports both Python 2.x and 3.x.
 
-LLFUSE releases can be downloaded from PyPi_. The documentation can be
+Python-LLFUSE releases can be downloaded from PyPi_. The documentation can be
 `read online`__ and is also included in the :file:`doc/html` directory
-of the LLFUSE tarball.
+of the Python-LLFUSE tarball.
 
 Getting Help
 ------------
@@ -22,13 +22,13 @@ questions, please use the general `FUSE mailing list`_. A searchable
 Development Status
 ------------------
 
-The LLFUSE API is not yet stable and may change from one release to
+The Python-LLFUSE API is not yet stable and may change from one release to
 the other.
 
 Contributing
 ------------
 
-The LLFUSE source code is available both on GitHub_ and BitBucket_.
+The Python-LLFUSE source code is available both on GitHub_ and BitBucket_.
 
 .. __: http://pythonhosted.org/llfuse/
 .. _FUSE: http://fuse.sourceforge.net/

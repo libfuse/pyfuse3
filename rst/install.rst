@@ -1,6 +1,6 @@
-===================
- Installing LLFUSE
-===================
+==========================
+ Installing Python-LLFUSE
+==========================
 
 .. highlight:: sh
 
@@ -8,7 +8,7 @@
 Dependencies
 ============
 
-In order to build and run LLFUSE you need the following software:
+In order to build and run Python-LLFUSE you need the following software:
 
 * Linux, FreeBSD or MacOS X system
 * Python_ 2.6 or newer (including Python 3.x), installed with
@@ -37,11 +37,11 @@ For OS-X, you need:
 Stable releases
 ===============
 
-LLFUSE can be installed like any other Python extension. Make sure
+Python-LLFUSE can be installed like any other Python extension. Make sure
 that you have all necessary dependencies installed (when installing
 packages from a distribution, make sure to also install the
 corresponding *-dev* or *-devel* development packages), then download
-and extract the LLFUSE tarball and run ::
+and extract the Python-LLFUSE tarball and run ::
 
   sudo python setup.py install
 

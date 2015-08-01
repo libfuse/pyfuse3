@@ -3,8 +3,8 @@ pyapi.py
 
 Copyright (C) Nikolaus Rath <Nikolaus@rath.org>
 
-This file is part of LLFUSE (http://python-llfuse.googlecode.com).
-LLFUSE can be distributed under the terms of the GNU LGPL.
+This file is part of Python-LLFUSE (http://python-llfuse.googlecode.com).
+Python-LLFUSE can be distributed under the terms of the GNU LGPL.
 '''
 
 from __future__ import division, print_function, absolute_import
@@ -109,7 +109,7 @@ class FUSEError(Exception):
 class Operations(object):
     '''
     This class defines the general and request handler methods that an
-    LLFUSE file system may implement. If a particular request handler
+    Python-LLFUSE file system may implement. If a particular request handler
     has not been implemented, it must raise `FUSEError` with an errorcode of
     `errno.ENOSYS`.
 

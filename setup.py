@@ -2,12 +2,12 @@
 '''
 setup.py
 
-Installation script for LLFUSE.
+Installation script for Python-LLFUSE.
 
 Copyright (C) Nikolaus Rath <Nikolaus@rath.org>
 
-This file is part of LLFUSE (http://python-llfuse.googlecode.com).
-LLFUSE can be distributed under the terms of the GNU LGPL.
+This file is part of Python-LLFUSE (http://python-llfuse.googlecode.com).
+Python-LLFUSE can be distributed under the terms of the GNU LGPL.
 '''
 
 from __future__ import division, print_function, absolute_import
@@ -87,7 +87,7 @@ def main():
               "will not be available" % os.uname()[0])
 
     setuptools.setup(
-          name='llfuse',
+          name='Python-LLFUSE',
           zip_safe=True,
           version=LLFUSE_VERSION,
           description='Python bindings for the low-level FUSE API',

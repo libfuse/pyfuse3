@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 '''
-tmpfs.py - Example file system for python-llfuse.
+tmpfs.py - Example file system for Python-LLFUSE.
 
 This file system stores all data in memory.
 
 Copyright (C) Nikolaus Rath <Nikolaus@rath.org>
 
-This file is part of python-llfuse (http://python-llfuse.googlecode.com).
-python-llfuse can be distributed under the terms of the GNU LGPL.
+This file is part of Python-LLFUSE (http://python-llfuse.googlecode.com).
+Python-LLFUSE can be distributed under the terms of the GNU LGPL.
 '''
 
 from __future__ import division, print_function, absolute_import
@@ -15,7 +15,7 @@ from __future__ import division, print_function, absolute_import
 import os
 import sys
 
-# We are running from the llfuse source directory, make sure
+# We are running from the Python-LLFUSE source directory, make sure
 # that we use modules from this directory
 basedir = os.path.abspath(os.path.join(os.path.dirname(sys.argv[0]), '..'))
 if (os.path.exists(os.path.join(basedir, 'setup.py')) and

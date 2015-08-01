@@ -1,6 +1,6 @@
-======================
- LLFUSE Documentation
-======================
+=============================
+ Python-LLFUSE Documentation
+=============================
 
 .. include:: about.rst
 
@@ -27,4 +27,3 @@ Indices and tables
 
 * :ref:`genindex`
 * :ref:`search`
-

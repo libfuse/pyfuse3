@@ -6,8 +6,8 @@ It is included by llfuse.pyx.
 
 Copyright (C) Nikolaus Rath <Nikolaus@rath.org>
 
-This file is part of LLFUSE (http://python-llfuse.googlecode.com).
-LLFUSE can be distributed under the terms of the GNU LGPL.
+This file is part of Python-LLFUSE (http://python-llfuse.googlecode.com).
+Python-LLFUSE can be distributed under the terms of the GNU LGPL.
 '''
 
 def listdir(path):
@@ -73,7 +73,7 @@ def setxattr(path, name, bytes value, namespace='user'):
     parameter is ignored.
 
     In contrast the `os.setxattr` function from the standard library,
-    the method provided by llfuse is also available for non-Linux
+    the method provided by Python-LLFUSE is also available for non-Linux
     systems.
     '''
 
@@ -135,7 +135,7 @@ def getxattr(path, name, int size_guess=128, namespace='user'):
     parameter is ignored.
 
     In contrast the `os.setxattr` function from the standard library,
-    the method provided by llfuse is also available for non-Linux
+    the method provided by Python-LLFUSE is also available for non-Linux
     systems.
     '''
 

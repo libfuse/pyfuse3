@@ -7,7 +7,7 @@
 .. py:data:: ENOATTR
 
    This errorcode is unfortunately missing in the `errno` module,
-   so it is provided by llfuse instead.
+   so it is provided by Python-LLFUSE instead.
 
 .. py:data:: ROOT_INODE
 
