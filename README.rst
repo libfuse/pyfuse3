@@ -19,6 +19,12 @@ Please report any bugs on the `issue tracker`_. For discussion and
 questions, please use the general `FUSE mailing list`_. A searchable
 `mailing list archive`_ is kindly provided by Gmane_.
 
+Development Status
+------------------
+
+The LLFUSE API is not yet stable and may change from one release to
+the other.
+
 Contributing
 ------------
 
