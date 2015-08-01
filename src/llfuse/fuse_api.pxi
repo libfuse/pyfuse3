@@ -89,7 +89,9 @@ def setxattr(path, name, bytes value, namespace='user'):
 
     cdef int ret
     cdef Py_ssize_t len_
-    cdef char *cvalue, *cpath, *cname
+    cdef char *cvalue
+    cdef char *cpath
+    cdef char *cname
 
     IF TARGET_PLATFORM == 'freebsd':
         cdef int cnamespace
@@ -148,7 +150,9 @@ def getxattr(path, name, int size_guess=128, namespace='user'):
                          % namespace)
 
     cdef ssize_t ret
-    cdef char *buf, *cpath, *cname
+    cdef char *buf
+    cdef char *cpath
+    cdef char *cname
     cdef size_t bufsize
 
     IF TARGET_PLATFORM == 'freebsd':
@@ -394,4 +398,3 @@ def get_off_t_bits():
     result in `OverflowError`.
     '''
     return sizeof(off_t) * 8
-

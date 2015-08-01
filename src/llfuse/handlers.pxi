@@ -397,7 +397,8 @@ cdef void fuse_opendir (fuse_req_t req, fuse_ino_t ino, fuse_file_info *fi) with
 cdef void fuse_readdir (fuse_req_t req, fuse_ino_t ino, size_t size, off_t off,
                         fuse_file_info *fi) with gil:
     cdef int ret
-    cdef char *cname, *buf
+    cdef char *cname
+    cdef char *buf
     cdef size_t len_, acc_size
     cdef c_stat stat
 
