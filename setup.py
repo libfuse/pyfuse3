@@ -197,6 +197,11 @@ class build_cython(setuptools.Command):
                 raise SystemExit('Cython encountered errors.')
 
 
+        # distutils doesn't know that capi.c #includes other files
+        # and thus does not recompile unless we change the modification
+        # date.
+        os.utime(os.path.join(basedir, 'src', 'llfuse', 'capi.c'), None)
+
 def fix_docutils():
     '''Work around https://bitbucket.org/birkenfeld/sphinx/issue/1154/'''
 
