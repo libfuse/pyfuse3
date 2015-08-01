@@ -12,3 +12,5 @@ from __future__ import division, print_function, absolute_import
 from llfuse.pyapi import *
 from llfuse.capi import *
 
+# dunder needs explicit import
+from .capi import __version__

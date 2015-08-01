@@ -11,7 +11,7 @@ LLFUSE can be distributed under the terms of the GNU LGPL.
 # Version is defined in setup.py
 cdef extern from *:
     char* LLFUSE_VERSION
-__version__ = LLFUSE_VERSION
+__version__ = LLFUSE_VERSION.decode('utf-8')
 
 
 ###########
