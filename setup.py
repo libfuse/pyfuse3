@@ -151,9 +151,7 @@ def pkg_config(pkg, cflags=True, ldflags=False, min_ver=None):
     cflags = proc.stdout.readline().rstrip()
     proc.stdout.close()
     if proc.wait() != 0:
-        raise SystemExit('Failed to execute pkg-config. Exit code: %d.\n'
-                         'Check that the %s development package been installed properly.'
-                         % (proc.returncode, pkg))
+        raise SystemExit() # pkg-config generates error message already
 
     return cflags.decode('us-ascii').split()
 
