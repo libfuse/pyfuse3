@@ -48,7 +48,7 @@ nitpicky = True
 
 # General information about the project.
 project = u'Python-LLFUSE'
-copyright = u'2010-2013, Nikolaus Rath'
+copyright = u'2010-2015, Nikolaus Rath'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the

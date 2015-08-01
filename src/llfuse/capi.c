@@ -1,10 +1,10 @@
 /*
 capi.c
 
-Copyright (C) Nikolaus Rath <Nikolaus@rath.org>
+Copyright © 2013 Nikolaus Rath <Nikolaus.org>
 
-This file is part of Python-LLFUSE (http://python-llfuse.googlecode.com).
-Python-LLFUSE can be distributed under the terms of the GNU LGPL.
+This file is part of Python-LLFUSE. This work may be distributed under
+the terms of the GNU LGPL.
 */
 
 #ifdef __gnu_linux__
@@ -16,5 +16,3 @@ Python-LLFUSE can be distributed under the terms of the GNU LGPL.
 #else
 #error "Unable to determine system (Linux/FreeBSD/Darwin)"
 #endif
-
-

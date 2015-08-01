@@ -1,13 +1,14 @@
+# -*- coding: utf-8 -*-
 '''
 sphinx_cython.py
 
 This module removes C style type declarations from function and
 method docstrings. It also works around http://trac.cython.org/cython_trac/ticket/812
 
-Copyright (C) Nikolaus Rath <Nikolaus@rath.org>
+Copyright © 2010 Nikolaus Rath <Nikolaus.org>
 
-This file is part of Python-LLFUSE (http://python-llfuse.googlecode.com).
-Python-LLFUSE can be distributed under the terms of the GNU LGPL.
+This file is part of Python-LLFUSE. This work may be distributed under
+the terms of the GNU LGPL.
 '''
 
 from __future__ import division, print_function, absolute_import

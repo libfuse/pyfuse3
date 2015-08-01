@@ -4,10 +4,11 @@ fuse_api.pxi
 This file defines the Python bindings to common FUSE API functions.
 It is included by llfuse.pyx.
 
-Copyright (C) Nikolaus Rath <Nikolaus@rath.org>
+Copyright © 2013 Nikolaus Rath <Nikolaus.org>
 
-This file is part of Python-LLFUSE (http://python-llfuse.googlecode.com).
-Python-LLFUSE can be distributed under the terms of the GNU LGPL.
+This file is part of Python-LLFUSE. This work may be distributed under
+the terms of the GNU LGPL.
+
 '''
 
 def listdir(path):

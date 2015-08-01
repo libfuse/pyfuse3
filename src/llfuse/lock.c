@@ -3,10 +3,10 @@ lock.c
 
 This file provides the plain C components for the global lock.
 
-Copyright (C) Nikolaus Rath <Nikolaus@rath.org>
+Copyright © 2013 Nikolaus Rath <Nikolaus.org>
 
-This file is part of Python-LLFUSE (http://python-llfuse.googlecode.com).
-Python-LLFUSE can be distributed under the terms of the GNU LGPL.
+This file is part of Python-LLFUSE. This work may be distributed under
+the terms of the GNU LGPL.
 */
 
 #define TRUE  (1==1)
@@ -153,5 +153,3 @@ int c_yield(int count) {
     }
     return pthread_mutex_unlock(&mutex);
 }
-
-

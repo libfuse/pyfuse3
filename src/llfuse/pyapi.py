@@ -1,10 +1,11 @@
+# -*- coding: utf-8 -*-
 '''
 pyapi.py
 
-Copyright (C) Nikolaus Rath <Nikolaus@rath.org>
+Copyright © 2013 Nikolaus Rath <Nikolaus.org>
 
-This file is part of Python-LLFUSE (http://python-llfuse.googlecode.com).
-Python-LLFUSE can be distributed under the terms of the GNU LGPL.
+This file is part of Python-LLFUSE. This work may be distributed under
+the terms of the GNU LGPL.
 '''
 
 from __future__ import division, print_function, absolute_import
@@ -376,8 +377,8 @@ class Operations(object):
         '''Read *size* bytes from *fh* at position *off*
 
         This function should return exactly the number of bytes
-	requested except on EOF or error, otherwise the rest of the
-	data will be substituted with zeroes.
+        requested except on EOF or error, otherwise the rest of the
+        data will be substituted with zeroes.
         '''
 
         raise FUSEError(errno.ENOSYS)
@@ -572,8 +573,3 @@ class Operations(object):
         '''
 
         raise FUSEError(errno.ENOSYS)
-
-
-
-
-
