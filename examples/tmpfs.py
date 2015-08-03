@@ -1,9 +1,10 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 '''
 tmpfs.py - Example file system for Python-LLFUSE.
 
-This file system stores all data in memory.
+This file system stores all data in memory. It is compatible with both Python
+2.x and 3.x.
 
 Copyright © 2013 Nikolaus Rath <Nikolaus.org>
 
