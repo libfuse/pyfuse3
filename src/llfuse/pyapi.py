@@ -13,6 +13,7 @@ from __future__ import division, print_function, absolute_import
 import os
 import errno
 import logging
+import stat
 
 log = logging.getLogger('llfuse')
 
@@ -65,10 +66,25 @@ class EntryAttributes:
                   'st_atime', 'st_atime_ns', 'st_mtime', 'st_mtime_ns',
                   'st_ctime', 'st_ctime_ns' ]
 
-
     def __init__(self):
-        for name in self.__slots__:
-            setattr(self, name, None)
+        self.st_ino = None
+        self.generation = 0
+        self.entry_timeout = 300
+        self.attr_timeout = 300
+        self.st_mode = stat.S_IFREG
+        self.st_nlink = 1
+        self.st_uid = 0
+        self.st_gid = 0
+        self.st_rdev = 0
+        self.st_size = 0
+        self.st_blksize = 4096
+        self.st_blocks = 0
+        self.st_atime = 0
+        self.st_mtime = 0
+        self.st_ctime = 0
+        self.st_atime_ns = None
+        self.st_mtime_ns = None
+        self.st_ctime_ns = None
 
 class StatvfsData:
     '''
