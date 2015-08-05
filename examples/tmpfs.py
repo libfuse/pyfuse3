@@ -262,7 +262,7 @@ class Operations(llfuse.Operations):
         if attr.st_size is not None:
             data = self.get_row('SELECT data FROM inodes WHERE id=?', (inode,))[0]
             if data is None:
-                data = ''
+                data = b''
             if len(data) < attr.st_size:
                 data = data + b'\0' * (attr.st_size - len(data))
             else:
