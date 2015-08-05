@@ -21,9 +21,8 @@ import sys
 # that we use modules from this directory
 basedir = os.path.abspath(os.path.join(os.path.dirname(sys.argv[0]), '..'))
 if (os.path.exists(os.path.join(basedir, 'setup.py')) and
-    os.path.exists(os.path.join(basedir, 'src', 'llfuse.pyx'))):
+    os.path.exists(os.path.join(basedir, 'src', 'llfuse'))):
     sys.path = [os.path.join(basedir, 'src')] + sys.path
-
 
 import llfuse
 import errno
@@ -33,6 +32,7 @@ import sqlite3
 import logging
 from collections import defaultdict
 from llfuse import FUSEError
+from argparse import ArgumentParser
 
 log = logging.getLogger()
 
@@ -393,24 +393,40 @@ class NoSuchRowError(Exception):
     def __str__(self):
         return 'Query produced 0 result rows'
 
-def init_logging():
-    formatter = logging.Formatter('%(message)s')
+def init_logging(debug=False):
+    formatter = logging.Formatter('%(asctime)s.%(msecs)03d %(threadName)s: '
+                                  '[%(name)s] %(message)s', datefmt="%Y-%m-%d %H:%M:%S")
     handler = logging.StreamHandler()
     handler.setFormatter(formatter)
-    handler.setLevel(logging.INFO)
-    log.setLevel(logging.INFO)
-    log.addHandler(handler)
+    root_logger = logging.getLogger()
+    if debug:
+        handler.setLevel(logging.DEBUG)
+        root_logger.setLevel(logging.DEBUG)
+    else:
+        handler.setLevel(logging.INFO)
+        root_logger.setLevel(logging.INFO)
+    root_logger.addHandler(handler)
+
+def parse_args():
+    '''Parse command line'''
+
+    parser = ArgumentParser()
+
+    parser.add_argument('mountpoint', type=str,
+                        help='Where to mount the file system')
+    parser.add_argument('--debug', action='store_true', default=False,
+                        help='Enable debugging output')
+
+    return parser.parse_args()
+
 
 if __name__ == '__main__':
 
-    if len(sys.argv) != 2:
-        raise SystemExit('Usage: %s <mountpoint>' % sys.argv[0])
-
-    init_logging()
-    mountpoint = sys.argv[1]
+    options = parse_args()
+    init_logging(options.debug)
     operations = Operations()
 
-    llfuse.init(operations, mountpoint,
+    llfuse.init(operations, options.mountpoint,
                 [  'fsname=tmpfs', "nonempty" ])
 
     # sqlite3 does not support multithreading
