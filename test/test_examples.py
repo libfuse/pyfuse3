@@ -22,10 +22,11 @@ import pytest
 import stat
 import shutil
 import platform
+import filecmp
 import errno
-from pytest import raises as assert_raises
 
 basename = os.path.join(os.path.dirname(__file__), '..')
+TEST_FILE = __file__
 
 # For Python 2 + 3 compatibility
 if sys.version_info[0] == 2:
@@ -135,3 +136,172 @@ def test_lltest(tmpdir):
         raise
     else:
         umount(mount_process, mnt_dir)
+
+def test_tmpfs(tmpdir):
+    mnt_dir = str(tmpdir)
+    cmdline = [sys.executable,
+               os.path.join(basename, 'examples', 'tmpfs.py'),
+               mnt_dir ]
+    mount_process = subprocess.Popen(cmdline, stdin=subprocess.DEVNULL,
+                                     universal_newlines=True)
+    try:
+        wait_for_mount(mount_process, mnt_dir)
+        tst_write(mnt_dir)
+        tst_mkdir(mnt_dir)
+        tst_symlink(mnt_dir)
+        tst_mknod(mnt_dir)
+        tst_chown(mnt_dir)
+        tst_utimens(mnt_dir)
+        tst_link(mnt_dir)
+        tst_readdir(mnt_dir)
+        tst_statvfs(mnt_dir)
+        tst_truncate(mnt_dir)
+    except:
+        cleanup(mnt_dir)
+        raise
+    else:
+        umount(mount_process, mnt_dir)
+
+def checked_unlink(filename, path, isdir=False):
+    fullname = os.path.join(path, filename)
+    if isdir:
+        os.rmdir(fullname)
+    else:
+        os.unlink(fullname)
+    with pytest.raises(OSError) as exc_info:
+        os.stat(fullname)
+    assert exc_info.value.errno == errno.ENOENT
+    assert filename not in os.listdir(path)
+
+def tst_mkdir(mnt_dir):
+    dirname = name_generator()
+    fullname = mnt_dir + "/" + dirname
+    os.mkdir(fullname)
+    fstat = os.stat(fullname)
+    assert stat.S_ISDIR(fstat.st_mode)
+    assert os.listdir(fullname) ==  []
+    assert fstat.st_nlink == 1
+    assert dirname in os.listdir(mnt_dir)
+    checked_unlink(dirname, mnt_dir, isdir=True)
+
+def tst_symlink(mnt_dir):
+    linkname = name_generator()
+    fullname = mnt_dir + "/" + linkname
+    os.symlink("/imaginary/dest", fullname)
+    fstat = os.lstat(fullname)
+    assert stat.S_ISLNK(fstat.st_mode)
+    assert os.readlink(fullname) == "/imaginary/dest"
+    assert fstat.st_nlink == 1
+    assert linkname in os.listdir(mnt_dir)
+    checked_unlink(linkname, mnt_dir)
+
+def tst_mknod(mnt_dir):
+    filename = os.path.join(mnt_dir, name_generator())
+    shutil.copyfile(TEST_FILE, filename)
+    fstat = os.lstat(filename)
+    assert stat.S_ISREG(fstat.st_mode)
+    assert fstat.st_nlink == 1
+    assert os.path.basename(filename) in os.listdir(mnt_dir)
+    assert filecmp.cmp(TEST_FILE, filename, False)
+    checked_unlink(filename, mnt_dir)
+
+def tst_chown(mnt_dir):
+    filename = os.path.join(mnt_dir, name_generator())
+    os.mkdir(filename)
+    fstat = os.lstat(filename)
+    uid = fstat.st_uid
+    gid = fstat.st_gid
+
+    uid_new = uid + 1
+    os.chown(filename, uid_new, -1)
+    fstat = os.lstat(filename)
+    assert fstat.st_uid == uid_new
+    assert fstat.st_gid == gid
+
+    gid_new = gid + 1
+    os.chown(filename, -1, gid_new)
+    fstat = os.lstat(filename)
+    assert fstat.st_uid == uid_new
+    assert fstat.st_gid == gid_new
+
+    checked_unlink(filename, mnt_dir, isdir=True)
+
+def tst_write(mnt_dir):
+    name = os.path.join(mnt_dir, name_generator())
+    shutil.copyfile(TEST_FILE, name)
+    assert filecmp.cmp(name, TEST_FILE, False)
+    checked_unlink(name, mnt_dir)
+
+def tst_statvfs(mnt_dir):
+    os.statvfs(mnt_dir)
+
+def tst_link(mnt_dir):
+    name1 = os.path.join(mnt_dir, name_generator())
+    name2 = os.path.join(mnt_dir, name_generator())
+    shutil.copyfile(TEST_FILE, name1)
+    assert filecmp.cmp(name1, TEST_FILE, False)
+    os.link(name1, name2)
+
+    fstat1 = os.lstat(name1)
+    fstat2 = os.lstat(name2)
+
+    assert fstat1 == fstat2
+    assert fstat1.st_nlink == 2
+
+    assert os.path.basename(name2) in os.listdir(mnt_dir)
+    assert filecmp.cmp(name1, name2, False)
+    os.unlink(name2)
+    fstat1 = os.lstat(name1)
+    assert fstat1.st_nlink == 1
+    os.unlink(name1)
+
+def tst_readdir(mnt_dir):
+    dir_ = os.path.join(mnt_dir, name_generator())
+    file_ = dir_ + "/" + name_generator()
+    subdir = dir_ + "/" + name_generator()
+    subfile = subdir + "/" + name_generator()
+
+    os.mkdir(dir_)
+    shutil.copyfile(TEST_FILE, file_)
+    os.mkdir(subdir)
+    shutil.copyfile(TEST_FILE, subfile)
+
+    listdir_is = os.listdir(dir_)
+    listdir_is.sort()
+    listdir_should = [ os.path.basename(file_), os.path.basename(subdir) ]
+    listdir_should.sort()
+    assert listdir_is == listdir_should
+
+    os.unlink(file_)
+    os.unlink(subfile)
+    os.rmdir(subdir)
+    os.rmdir(dir_)
+
+def tst_truncate(mnt_dir):
+    filename = os.path.join(mnt_dir, name_generator())
+    shutil.copyfile(TEST_FILE, filename)
+    assert filecmp.cmp(filename, TEST_FILE, False)
+    fstat = os.stat(filename)
+    size = fstat.st_size
+    fd = os.open(filename, os.O_RDWR)
+
+    os.ftruncate(fd, size + 1024) # add > 1 block
+    assert os.stat(filename).st_size == size + 1024
+
+    os.ftruncate(fd, size - 1024) # Truncate > 1 block
+    assert os.stat(filename).st_size == size - 1024
+
+    os.close(fd)
+    os.unlink(filename)
+
+def tst_utimens(mnt_dir):
+    filename = os.path.join(mnt_dir, name_generator())
+    os.mkdir(filename)
+    fstat = os.lstat(filename)
+    atime = fstat.st_atime + 42.28
+    mtime = fstat.st_mtime - 42.23
+    os.utime(filename, (atime, mtime))
+    fstat = os.lstat(filename)
+    assert fstat.st_atime == atime
+    assert fstat.st_mtime == mtime
+    checked_unlink(filename, mnt_dir, isdir=True)

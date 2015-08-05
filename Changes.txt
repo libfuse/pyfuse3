@@ -4,6 +4,7 @@ UNRELEASED, python-llfuse tip
    * Introduced an `llfuse.__version__` attribute.
    * Added more reasonable default values for `llfuse.EntryAttributes`.
    * Added new minimal example, `examples/lltest.py`.
+   * Added unit tests.
 
 2013-11-26, python-llfuse 0.40
 
