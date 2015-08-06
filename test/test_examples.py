@@ -162,6 +162,37 @@ def test_tmpfs(tmpdir):
     else:
         umount(mount_process, mnt_dir)
 
+@pytest.mark.skipif(sys.version_info < (3,3),
+                    reason="requires python3.3")
+def test_passthroughfs(tmpdir):
+    mnt_dir = str(tmpdir.mkdir('mnt'))
+    src_dir = str(tmpdir.mkdir('src'))
+    cmdline = [sys.executable,
+               os.path.join(basename, 'examples', 'passthroughfs.py'),
+               src_dir, mnt_dir ]
+    mount_process = subprocess.Popen(cmdline, stdin=subprocess.DEVNULL,
+                                     universal_newlines=True)
+    try:
+        wait_for_mount(mount_process, mnt_dir)
+        tst_write(mnt_dir)
+        tst_mkdir(mnt_dir)
+        tst_symlink(mnt_dir)
+        tst_mknod(mnt_dir)
+        if os.getuid() == 0:
+            tst_chown(mnt_dir)
+        # Underlying fs may not have full nanosecond resolution
+        tst_utimens(mnt_dir, ns_tol=1000)
+        tst_link(mnt_dir)
+        tst_readdir(mnt_dir)
+        tst_statvfs(mnt_dir)
+        tst_truncate(mnt_dir)
+        tst_passthrough(src_dir, mnt_dir)
+    except:
+        cleanup(mnt_dir)
+        raise
+    else:
+        umount(mount_process, mnt_dir)
+
 def checked_unlink(filename, path, isdir=False):
     fullname = os.path.join(path, filename)
     if isdir:
@@ -180,7 +211,7 @@ def tst_mkdir(mnt_dir):
     fstat = os.stat(fullname)
     assert stat.S_ISDIR(fstat.st_mode)
     assert os.listdir(fullname) ==  []
-    assert fstat.st_nlink == 1
+    assert fstat.st_nlink in (1,2)
     assert dirname in os.listdir(mnt_dir)
     checked_unlink(dirname, mnt_dir, isdir=True)
 
@@ -294,7 +325,7 @@ def tst_truncate(mnt_dir):
     os.close(fd)
     os.unlink(filename)
 
-def tst_utimens(mnt_dir):
+def tst_utimens(mnt_dir, ns_tol=0):
     filename = os.path.join(mnt_dir, name_generator())
     os.mkdir(filename)
     fstat = os.lstat(filename)
@@ -313,7 +344,30 @@ def tst_utimens(mnt_dir):
     assert abs(fstat.st_atime - atime) < 1e-3
     assert abs(fstat.st_mtime - mtime) < 1e-3
     if sys.version_info >= (3,3):
-        assert fstat.st_atime_ns == atime_ns
-        assert fstat.st_mtime_ns == mtime_ns
+        assert abs(fstat.st_atime_ns - atime_ns) <= ns_tol
+        assert abs(fstat.st_mtime_ns - mtime_ns) <= ns_tol
 
     checked_unlink(filename, mnt_dir, isdir=True)
+
+def tst_passthrough(src_dir, mnt_dir):
+    name = name_generator()
+    src_name = os.path.join(src_dir, name)
+    mnt_name = os.path.join(src_dir, name)
+    assert name not in os.listdir(src_dir)
+    assert name not in os.listdir(mnt_dir)
+    with open(src_name, 'w') as fh:
+        fh.write('Hello, world')
+    assert name in os.listdir(src_dir)
+    assert name in os.listdir(mnt_dir)
+    assert os.stat(src_name) == os.stat(mnt_name)
+
+    name = name_generator()
+    src_name = os.path.join(src_dir, name)
+    mnt_name = os.path.join(src_dir, name)
+    assert name not in os.listdir(src_dir)
+    assert name not in os.listdir(mnt_dir)
+    with open(mnt_name, 'w') as fh:
+        fh.write('Hello, world')
+    assert name in os.listdir(src_dir)
+    assert name in os.listdir(mnt_dir)
+    assert os.stat(src_name) == os.stat(mnt_name)

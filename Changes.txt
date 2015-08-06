@@ -5,6 +5,8 @@ UNRELEASED, python-llfuse tip
    * Added more reasonable default values for `llfuse.EntryAttributes`.
    * Added new minimal example, `examples/lltest.py`.
    * Added unit tests.
+   * Added an example for a pass-through file system,
+     `examples/passthroughfs.py`.
 
 2013-11-26, python-llfuse 0.40
 
