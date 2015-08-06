@@ -298,10 +298,22 @@ def tst_utimens(mnt_dir):
     filename = os.path.join(mnt_dir, name_generator())
     os.mkdir(filename)
     fstat = os.lstat(filename)
+
     atime = fstat.st_atime + 42.28
     mtime = fstat.st_mtime - 42.23
-    os.utime(filename, (atime, mtime))
+    if sys.version_info < (3,3):
+        os.utime(filename, (atime, mtime))
+    else:
+        atime_ns = fstat.st_atime_ns + int(42.28*1e9)
+        mtime_ns = fstat.st_mtime_ns - int(42.23*1e9)
+        os.utime(filename, None, ns=(atime_ns, mtime_ns))
+
     fstat = os.lstat(filename)
-    assert fstat.st_atime == atime
-    assert fstat.st_mtime == mtime
+
+    assert abs(fstat.st_atime - atime) < 1e-3
+    assert abs(fstat.st_mtime - mtime) < 1e-3
+    if sys.version_info >= (3,3):
+        assert fstat.st_atime_ns == atime_ns
+        assert fstat.st_mtime_ns == mtime_ns
+
     checked_unlink(filename, mnt_dir, isdir=True)

@@ -74,9 +74,9 @@ class Operations(llfuse.Operations):
             uid       INT NOT NULL,
             gid       INT NOT NULL,
             mode      INT NOT NULL,
-            mtime     REAL NOT NULL,
-            atime     REAL NOT NULL,
-            ctime     REAL NOT NULL,
+            mtime_ns  INT NOT NULL,
+            atime_ns  INT NOT NULL,
+            ctime_ns  INT NOT NULL,
             target    BLOB(256) ,
             size      INT NOT NULL DEFAULT 0,
             rdev      INT NOT NULL DEFAULT 0,
@@ -95,12 +95,12 @@ class Operations(llfuse.Operations):
         )""")
 
         # Insert root directory
-        self.cursor.execute("INSERT INTO inodes (id,mode,uid,gid,mtime,atime,ctime) "
+        now_ns = int(time() * 1e9)
+        self.cursor.execute("INSERT INTO inodes (id,mode,uid,gid,mtime_ns,atime_ns,ctime_ns) "
                             "VALUES (?,?,?,?,?,?,?)",
                             (llfuse.ROOT_INODE, stat.S_IFDIR | stat.S_IRUSR | stat.S_IWUSR
                               | stat.S_IXUSR | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH
-                              | stat.S_IXOTH, os.getuid(), os.getgid(), time(),
-                              time(), time()))
+                              | stat.S_IXOTH, os.getuid(), os.getgid(), now_ns, now_ns, now_ns))
         self.cursor.execute("INSERT INTO contents (name, parent_inode, inode) VALUES (?,?,?)",
                             (b'..', llfuse.ROOT_INODE, llfuse.ROOT_INODE))
 
@@ -154,9 +154,9 @@ class Operations(llfuse.Operations):
 
         entry.st_blksize = 512
         entry.st_blocks = 1
-        entry.st_atime = row['atime']
-        entry.st_mtime = row['mtime']
-        entry.st_ctime = row['ctime']
+        entry.st_atime_ns = row['atime_ns']
+        entry.st_mtime_ns = row['mtime_ns']
+        entry.st_ctime_ns = row['ctime_ns']
 
         return entry
 
@@ -286,17 +286,17 @@ class Operations(llfuse.Operations):
             self.cursor.execute('UPDATE inodes SET rdev=? WHERE id=?',
                                 (attr.st_rdev, inode))
 
-        if attr.st_atime is not None:
-            self.cursor.execute('UPDATE inodes SET atime=? WHERE id=?',
-                                (attr.st_atime, inode))
+        if attr.st_atime_ns is not None:
+            self.cursor.execute('UPDATE inodes SET atime_ns=? WHERE id=?',
+                                (attr.st_atime_ns, inode))
 
-        if attr.st_mtime is not None:
-            self.cursor.execute('UPDATE inodes SET mtime=? WHERE id=?',
-                                (attr.st_mtime, inode))
+        if attr.st_mtime_ns is not None:
+            self.cursor.execute('UPDATE inodes SET mtime_ns=? WHERE id=?',
+                                (attr.st_mtime_ns, inode))
 
-        if attr.st_ctime is not None:
-            self.cursor.execute('UPDATE inodes SET ctime=? WHERE id=?',
-                                (attr.st_ctime, inode))
+        if attr.st_ctime_ns is not None:
+            self.cursor.execute('UPDATE inodes SET ctime_ns=? WHERE id=?',
+                                (attr.st_ctime_ns, inode))
 
         return self.getattr(inode)
 
@@ -349,22 +349,21 @@ class Operations(llfuse.Operations):
                      name, inode_p)
             raise FUSEError(errno.EINVAL)
 
-        self.cursor.execute('INSERT INTO inodes (uid, gid, mode, mtime, atime, '
-                            'ctime, target, rdev) VALUES(?, ?, ?, ?, ?, ?, ?, ?)',
-                            (ctx.uid, ctx.gid, mode, time(), time(), time(), target, rdev))
+        now_ns = int(time() * 1e9)
+        self.cursor.execute('INSERT INTO inodes (uid, gid, mode, mtime_ns, atime_ns, '
+                            'ctime_ns, target, rdev) VALUES(?, ?, ?, ?, ?, ?, ?, ?)',
+                            (ctx.uid, ctx.gid, mode, now_ns, now_ns, now_ns, target, rdev))
 
         inode = self.cursor.lastrowid
         self.db.execute("INSERT INTO contents(name, inode, parent_inode) VALUES(?,?,?)",
                         (name, inode, inode_p))
         return self.getattr(inode)
 
-
     def read(self, fh, offset, length):
         data = self.get_row('SELECT data FROM inodes WHERE id=?', (fh,))[0]
         if data is None:
             data = b''
         return data[offset:offset+length]
-
 
     def write(self, fh, offset, buf):
         data = self.get_row('SELECT data FROM inodes WHERE id=?', (fh,))[0]
