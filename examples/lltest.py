@@ -3,10 +3,11 @@
 '''
 lltest.py - Example file system for Python-LLFUSE.
 
-This program presents a static file system containing a single file. It
-is compatible with both Python 2.x and 3.x.
+This program presents a static file system containing a single file. It is
+compatible with both Python 2.x and 3.x. Based on an example from Geriod Entrup.
 
 Copyright © 2015 Nikolaus Rath <Nikolaus.org>
+Copyright © 2015 Gerion Entrup.
 
 This file is part of Python-LLFUSE. This work may be distributed under
 the terms of the GNU LGPL.
