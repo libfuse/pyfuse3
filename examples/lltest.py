@@ -4,7 +4,7 @@
 lltest.py - Example file system for Python-LLFUSE.
 
 This program presents a static file system containing a single file. It is
-compatible with both Python 2.x and 3.x. Based on an example from Geriod Entrup.
+compatible with both Python 2.x and 3.x. Based on an example from Gerion Entrup.
 
 Copyright © 2015 Nikolaus Rath <Nikolaus.org>
 Copyright © 2015 Gerion Entrup.
