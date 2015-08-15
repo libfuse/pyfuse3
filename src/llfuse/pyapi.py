@@ -126,9 +126,10 @@ class FUSEError(Exception):
 class Operations(object):
     '''
     This class defines the general and request handler methods that an
-    Python-LLFUSE file system may implement. If a particular request handler
-    has not been implemented, it must raise `FUSEError` with an errorcode of
-    `errno.ENOSYS`.
+    Python-LLFUSE file system may implement. If a particular request handler has
+    not been implemented, it must raise `FUSEError` with an errorcode of
+    `errno.ENOSYS`. Further requests of this type will then be handled directly
+    by the FUSE kernel module without calling the handler again.
 
     It is recommended that file systems are derived from this class
     and only overwrite the handlers that they actually implement. (The
