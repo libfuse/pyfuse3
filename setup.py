@@ -18,6 +18,21 @@ import sys
 import os
 import subprocess
 
+# Disable Cython support in setuptools. It fails under some conditions
+# (http://trac.cython.org/ticket/859), and we have our own build_cython command
+# anyway.
+try:
+    import Cython.Distutils.build_ext
+except ImportError:
+    pass
+else:
+    # We can't delete Cython.Distutils.build_ext directly,
+    # because the build_ext class (that is imported from
+    # the build_ext module in __init__.py) shadows the
+    # build_ext module.
+    module = sys.modules['Cython.Distutils.build_ext']
+    del module.build_ext
+
 try:
     import setuptools
 except ImportError:
