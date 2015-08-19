@@ -1,12 +1,11 @@
 '''
-capi.pyx
+capi.pxy
 
-Copyright (C) Nikolaus Rath <Nikolaus@rath.org>
+Copyright © 2013 Nikolaus Rath <Nikolaus.org>
 
-This file is part of LLFUSE (http://python-llfuse.googlecode.com).
-LLFUSE can be distributed under the terms of the GNU LGPL.
+This file is part of Python-LLFUSE. This work may be distributed under
+the terms of the GNU LGPL.
 '''
-
 
 # Version is defined in setup.py
 cdef extern from *:
