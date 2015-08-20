@@ -1,4 +1,4 @@
-UNRELEASED, python-llfuse tip
+2015-08-20, python-llfuse 0.41
 
    * Fixed a syntax error in contrib/tmpfs.py
    * Introduced an `llfuse.__version__` attribute.
