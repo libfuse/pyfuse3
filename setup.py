@@ -108,7 +108,7 @@ def main():
               "will not be available" % os.uname()[0])
 
     setuptools.setup(
-          name='Python-LLFUSE',
+          name='llfuse',
           zip_safe=True,
           version=LLFUSE_VERSION,
           description='Python bindings for the low-level FUSE API',
