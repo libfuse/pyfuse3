@@ -1,6 +1,7 @@
 ..
-  NOTE: We cannot use sophisticated ReST syntax here because this
-  file is rendered by Bitbucket.
+  NOTE: We cannot use sophisticated ReST syntax (like
+  e.g. :file:`foo`) here because this isn't rendered correctly
+  by PyPi and/or BitBucket.
 
 About Python-LLFUSE
 ===================
@@ -8,9 +9,9 @@ About Python-LLFUSE
 Python-LLFUSE is a set of Python bindings for the low level FUSE_ API. It
 requires at least FUSE 2.8.0 and supports both Python 2.x and 3.x.
 
-Python-LLFUSE releases can be downloaded from PyPi_. The documentation can be
-`read online`__ and is also included in the :file:`doc/html` directory
-of the Python-LLFUSE tarball.
+Python-LLFUSE releases can be downloaded from PyPi_. The documentation
+can be `read online`__ and is also included in the ``doc/html``
+directory of the Python-LLFUSE tarball.
 
 Getting Help
 ------------
