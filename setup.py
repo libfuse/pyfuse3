@@ -9,7 +9,6 @@ Copyright © 2010 Nikolaus Rath <Nikolaus.org>
 
 This file is part of Python-LLFUSE. This work may be distributed under
 the terms of the GNU LGPL.
-
 '''
 
 from __future__ import division, print_function, absolute_import
@@ -17,6 +16,7 @@ from __future__ import division, print_function, absolute_import
 import sys
 import os
 import subprocess
+import warnings
 
 # Disable Cython support in setuptools. It fails under some conditions
 # (http://trac.cython.org/ticket/859), and we have our own build_cython command
@@ -44,6 +44,13 @@ from setuptools import Extension
 basedir = os.path.abspath(os.path.dirname(sys.argv[0]))
 sys.path.insert(0, os.path.join(basedir, 'util'))
 
+# When running from HG repo, enable all warnings
+DEVELOPER_MODE = (os.path.exists(os.path.join(basedir, '.hg')) or
+                  os.path.exists(os.path.join(basedir, '.git')))
+if DEVELOPER_MODE:
+    print('found hg or git repository, running in developer mode')
+    warnings.simplefilter('default')
+
 # Add src to load path, important for Sphinx autodoc
 # to work properly
 sys.path.insert(0, os.path.join(basedir, 'src'))
@@ -63,28 +70,25 @@ def main():
         long_desc = fh.read()
 
     compile_args = pkg_config('fuse', cflags=True, ldflags=False, min_ver='2.8.0')
-    compile_args += ['-DFUSE_USE_VERSION=28', '-Wall',
+    compile_args += ['-DFUSE_USE_VERSION=28', '-Wall', '-Wextra', '-Wconversion',
+                     '-Wno-sign-conversion',
                      '-DLLFUSE_VERSION="%s"' % LLFUSE_VERSION]
 
-    # Enable fatal warnings only when compiling from Mercurial tip.
-    # Otherwise, this breaks both forward and backward compatibility
-    # (because compilation with newer compiler may fail if additional
-    # warnings are added, and compilation with older compiler may fail
-    # if it doesn't know about a newer -Wno-* option).
-    if os.path.exists(os.path.join(basedir, 'MANIFEST.in')):
-        print('MANIFEST.in exists, compiling with developer options')
-        compile_args += [ '-Werror', '-Wextra', '-Wconversion',
-                          '-Wno-sign-conversion' ]
+    # Enable fatal warnings only when compiling from Mercurial tip.  (otherwise
+    # we break forward compatibility because compilation with newer compiler may
+    # fail if additional warnings are added)
+    if DEVELOPER_MODE:
+        compile_args.append('-Werror')
 
-        # http://bugs.python.org/issue7576
-        if sys.version_info[0] == 3 and sys.version_info[1] < 2:
-            compile_args.append('-Wno-missing-field-initializers')
+    # http://bugs.python.org/issue7576
+    if sys.version_info[0] == 3 and sys.version_info[1] < 2:
+        compile_args.append('-Wno-missing-field-initializers')
 
-        # http://trac.cython.org/cython_trac/ticket/811
-        compile_args.append('-Wno-unused-but-set-variable')
+    # http://trac.cython.org/cython_trac/ticket/811
+    compile_args.append('-Wno-unused-but-set-variable')
 
-        # http://trac.cython.org/cython_trac/ticket/813
-        compile_args.append('-Wno-maybe-uninitialized')
+    # http://trac.cython.org/cython_trac/ticket/813
+    compile_args.append('-Wno-maybe-uninitialized')
 
     # http://bugs.python.org/issue969718
     if sys.version_info[0] == 2:
@@ -185,11 +189,16 @@ class build_cython(setuptools.Command):
     def run(self):
         try:
             from Cython.Compiler.Main import compile as cython_compile
-            from Cython.Compiler.Options import extra_warnings
+            from Cython.Compiler import Options as DefaultOptions
         except ImportError:
             raise SystemExit('Cython needs to be installed for this command')
 
-        directives = dict(extra_warnings)
+        # Cannot be passed directly to cython_compile()
+        DefaultOptions.warning_errors = True
+        DefaultOptions.fast_fail = True
+
+        directives = dict()
+        directives.update(DefaultOptions.extra_warnings)
         directives['embedsignature'] = True
         directives['language_level'] = 3
 
@@ -197,9 +206,8 @@ class build_cython(setuptools.Command):
         directives['warn.maybe_uninitialized'] = False
 
         options = {'include_path': [ os.path.join(basedir, 'Include') ],
-                   'recursive': False, 'verbose': True, 'timestamps': False,
-                   'compiler_directives': directives, 'warning_errors': True,
-                   'compile_time_env': {} }
+                   'verbose': True, 'timestamps': False, 'compile_time_env': {},
+                   'compiler_directives': directives }
 
         for sysname in ('linux', 'freebsd', 'darwin'):
             print('compiling capi.pyx to capi_%s.c...' % (sysname,))
