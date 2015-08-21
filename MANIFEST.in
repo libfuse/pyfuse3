@@ -5,6 +5,7 @@ graft Include
 graft examples
 graft rst
 graft util
+graft test
 exclude MANIFEST.in
 recursive-include src *.pyx *.pxi *.c
 global-exclude *.pyc
