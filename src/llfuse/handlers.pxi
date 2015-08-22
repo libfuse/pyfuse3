@@ -85,21 +85,33 @@ cdef void fuse_setattr (fuse_req_t req, fuse_ino_t ino, c_stat *stat,
     cdef int ret
     cdef c_stat stat_n
     cdef int timeout
+    cdef timespec now
 
     try:
         attr = EntryAttributes()
+        if to_set & (FUSE_SET_ATTR_ATIME_NOW | FUSE_SET_ATTR_MTIME_NOW):
+            ret = clock_gettime(CLOCK_REALTIME, &now)
+            if ret != 0:
+                log.error('fuse_setattr(): clock_gettime(CLOCK_REALTIME) failed with %s',
+                          strerror(errno.errno))
 
         # Type casting required on 64bit, where double
         # is smaller than long int.
         if to_set & FUSE_SET_ATTR_ATIME:
             attr.st_atime = <double> stat.st_atime + <double> GET_ATIME_NS(stat) * 1e-9
             attr.st_atime_ns = stat.st_atime * 10**9 + GET_ATIME_NS(stat)
+        elif to_set & FUSE_SET_ATTR_ATIME_NOW:
+            attr.st_atime = now.tv_sec
+            attr.st_atime_ns = now.tv_nsec
         else:
             attr.st_atime = attr.st_atime_ns = None
 
         if to_set & FUSE_SET_ATTR_MTIME:
             attr.st_mtime = <double> stat.st_mtime + <double> GET_MTIME_NS(stat) * 1e-9
             attr.st_mtime_ns = stat.st_mtime * 10**9 + GET_MTIME_NS(stat)
+        elif to_set & FUSE_SET_ATTR_MTIME_NOW:
+            attr.st_mtime = now.tv_sec
+            attr.st_mtime_ns = now.tv_nsec
         else:
             attr.st_mtime = attr.st_mtime_ns = None
 

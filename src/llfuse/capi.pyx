@@ -24,6 +24,7 @@ from libc.stdint cimport uint32_t
 from libc.stdlib cimport const_char
 from libc cimport stdlib, string, errno, dirent, xattr
 from posix.unistd cimport getpid
+from posix.time cimport clock_gettime, CLOCK_REALTIME, timespec
 from cpython.bytes cimport (PyBytes_AsStringAndSize, PyBytes_FromStringAndSize,
                             PyBytes_AsString, PyBytes_FromString)
 cimport cpython.exc

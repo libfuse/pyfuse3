@@ -4,6 +4,12 @@ UNRELEASED, python-llfuse tip
      Tests now support the --installed option, produce prettier output,
      and check for error messages printed to stderr or stdout.
 
+   * Python-LLFUSE can now also be built on NetBSD.
+
+   * Added support for FUSE_SET_ATTR_ATIME_NOW and
+     FUSE_SET_ATTR_MTIME_NOW setattr flags. Previosly, these would be
+     silently ignored.
+
 2015-08-20, python-llfuse 0.41
 
    * Fixed a syntax error in contrib/tmpfs.py
