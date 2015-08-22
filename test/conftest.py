@@ -38,9 +38,18 @@ def pytest_configure(config):
     # modules from here
     basedir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
     if not config.getoption('installed'):
+        llfuse_path = os.path.join(basedir, 'src')
         if (os.path.exists(os.path.join(basedir, 'setup.py')) and
             os.path.exists(os.path.join(basedir, 'src', 'llfuse'))):
-            sys.path.insert(0, basedir)
+            sys.path.insert(0, llfuse_path)
+
+        # Make sure that called processes use the same path
+        pp = os.environ.get('PYTHONPATH', None)
+        if pp:
+            pp = '%s:%s' (llfuse_path, pp)
+        else:
+            pp = llfuse_path
+        os.environ['PYTHONPATH'] = pp
 
     # When running from HG repo, enable all warnings
     if os.path.exists(os.path.join(basedir, '.hg')):
