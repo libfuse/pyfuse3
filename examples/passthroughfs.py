@@ -261,9 +261,6 @@ class Operations(llfuse.Operations):
             if attr.st_uid is not None:
                 os.chown(path, attr.st_uid, attr.st_gid, follow_symlinks=False)
 
-            assert attr.st_rdev is None
-            assert attr.st_ctime_ns is None
-
             assert (attr.st_atime is None) == (attr.st_mtime is None)
             if attr.st_atime is not None:
                 os.utime(path, None, follow_symlinks=False,

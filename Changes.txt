@@ -10,6 +10,8 @@ UNRELEASED, python-llfuse tip
      FUSE_SET_ATTR_MTIME_NOW setattr flags. Previosly, these would be
      silently ignored.
 
+   * Fixed an AssertionError in examples/passthroughfs.py
+
 2015-08-20, python-llfuse 0.41
 
    * Fixed a syntax error in contrib/tmpfs.py
