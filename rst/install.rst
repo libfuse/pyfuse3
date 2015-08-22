@@ -10,7 +10,7 @@ Dependencies
 
 In order to build and run Python-LLFUSE you need the following software:
 
-* Linux, FreeBSD or MacOS X system
+* Linux, FreeBSD, NetBSD or MacOS X system
 * Python_ 2.6 or newer (including Python 3.x), installed with
   development headers
 * The `setuptools`_ Python module, version 1.0 or newer.
@@ -27,7 +27,7 @@ When using Linux, you also need:
   headers (typically distributions provide them in a *libfuse-devel*
   or *libfuse-dev* package).
 
-In case of FreeBSD, you will need:
+In case of FreeBSD and NetBSD you will need:
 
 * The FUSE4BSD_ kernel module.
 

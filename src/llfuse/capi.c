@@ -11,6 +11,8 @@ the terms of the GNU LGPL.
 #include "capi_linux.c"
 #elif __FreeBSD__
 #include "capi_freebsd.c"
+#elif __NetBSD__
+#include "capi_freebsd.c"
 #elif __APPLE__ && __MACH__
 #include "capi_darwin.c"
 #else

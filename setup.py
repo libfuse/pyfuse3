@@ -101,7 +101,7 @@ def main():
         link_args.append('-lrt')
         compile_args.append('-DHAVE_STRUCT_STAT_ST_ATIM')
 
-    elif os.uname()[0] in ('Darwin', 'FreeBSD'):
+    elif os.uname()[0] in ('Darwin', 'FreeBSD', 'NetBSD'):
         compile_args.append('-DHAVE_STRUCT_STAT_ST_ATIMESPEC')
     else:
         print("NOTE: unknown system (%s), nanosecond resolution file times "
