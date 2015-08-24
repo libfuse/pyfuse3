@@ -34,6 +34,13 @@ from collections import defaultdict
 from llfuse import FUSEError
 from argparse import ArgumentParser
 
+try:
+    import faulthandler
+except ImportError:
+    pass
+else:
+    faulthandler.enable()
+
 log = logging.getLogger()
 
 # For Python 2 + 3 compatibility

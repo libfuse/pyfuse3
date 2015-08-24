@@ -50,6 +50,9 @@ from llfuse import FUSEError
 from os import fsencode, fsdecode
 from collections import defaultdict
 
+import faulthandler
+faulthandler.enable()
+
 log = logging.getLogger(__name__)
 
 class Operations(llfuse.Operations):

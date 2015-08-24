@@ -31,6 +31,13 @@ import logging
 import errno
 import llfuse
 
+try:
+    import faulthandler
+except ImportError:
+    pass
+else:
+    faulthandler.enable()
+
 log = logging.getLogger(__name__)
 
 class TestFs(llfuse.Operations):

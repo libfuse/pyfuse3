@@ -52,6 +52,13 @@ def pytest_configure(config):
             pp = llfuse_path
         os.environ['PYTHONPATH'] = pp
 
+    try:
+        import faulthandler
+    except ImportError:
+        pass
+    else:
+        faulthandler.enable()
+
     # When running from VCS repo, enable all warnings
     if os.path.exists(os.path.join(basedir, 'MANIFEST.in')):
         import warnings
