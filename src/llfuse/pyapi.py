@@ -529,7 +529,8 @@ class Operations(object):
     def setxattr(self, inode, name, value):
         '''Set an extended attribute.
 
-        The attribute may or may not exist already.
+        The attribute may or may not exist already. Both *name* and *value* must
+        be of type `bytes`. *name* must not contain zero-bytes (``\0``).
         '''
 
         raise FUSEError(errno.ENOSYS)
@@ -537,22 +538,28 @@ class Operations(object):
     def getxattr(self, inode, name):
         '''Return extended attribute value
 
-        If the attribute does not exist, the method must raise
-        `FUSEError` with an error code of `ENOATTR`.
+        If the attribute does not exist, the method must raise `FUSEError` with
+        an error code of `ENOATTR`. *name* must be of type `bytes` and must
+        not contain zero-bytes (``\0``).
         '''
 
         raise FUSEError(errno.ENOSYS)
 
     def listxattr(self, inode):
-        '''Get list of extended attribute names'''
+        '''Get list of extended attribute names.
+
+        This method will return an iterator over a sequence of `bytes` objects.
+        The objects are guaranteed not to include zero-bytes (``\0``).
+        '''
 
         raise FUSEError(errno.ENOSYS)
 
     def removexattr(self, inode, name):
         '''Remove extended attribute
 
-        If the attribute does not exist, the method must raise
-        `FUSEError` with an error code of `ENOATTR`.
+        If the attribute does not exist, the method must raise `FUSEError` with
+        an error code of `ENOATTR`. *name* must be of type `bytes` and must not
+        contain zero-bytes (``\0``).
         '''
 
         raise FUSEError(errno.ENOSYS)
