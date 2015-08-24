@@ -2,6 +2,7 @@ import sys
 import os.path
 import logging
 import pytest
+import gc
 
 # Converted to autouse fixture below if capture is activated
 def check_test_output(request, capfd):
@@ -68,3 +69,8 @@ def pytest_configure(config):
         handler.setFormatter(formatter)
         root_logger.addHandler(handler)
         root_logger.setLevel(logging.DEBUG)
+
+# Run gc.collect() at the end of every test, so that we get ResourceWarnings
+# as early as possible.
+def pytest_runtest_teardown(item, nextitem):
+    gc.collect()
