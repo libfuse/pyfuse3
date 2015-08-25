@@ -10,8 +10,8 @@ the terms of the GNU LGPL.
 '''
 
 from fuse_common cimport *
-from libc.sys.stat cimport *
-from libc.sys.types cimport *
+from posix.stat cimport *
+from posix.types cimport *
 from libc.sys.statvfs cimport *
 from libc.stdlib cimport const_char
 from libc.stdint cimport uint32_t
@@ -30,7 +30,7 @@ cdef extern from "fuse_lowlevel.h" nogil:
     struct fuse_entry_param:
         fuse_ino_t ino
         unsigned long generation
-        stat attr
+        struct_stat attr
         double attr_timeout
         double entry_timeout
 
@@ -70,7 +70,7 @@ cdef extern from "fuse_lowlevel.h" nogil:
         void (*forget) (fuse_req_t req, fuse_ino_t ino, ulong_t nlookup)
         void (*getattr) (fuse_req_t req, fuse_ino_t ino,
                          fuse_file_info *fi)
-        void (*setattr) (fuse_req_t req, fuse_ino_t ino, stat *attr,
+        void (*setattr) (fuse_req_t req, fuse_ino_t ino, struct_stat *attr,
                          int to_set, fuse_file_info *fi)
         void (*readlink) (fuse_req_t req, fuse_ino_t ino)
         void (*mknod) (fuse_req_t req, fuse_ino_t parent, const_char *name,
@@ -119,7 +119,7 @@ cdef extern from "fuse_lowlevel.h" nogil:
     int fuse_reply_entry(fuse_req_t req, fuse_entry_param *e)
     int fuse_reply_create(fuse_req_t req, fuse_entry_param *e,
                           fuse_file_info *fi)
-    int fuse_reply_attr(fuse_req_t req, stat *attr,
+    int fuse_reply_attr(fuse_req_t req, struct_stat *attr,
                         double attr_timeout)
     int fuse_reply_readlink(fuse_req_t req, const_char *link)
     int fuse_reply_open(fuse_req_t req, fuse_file_info *fi)
@@ -129,7 +129,7 @@ cdef extern from "fuse_lowlevel.h" nogil:
     int fuse_reply_xattr(fuse_req_t req, size_t count)
 
     size_t fuse_add_direntry(fuse_req_t req, const_char *buf, size_t bufsize,
-                             const_char *name, stat *stbuf,
+                             const_char *name, struct_stat *stbuf,
                              off_t off)
 
     int fuse_lowlevel_notify_inval_inode(fuse_chan *ch, fuse_ino_t ino,

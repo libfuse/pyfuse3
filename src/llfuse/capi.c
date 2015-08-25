@@ -8,6 +8,11 @@ the terms of the GNU LGPL.
 */
 
 #define FUSE_USE_VERSION 28
+#include <fuse.h>
+
+#if FUSE_MAJOR_VERSION != 2
+#error This version of the FUSE library is not yet supported.
+#endif
 
 #ifdef __gnu_linux__
 #include "capi_linux.c"

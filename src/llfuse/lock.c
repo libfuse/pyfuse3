@@ -9,20 +9,19 @@ This file is part of Python-LLFUSE. This work may be distributed under
 the terms of the GNU LGPL.
 */
 
+#include "lock.h"
+
 #define TRUE  (1==1)
 #define FALSE (0==1)
 
 #include <pthread.h>
 #include <time.h>
+#include <errno.h>
 #ifdef __MACH__
 #include <sys/time.h>
 #endif
 
 #define GIGA ((long)1e9)
-
-int acquire(double timeout);
-int release(void);
-int c_yield(int count);
 
 // Who was the last to acquire the lock
 static pthread_t lock_owner;

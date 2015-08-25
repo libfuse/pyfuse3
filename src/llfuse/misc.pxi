@@ -18,13 +18,13 @@ cdef object fill_entry_param(object attr, fuse_entry_param* entry):
 
     fill_c_stat(attr, &entry.attr)
 
-cdef object fill_c_stat(object attr, c_stat* stat):
+cdef object fill_c_stat(object attr, struct_stat* stat):
 
-    # Under OS-X, c_stat has an additional st_flags field. The memset
+    # Under OS-X, struct_stat has an additional st_flags field. The memset
     # below sets this to zero without the need for an explicit
     # platform check (although, admittedly, this explanatory comment
     # make take even more space than the check would have taken).
-    string.memset(stat, 0, sizeof(c_stat))
+    string.memset(stat, 0, sizeof(struct_stat))
 
     stat.st_ino = attr.st_ino
     stat.st_mode = attr.st_mode

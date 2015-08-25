@@ -1,8 +1,5 @@
 /*
-time.c
-
-Functions to access the nanosecond attributes in struct stat
-in a platform independent way. Stolen from fuse_misc.h.
+macros.c - Pre-processor macros
 
 Copyright © 2013 Nikolaus Rath <Nikolaus.org>
 
@@ -10,6 +7,11 @@ This file is part of Python-LLFUSE. This work may be distributed under
 the terms of the GNU LGPL.
 */
 
+
+/******
+ * Functions to access the nanosecond attributes in struct stat in a
+ * platform independent way. Stolen from fuse_misc.h.
+ *******/
 
 /* Linux */
 #ifdef HAVE_STRUCT_STAT_ST_ATIM

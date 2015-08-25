@@ -61,7 +61,7 @@ cdef void fuse_forget (fuse_req_t req, fuse_ino_t ino,
 
 cdef void fuse_getattr (fuse_req_t req, fuse_ino_t ino,
                         fuse_file_info *fi) with gil:
-    cdef c_stat stat
+    cdef struct_stat stat
     cdef int ret
     cdef int timeout
 
@@ -80,10 +80,10 @@ cdef void fuse_getattr (fuse_req_t req, fuse_ino_t ino,
     if ret != 0:
         log.error('fuse_getattr(): fuse_reply_* failed with %s', strerror(-ret))
 
-cdef void fuse_setattr (fuse_req_t req, fuse_ino_t ino, c_stat *stat,
+cdef void fuse_setattr (fuse_req_t req, fuse_ino_t ino, struct_stat *stat,
                         int to_set, fuse_file_info *fi) with gil:
     cdef int ret
-    cdef c_stat stat_n
+    cdef struct_stat stat_n
     cdef int timeout
     cdef timespec now
 
@@ -427,7 +427,7 @@ cdef void fuse_readdir (fuse_req_t req, fuse_ino_t ino, size_t size, off_t off,
     cdef char *cname
     cdef char *buf
     cdef size_t len_, acc_size
-    cdef c_stat stat
+    cdef struct_stat stat
 
     # GCC thinks this may end up uninitialized
     ret = 0
@@ -559,7 +559,7 @@ cdef void fuse_setxattr (fuse_req_t req, fuse_ino_t ino, const_char *cname,
                         try:
                             operations.getxattr(ino, name)
                         except FUSEError as e:
-                            if e.errno != errno.ENOATTR:
+                            if e.errno != ENOATTR:
                                 raise
                         else:
                             raise FUSEError(errno.EEXIST)
