@@ -47,7 +47,7 @@ def pytest_configure(config):
         # Make sure that called processes use the same path
         pp = os.environ.get('PYTHONPATH', None)
         if pp:
-            pp = '%s:%s' (llfuse_path, pp)
+            pp = '%s:%s' % (llfuse_path, pp)
         else:
             pp = llfuse_path
         os.environ['PYTHONPATH'] = pp
