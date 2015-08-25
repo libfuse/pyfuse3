@@ -58,12 +58,37 @@ def skip_if_no_fuse():
     else:
         os.close(fd)
 
+def exitcode(process):
+    if isinstance(process, subprocess.Popen):
+        return process.poll()
+    else:
+        if process.is_alive():
+            return None
+        else:
+            return process.exitcode
+
+def wait_for(callable, timeout=10, interval=0.1):
+    '''Wait until *callable* returns something True and return it
+
+    If *timeout* expires, return None
+    '''
+
+    waited = 0
+    while True:
+        ret = callable()
+        if ret:
+            return ret
+        if waited > timeout:
+            return None
+        waited += interval
+        time.sleep(interval)
+
 def wait_for_mount(mount_process, mnt_dir):
     elapsed = 0
     while elapsed < 30:
         if os.path.ismount(mnt_dir):
             return True
-        if mount_process.poll() is not None:
+        if exitcode(mount_process) is not None:
             pytest.fail('file system process terminated prematurely')
         time.sleep(0.1)
         elapsed += 0.1
@@ -88,8 +113,9 @@ def umount(mount_process, mnt_dir):
     # was only added in 3.3...
     elapsed = 0
     while elapsed < 30:
-        if mount_process.poll() is not None:
-            if mount_process.returncode == 0:
+        code = exitcode(mount_process)
+        if code is not None:
+            if code == 0:
                 return
             pytest.fail('file system process terminated with code %d' %
                         mount_process.exitcode)
