@@ -92,15 +92,14 @@
    .. attribute:: st_atime_ns
 
       Time of last access in nanoseconds. Only integer values
-      may be used. If specified, takes precedence over `st_atime`.
+      may be used. If not `None`, takes precedence over `st_atime`.
 
    .. attribute:: st_ctime_ns
 
       Time of last status change in nanoseconds. Only integer values
-      may be used. If specified, takes precedence over `st_ctime`.
+      may be used. If not `None`, takes precedence over `st_ctime`.
 
    .. attribute:: st_mtime_ns
 
       Time of last modification in nanoseconds. Only integer values
-      may be used. If specified, takes precedence over `st_mtime`.
-
+      may be used. If not `None`, takes precedence over `st_mtime`.
