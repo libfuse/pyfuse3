@@ -102,6 +102,37 @@ def test_invalidate_inode(testfs):
             return fs_state.read_called
         assert wait_for(check)
 
+def test_entry_timeout(testfs):
+    (mnt_dir, fs_state) = testfs
+    fs_state.entry_timeout = 1
+    path = os.path.join(mnt_dir, 'message')
+
+    os.stat(path)
+    assert fs_state.lookup_called
+    fs_state.lookup_called = False
+    os.stat(path)
+    assert not fs_state.lookup_called
+
+    time.sleep(fs_state.entry_timeout*1.1)
+    fs_state.lookup_called = False
+    os.stat(path)
+    assert fs_state.lookup_called
+
+def test_attr_timeout(testfs):
+    (mnt_dir, fs_state) = testfs
+    fs_state.attr_timeout = 1
+    with open(os.path.join(mnt_dir, 'message'), 'r') as fh:
+        os.fstat(fh.fileno())
+        assert fs_state.getattr_called
+        fs_state.getattr_called = False
+        os.fstat(fh.fileno())
+        assert not fs_state.getattr_called
+
+        time.sleep(fs_state.attr_timeout*1.1)
+        fs_state.getattr_called = False
+        os.fstat(fh.fileno())
+        assert fs_state.getattr_called
+
 class Fs(llfuse.Operations):
     def __init__(self, cross_process):
         super(Fs, self).__init__()
@@ -113,6 +144,8 @@ class Fs(llfuse.Operations):
         self.status.getattr_called = False
         self.status.lookup_called = False
         self.status.read_called = False
+        self.status.entry_timeout = 2
+        self.status.attr_timeout = 2
 
     def getattr(self, inode):
         entry = llfuse.EntryAttributes()
@@ -132,6 +165,8 @@ class Fs(llfuse.Operations):
         entry.st_gid = os.getgid()
         entry.st_uid = os.getuid()
         entry.st_ino = inode
+        entry.entry_timeout = self.status.entry_timeout
+        entry.attr_timeout = self.status.attr_timeout
 
         self.status.getattr_called = True
         return entry
