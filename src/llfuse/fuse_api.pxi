@@ -399,3 +399,40 @@ def get_off_t_bits():
     result in `OverflowError`.
     '''
     return sizeof(off_t) * 8
+
+def notify_store(inode, offset, data):
+    '''Store data in kernel page cache
+
+    Sends *data* for the kernel to store it in the page cache for *inode* at
+    *offset*. If this provides data beyond the current file size, the file is
+    automatically extended.
+
+    If this function raises an exception, the store may still have completed
+    partially.
+    '''
+
+    cdef int ret
+    cdef fuse_ino_t ino
+    cdef off_t off
+    cdef Py_buffer pybuf
+    cdef fuse_bufvec bufvec
+    cdef fuse_buf *buf
+
+    PyObject_GetBuffer(data, &pybuf, PyBUF_CONTIG_RO)
+    bufvec.count = 1
+    bufvec.idx = 0
+    bufvec.off = 0
+
+    buf = bufvec.buf
+    buf[0].flags = 0
+    buf[0].mem = pybuf.buf
+    buf[0].size = pybuf.len
+
+    ino = inode
+    off = offset
+    with nogil:
+        ret = fuse_lowlevel_notify_store(channel, ino, off, &bufvec, 0)
+
+    PyBuffer_Release(&pybuf)
+    if ret != 0:
+        raise OSError(-ret, 'fuse_lowlevel_notify_store returned: ' + strerror(-ret))

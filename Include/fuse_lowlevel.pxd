@@ -155,3 +155,8 @@ cdef extern from "fuse_lowlevel.h" nogil:
     int fuse_session_loop(fuse_session *se)
     int fuse_session_loop_mt(fuse_session *se)
     void fuse_chan_destroy(fuse_chan *ch)
+
+    # Based on fuse sources, commit e0f95858719a
+    int fuse_lowlevel_notify_store(fuse_chan *ch, fuse_ino_t ino,
+                                   off_t offset, fuse_bufvec *bufv,
+                                   fuse_buf_copy_flags flags)

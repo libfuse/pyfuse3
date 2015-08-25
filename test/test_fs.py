@@ -102,6 +102,14 @@ def test_invalidate_inode(testfs):
             return fs_state.read_called
         assert wait_for(check)
 
+def test_notify_store(testfs):
+    (mnt_dir, fs_state) = testfs
+    with open(os.path.join(mnt_dir, 'message'), 'r') as fh:
+        llfuse.setxattr(mnt_dir, 'command', b'store')
+        fs_state.read_called = False
+        assert fh.read() == 'hello world\n'
+        assert not fs_state.read_called
+
 def test_entry_timeout(testfs):
     (mnt_dir, fs_state) = testfs
     fs_state.entry_timeout = 1
@@ -216,6 +224,9 @@ class Fs(llfuse.Operations):
             llfuse.invalidate_entry(llfuse.ROOT_INODE, self.hello_name)
         elif value == b'forget_inode':
             llfuse.invalidate_inode(self.hello_inode)
+        elif value == b'store':
+            llfuse.notify_store(self.hello_inode, offset=0,
+                                data=self.hello_data)
         else:
             raise FUSEError(errno.EINVAL)
 
