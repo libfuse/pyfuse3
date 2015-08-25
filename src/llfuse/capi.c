@@ -7,6 +7,8 @@ This file is part of Python-LLFUSE. This work may be distributed under
 the terms of the GNU LGPL.
 */
 
+#define FUSE_USE_VERSION 28
+
 #ifdef __gnu_linux__
 #include "capi_linux.c"
 #elif __FreeBSD__
