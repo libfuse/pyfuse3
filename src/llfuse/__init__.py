@@ -16,3 +16,6 @@ from llfuse.capi import *
 
 # dunder needs explicit import
 from .capi import __version__
+
+# For easy access
+ENOATTR = ENOATTR_obj

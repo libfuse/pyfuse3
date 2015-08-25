@@ -65,7 +65,7 @@ cdef extern from "Python.h" nogil:
 cdef extern from *:
     enum:
         EDEADLK
-        c_ENOATTR "ENOATTR"
+        ENOATTR
 
 ################
 # PYTHON IMPORTS
@@ -110,7 +110,7 @@ inval_entry_req = namedtuple('inval_entry_req', [ 'inode_p', 'name' ])
 
 # Exported for access from Python code
 ROOT_INODE = FUSE_ROOT_ID
-ENOATTR = c_ENOATTR
+ENOATTR_obj = ENOATTR
 
 #######################
 # FUSE REQUEST HANDLERS
