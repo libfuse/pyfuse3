@@ -52,8 +52,8 @@ def pytest_configure(config):
             pp = llfuse_path
         os.environ['PYTHONPATH'] = pp
 
-    # When running from HG repo, enable all warnings
-    if os.path.exists(os.path.join(basedir, '.hg')):
+    # When running from VCS repo, enable all warnings
+    if os.path.exists(os.path.join(basedir, 'MANIFEST.in')):
         import warnings
         warnings.resetwarnings()
         warnings.simplefilter('error')

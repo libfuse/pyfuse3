@@ -45,10 +45,12 @@ basedir = os.path.abspath(os.path.dirname(sys.argv[0]))
 sys.path.insert(0, os.path.join(basedir, 'util'))
 
 # When running from HG repo, enable all warnings
-DEVELOPER_MODE = (os.path.exists(os.path.join(basedir, '.hg')) or
-                  os.path.exists(os.path.join(basedir, '.git')))
+DEVELOPER_MODE = os.path.exists(os.path.join(basedir, 'MANIFEST.in'))
 if DEVELOPER_MODE:
-    print('found hg or git repository, running in developer mode')
+    print('found MANIFEST.in, running in developer mode')
+    warnings.resetwarnings()
+    # We can't use `error`, because e.g. Sphinx triggers a
+    # DeprecationWarning.
     warnings.simplefilter('default')
 
 # Add src to load path, important for Sphinx autodoc
