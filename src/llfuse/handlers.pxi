@@ -316,14 +316,16 @@ cdef void fuse_open (fuse_req_t req, fuse_ino_t ino, fuse_file_info *fi) with gi
 cdef void fuse_read (fuse_req_t req, fuse_ino_t ino, size_t size, off_t off,
                      fuse_file_info *fi) with gil:
     cdef int ret
-    cdef ssize_t len_
-    cdef char* cbuf
+    cdef Py_buffer pybuf
 
     try:
         with lock:
             buf = operations.read(fi.fh, off, size)
-        PyBytes_AsStringAndSize(buf, &cbuf, &len_)
-        ret = fuse_reply_buf(req, cbuf, len_)
+
+        PyObject_GetBuffer(buf, &pybuf, PyBUF_CONTIG_RO)
+        with nogil:
+            ret = fuse_reply_buf(req, <const_char*> pybuf.buf, pybuf.len)
+        PyBuffer_Release(&pybuf)
     except FUSEError as e:
         ret = fuse_reply_err(req, e.errno)
     except BaseException as e:
