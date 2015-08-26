@@ -347,17 +347,13 @@ cdef void fuse_write (fuse_req_t req, fuse_ino_t ino, const_char *buf,
         with lock:
             len_ = operations.write(fi.fh, off, pbuf)
         ret = fuse_reply_write(req, len_)
-        if ret != 0:
-            log.error('fuse_write(): fuse_reply_write failed with %s', strerror(-ret))
     except FUSEError as e:
         ret = fuse_reply_err(req, e.errno)
-        if ret != 0:
-            log.error('fuse_write(): fuse_reply_err(%d) failed with %s', strerror(-ret), e.errno)
     except BaseException as e:
         ret = handle_exc('write', e, req)
 
-        if ret != 0:
-            log.error('fuse_write(): fuse_reply_err failed with %s after exception', strerror(-ret))
+    if ret != 0:
+        log.error('fuse_write(): fuse_reply_* failed with %s', strerror(-ret))
 
 cdef void fuse_flush (fuse_req_t req, fuse_ino_t ino, fuse_file_info *fi) with gil:
     cdef int ret
