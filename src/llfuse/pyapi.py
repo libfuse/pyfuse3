@@ -403,8 +403,10 @@ class Operations(object):
     def write(self, fh, off, buf):
         '''Write *buf* into *fh* at *off*
 
-        This method should return the number of bytes written. If no
-        error occured, this should be exactly :samp:`len(buf)`.
+        Returns the number of bytes written.
+
+        Unless the file system has been mounted with the ``direct_io`` option,
+        this method will always write all the provided data.
         '''
 
         raise FUSEError(errno.ENOSYS)
