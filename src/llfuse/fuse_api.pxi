@@ -234,9 +234,9 @@ def init(ops, mountpoint, options=default_options):
 
     Valid options are listed under ``struct
     fuse_opt fuse_mount_opts[]``
-    (`mount.c:82 <http://fuse.git.sourceforge.net/git/gitweb.cgi?p=fuse/fuse;f=lib/mount.c;hb=HEAD#l82>`_)
+    (`mount.c:82 <http://sourceforge.net/p/fuse/fuse/ci/master/tree/lib/mount.c#l82>`_)
     and ``struct fuse_opt fuse_ll_opts[]``
-    (`fuse_lowlevel_c:2209 <http://fuse.git.sourceforge.net/git/gitweb.cgi?p=fuse/fuse;f=lib/fuse_lowlevel.c;hb=HEAD#l2532>`_).
+    (`fuse_lowlevel_c:2209 <http://sourceforge.net/p/fuse/fuse/ci/master/tree/lib/fuse_lowlevel.c#l2623>`_).
     '''
 
     log.debug('Initializing llfuse')
