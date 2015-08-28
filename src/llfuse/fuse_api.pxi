@@ -215,13 +215,24 @@ def getxattr(path, name, int size_guess=128, namespace='user'):
     finally:
         stdlib.free(buf)
 
-def init(ops, mountpoint, list args):
+default_options = frozenset(('big_writes', 'nonempty', 'default_permissions',
+                             'splice_read', 'splice_write', 'splice_move'))
+def init(ops, mountpoint, options=default_options):
     '''Initialize and mount FUSE file system
 
     *ops* has to be an instance of the `Operations` class (or another
     class defining the same methods).
 
-    *args* has to be a list of strings. Valid options are listed under ``struct
+    *args* has to be a set of strings. `default_options` provides some
+    reasonable defaults. It is recommended to use these options as a basis and
+    add or remove options as necessary. For example::
+
+        my_opts = set(llfuse.default_options)
+        my_opts.add('allow_other')
+        my_opts.discard('default_permissions')
+        llfuse.init(ops, mountpoint, my_apts)
+
+    Valid options are listed under ``struct
     fuse_opt fuse_mount_opts[]``
     (`mount.c:82 <http://fuse.git.sourceforge.net/git/gitweb.cgi?p=fuse/fuse;f=lib/mount.c;hb=HEAD#l82>`_)
     and ``struct fuse_opt fuse_ll_opts[]``
@@ -246,7 +257,7 @@ def init(ops, mountpoint, list args):
     # Initialize Python thread support
     PyEval_InitThreads()
 
-    make_fuse_args(args, &f_args)
+    make_fuse_args(options, &f_args)
     log.debug('Calling fuse_mount')
     channel = fuse_mount(<char*>mountpoint_b, &f_args)
     if not channel:

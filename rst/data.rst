@@ -14,6 +14,14 @@
    The inode of the root directory, i.e. the mount point of the file
    system.
 
+.. py:data:: default_options
+
+   This is a recommended set of options that should be passed to
+   `llfuse.init` to get reasonable behavior and
+   performance. Python-LLFUSE is compatible with any other combination
+   of options as well, but you should only deviate from the defaults
+   with good reason.
+
 .. autoexception:: FUSEError
 
 .. autoclass:: RequestContext

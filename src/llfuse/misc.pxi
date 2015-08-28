@@ -141,7 +141,7 @@ cdef void init_fuse_ops():
     fuse_ops.access = fuse_access
     fuse_ops.create = fuse_create
 
-cdef make_fuse_args(list args, fuse_args* f_args):
+cdef make_fuse_args(args, fuse_args* f_args):
     cdef char* arg
     cdef int i
     cdef ssize_t size
