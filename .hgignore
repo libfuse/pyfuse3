@@ -9,3 +9,4 @@ syntax: regexp
 syntax: glob
 src/llfuse/capi_*.c
 src/llfuse/*.so
+test/.cache/
