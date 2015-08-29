@@ -13,7 +13,7 @@ from fuse_opt cimport *
 from posix.types cimport off_t
 from libc.stdint cimport uint64_t
 
-# Based on fuse sources, revision tag fuse_2_8_3
+# Based on fuse sources, revision tag fuse_2_9_4
 cdef extern from * nogil: # fuse_common.h should not be included
 
     struct fuse_file_info:
@@ -37,8 +37,6 @@ cdef extern from * nogil: # fuse_common.h should not be included
     void fuse_unmount(char *mountpoint, fuse_chan *ch)
     int fuse_set_signal_handlers(fuse_session *se)
     void fuse_remove_signal_handlers(fuse_session *se)
-
-    # From here on, based on fuse sources, commit e0f95858719a
 
     # fuse_common.h declares these as enums, but they are
     # actually flags (i.e., FUSE_BUF_IS_FD|FUSE_BUF_FD_SEEK)
@@ -69,3 +67,7 @@ cdef extern from * nogil: # fuse_common.h should not be included
         size_t idx
         size_t off
         fuse_buf buf[1]
+
+    size_t fuse_buf_size(fuse_bufvec *bufv)
+    ssize_t fuse_buf_copy(fuse_bufvec *dst, fuse_bufvec *src,
+                          fuse_buf_copy_flags flags)
