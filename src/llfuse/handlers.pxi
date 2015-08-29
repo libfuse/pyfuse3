@@ -15,8 +15,8 @@ cdef void fuse_init (void *userdata, fuse_conn_info *conn) with gil:
     try:
         with lock:
             operations.init()
-    except BaseException as e:
-        handle_exc('init', e, NULL)
+    except:
+        handle_exc(NULL)
 
 cdef void fuse_destroy (void *userdata) with gil:
     # Note: called by fuse_session_destroy(), i.e. not as part of the
@@ -43,8 +43,8 @@ cdef void fuse_lookup (fuse_req_t req, fuse_ino_t parent,
         ret = fuse_reply_entry(req, &entry)
     except FUSEError as e:
         ret = fuse_reply_err(req, e.errno)
-    except BaseException as e:
-        ret = handle_exc('lookup', e, req)
+    except:
+        ret = handle_exc(req)
 
     if ret != 0:
         log.error('fuse_lookup(): fuse_reply_* failed with %s', strerror(-ret))
@@ -55,8 +55,8 @@ cdef void fuse_forget (fuse_req_t req, fuse_ino_t ino,
     try:
         with lock:
             operations.forget([(ino, nlookup)])
-    except BaseException as e:
-        handle_exc('forget', e, NULL)
+    except:
+        handle_exc(NULL)
     fuse_reply_none(req)
 
 cdef void fuse_getattr (fuse_req_t req, fuse_ino_t ino,
@@ -74,8 +74,8 @@ cdef void fuse_getattr (fuse_req_t req, fuse_ino_t ino,
         ret = fuse_reply_attr(req, &stat, timeout)
     except FUSEError as e:
         ret = fuse_reply_err(req, e.errno)
-    except BaseException as e:
-        ret = handle_exc('getattr', e, req)
+    except:
+        ret = handle_exc(req)
 
     if ret != 0:
         log.error('fuse_getattr(): fuse_reply_* failed with %s', strerror(-ret))
@@ -143,8 +143,8 @@ cdef void fuse_setattr (fuse_req_t req, fuse_ino_t ino, struct_stat *stat,
         ret = fuse_reply_attr(req, &stat_n, timeout)
     except FUSEError as e:
         ret = fuse_reply_err(req, e.errno)
-    except BaseException as e:
-        ret = handle_exc('setattr', e, req)
+    except:
+        ret = handle_exc(req)
 
     if ret != 0:
         log.error('fuse_setattr(): fuse_reply_* failed with %s', strerror(-ret))
@@ -159,8 +159,8 @@ cdef void fuse_readlink (fuse_req_t req, fuse_ino_t ino) with gil:
         ret = fuse_reply_readlink(req, name)
     except FUSEError as e:
         ret = fuse_reply_err(req, e.errno)
-    except BaseException as e:
-        ret = handle_exc('readlink', e, req)
+    except:
+        ret = handle_exc(req)
 
     if ret != 0:
         log.error('fuse_readlink(): fuse_reply_* failed with %s', strerror(-ret))
@@ -179,8 +179,8 @@ cdef void fuse_mknod (fuse_req_t req, fuse_ino_t parent, const_char *name,
         ret = fuse_reply_entry(req, &entry)
     except FUSEError as e:
         ret = fuse_reply_err(req, e.errno)
-    except BaseException as e:
-        ret = handle_exc('mknod', e, req)
+    except:
+        ret = handle_exc(req)
 
     if ret != 0:
         log.error('fuse_mknod(): fuse_reply_* failed with %s', strerror(-ret))
@@ -201,8 +201,8 @@ cdef void fuse_mkdir (fuse_req_t req, fuse_ino_t parent, const_char *name,
         ret = fuse_reply_entry(req, &entry)
     except FUSEError as e:
         ret = fuse_reply_err(req, e.errno)
-    except BaseException as e:
-        ret = handle_exc('mkdir', e, req)
+    except:
+        ret = handle_exc(req)
 
     if ret != 0:
         log.error('fuse_mkdir(): fuse_reply_* failed with %s', strerror(-ret))
@@ -216,8 +216,8 @@ cdef void fuse_unlink (fuse_req_t req, fuse_ino_t parent, const_char *name) with
         ret = fuse_reply_err(req, 0)
     except FUSEError as e:
         ret = fuse_reply_err(req, e.errno)
-    except BaseException as e:
-        ret = handle_exc('unlink', e, req)
+    except:
+        ret = handle_exc(req)
 
     if ret != 0:
         log.error('fuse_unlink(): fuse_reply_* failed with %s', strerror(-ret))
@@ -231,8 +231,8 @@ cdef void fuse_rmdir (fuse_req_t req, fuse_ino_t parent, const_char *name) with 
         ret = fuse_reply_err(req, 0)
     except FUSEError as e:
         ret = fuse_reply_err(req, e.errno)
-    except BaseException as e:
-        ret = handle_exc('rmdir', e, req)
+    except:
+        ret = handle_exc(req)
 
     if ret != 0:
         log.error('fuse_rmdir(): fuse_reply_* failed with %s', strerror(-ret))
@@ -251,8 +251,8 @@ cdef void fuse_symlink (fuse_req_t req, const_char *link, fuse_ino_t parent,
         ret = fuse_reply_entry(req, &entry)
     except FUSEError as e:
         ret = fuse_reply_err(req, e.errno)
-    except BaseException as e:
-        ret = handle_exc('symlink', e, req)
+    except:
+        ret = handle_exc(req)
 
     if ret != 0:
         log.error('fuse_symlink(): fuse_reply_* failed with %s', strerror(-ret))
@@ -268,8 +268,8 @@ cdef void fuse_rename (fuse_req_t req, fuse_ino_t parent, const_char *name,
         ret = fuse_reply_err(req, 0)
     except FUSEError as e:
         ret = fuse_reply_err(req, e.errno)
-    except BaseException as e:
-        ret = handle_exc('rename', e, req)
+    except:
+        ret = handle_exc(req)
 
     if ret != 0:
         log.error('fuse_rename(): fuse_reply_* failed with %s', strerror(-ret))
@@ -286,8 +286,8 @@ cdef void fuse_link (fuse_req_t req, fuse_ino_t ino, fuse_ino_t newparent,
         ret = fuse_reply_entry(req, &entry)
     except FUSEError as e:
         ret = fuse_reply_err(req, e.errno)
-    except BaseException as e:
-        ret = handle_exc('link', e, req)
+    except:
+        ret = handle_exc(req)
 
     if ret != 0:
         log.error('fuse_link(): fuse_reply_* failed with %s', strerror(-ret))
@@ -307,8 +307,8 @@ cdef void fuse_open (fuse_req_t req, fuse_ino_t ino, fuse_file_info *fi) with gi
         ret = fuse_reply_open(req, fi)
     except FUSEError as e:
         ret = fuse_reply_err(req, e.errno)
-    except BaseException as e:
-        ret = handle_exc('open', e, req)
+    except:
+        ret = handle_exc(req)
 
     if ret != 0:
         log.error('fuse_link(): fuse_reply_* failed with %s', strerror(-ret))
@@ -328,8 +328,8 @@ cdef void fuse_read (fuse_req_t req, fuse_ino_t ino, size_t size, off_t off,
         PyBuffer_Release(&pybuf)
     except FUSEError as e:
         ret = fuse_reply_err(req, e.errno)
-    except BaseException as e:
-        ret = handle_exc('read', e, req)
+    except:
+        ret = handle_exc(req)
 
     if ret != 0:
         log.error('fuse_read(): fuse_reply_* failed with %s', strerror(-ret))
@@ -349,8 +349,8 @@ cdef void fuse_write (fuse_req_t req, fuse_ino_t ino, const_char *buf,
         ret = fuse_reply_write(req, len_)
     except FUSEError as e:
         ret = fuse_reply_err(req, e.errno)
-    except BaseException as e:
-        ret = handle_exc('write', e, req)
+    except:
+        ret = handle_exc(req)
 
     if ret != 0:
         log.error('fuse_write(): fuse_reply_* failed with %s', strerror(-ret))
@@ -364,8 +364,8 @@ cdef void fuse_flush (fuse_req_t req, fuse_ino_t ino, fuse_file_info *fi) with g
         ret = fuse_reply_err(req, 0)
     except FUSEError as e:
         ret = fuse_reply_err(req, e.errno)
-    except BaseException as e:
-        ret = handle_exc('flush', e, req)
+    except:
+        ret = handle_exc(req)
 
     if ret != 0:
         log.error('fuse_flush(): fuse_reply_* failed with %s', strerror(-ret))
@@ -379,8 +379,8 @@ cdef void fuse_release (fuse_req_t req, fuse_ino_t ino, fuse_file_info *fi) with
         ret = fuse_reply_err(req, 0)
     except FUSEError as e:
         ret = fuse_reply_err(req, e.errno)
-    except BaseException as e:
-        ret = handle_exc('release', e, req)
+    except:
+        ret = handle_exc(req)
 
     if ret != 0:
         log.error('fuse_release(): fuse_reply_* failed with %s', strerror(-ret))
@@ -395,8 +395,8 @@ cdef void fuse_fsync (fuse_req_t req, fuse_ino_t ino, int datasync,
         ret = fuse_reply_err(req, 0)
     except FUSEError as e:
         ret = fuse_reply_err(req, e.errno)
-    except BaseException as e:
-        ret = handle_exc('fsync', e, req)
+    except:
+        ret = handle_exc(req)
 
     if ret != 0:
         log.error('fuse_fsync(): fuse_reply_* failed with %s', strerror(-ret))
@@ -411,8 +411,8 @@ cdef void fuse_opendir (fuse_req_t req, fuse_ino_t ino, fuse_file_info *fi) with
         ret = fuse_reply_open(req, fi)
     except FUSEError as e:
         ret = fuse_reply_err(req, e.errno)
-    except BaseException as e:
-        ret = handle_exc('opendir', e, req)
+    except:
+        ret = handle_exc(req)
 
     if ret != 0:
         log.error('fuse_opendir(): fuse_reply_* failed with %s', strerror(-ret))
@@ -445,8 +445,8 @@ cdef void fuse_readdir (fuse_req_t req, fuse_ino_t ino, size_t size, off_t off,
         ret = fuse_reply_buf(req, buf, acc_size)
     except FUSEError as e:
         ret = fuse_reply_err(req, e.errno)
-    except BaseException as e:
-        ret = handle_exc('readdir', e, req)
+    except:
+        ret = handle_exc(req)
     finally:
         if buf != NULL:
             stdlib.free(buf)
@@ -463,8 +463,8 @@ cdef void fuse_releasedir (fuse_req_t req, fuse_ino_t ino, fuse_file_info *fi) w
         ret = fuse_reply_err(req, 0)
     except FUSEError as e:
         ret = fuse_reply_err(req, e.errno)
-    except BaseException as e:
-        ret = handle_exc('releasedir', e, req)
+    except:
+        ret = handle_exc(req)
 
     if ret != 0:
         log.error('fuse_releasedir(): fuse_reply_* failed with %s', strerror(-ret))
@@ -480,8 +480,8 @@ cdef void fuse_fsyncdir (fuse_req_t req, fuse_ino_t ino, int datasync,
         ret = fuse_reply_err(req, 0)
     except FUSEError as e:
         ret = fuse_reply_err(req, e.errno)
-    except BaseException as e:
-        ret = handle_exc('fsyncdir', e, req)
+    except:
+        ret = handle_exc(req)
 
     if ret != 0:
         log.error('fuse_fsyncdir(): fuse_reply_* failed with %s', strerror(-ret))
@@ -501,8 +501,8 @@ cdef void fuse_statfs (fuse_req_t req, fuse_ino_t ino) with gil:
         ret = fuse_reply_statfs(req, &cstats)
     except FUSEError as e:
         ret = fuse_reply_err(req, e.errno)
-    except BaseException as e:
-        ret = handle_exc('statfs', e, req)
+    except:
+        ret = handle_exc(req)
 
     if ret != 0:
         log.error('fuse_statfs(): fuse_reply_* failed with %s', strerror(-ret))
@@ -568,8 +568,8 @@ cdef void fuse_setxattr (fuse_req_t req, fuse_ino_t ino, const_char *cname,
         ret = fuse_reply_err(req, 0)
     except FUSEError as e:
         ret = fuse_reply_err(req, e.errno)
-    except BaseException as e:
-        ret = handle_exc('setxattr', e, req)
+    except:
+        ret = handle_exc(req)
 
     if ret != 0:
         log.error('fuse_setxattr(): fuse_reply_* failed with %s', strerror(-ret))
@@ -606,8 +606,8 @@ cdef void fuse_getxattr (fuse_req_t req, fuse_ino_t ino, const_char *cname,
             ret = fuse_reply_err(req, errno.ERANGE)
     except FUSEError as e:
         ret = fuse_reply_err(req, e.errno)
-    except BaseException as e:
-        ret = handle_exc('getxattr', e, req)
+    except:
+        ret = handle_exc(req)
 
     if ret != 0:
         log.error('fuse_getxattr(): fuse_reply_* failed with %s', strerror(-ret))
@@ -633,8 +633,8 @@ cdef void fuse_listxattr (fuse_req_t req, fuse_ino_t ino, size_t size) with gil:
             ret = fuse_reply_err(req, errno.ERANGE)
     except FUSEError as e:
         ret = fuse_reply_err(req, e.errno)
-    except BaseException as e:
-        ret = handle_exc('listxattr', e, req)
+    except:
+        ret = handle_exc(req)
 
     if ret != 0:
         log.error('fuse_listxattr(): fuse_reply_* failed with %s', strerror(-ret))
@@ -648,8 +648,8 @@ cdef void fuse_removexattr (fuse_req_t req, fuse_ino_t ino, const_char *cname) w
         ret = fuse_reply_err(req, 0)
     except FUSEError as e:
         ret = fuse_reply_err(req, e.errno)
-    except BaseException as e:
-        ret = handle_exc('removexattr', e, req)
+    except:
+        ret = handle_exc(req)
 
     if ret != 0:
         log.error('fuse_removexattr(): fuse_reply_* failed with %s', strerror(-ret))
@@ -667,8 +667,8 @@ cdef void fuse_access (fuse_req_t req, fuse_ino_t ino, int mask) with gil:
             ret = fuse_reply_err(req, EPERM)
     except FUSEError as e:
         ret = fuse_reply_err(req, e.errno)
-    except BaseException as e:
-        ret = handle_exc('access', e, req)
+    except:
+        ret = handle_exc(req)
 
     if ret != 0:
         log.error('fuse_access(): fuse_reply_* failed with %s', strerror(-ret))
@@ -693,8 +693,8 @@ cdef void fuse_create (fuse_req_t req, fuse_ino_t parent, const_char *cname,
         ret = fuse_reply_create(req, &entry, fi)
     except FUSEError as e:
         ret = fuse_reply_err(req, e.errno)
-    except BaseException as e:
-        ret = handle_exc('create', e, req)
+    except:
+        ret = handle_exc(req)
 
     if ret != 0:
         log.error('fuse_create(): fuse_reply_* failed with %s', strerror(-ret))

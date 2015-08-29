@@ -69,7 +69,7 @@ cdef object fill_statvfs(object attr, statvfs* stat):
     stat.f_favail = attr.f_favail
 
 
-cdef int handle_exc(char* fn, object e, fuse_req_t req):
+cdef int handle_exc(fuse_req_t req):
     '''Try to call fuse_reply_err and terminate main loop'''
 
     global exc_info
