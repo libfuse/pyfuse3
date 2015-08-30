@@ -346,18 +346,17 @@ cdef strerror(int errno):
     except ValueError:
         return 'errno: %d' % errno
 
-class RequestContext:
+cdef class RequestContext:
     '''
     Instances of this class are passed to some `Operations` methods to
     provide information about the caller of the syscall that initiated
     the request.
     '''
 
-    __slots__ = [ 'uid', 'pid', 'gid', 'umask' ]
-
-    def __init__(self):
-        for name in self.__slots__:
-            setattr(self, name, None)
+    cdef readonly uid_t uid
+    cdef readonly pid_t pid
+    cdef readonly gid_t gid
+    cdef readonly mode_t umask
 
 class EntryAttributes:
     '''
