@@ -11,11 +11,11 @@ the terms of the GNU LGPL.
 
 from __future__ import division, print_function, absolute_import
 
-from llfuse.pyapi import *
-from llfuse.capi import *
+from llfuse.operations import *
+from llfuse.cext import *
 
 # dunder needs explicit import
-from .capi import __version__
+from .cext import __version__
 
 # For easy access
 ENOATTR = ENOATTR_obj

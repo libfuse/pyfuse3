@@ -1,5 +1,5 @@
 '''
-capi.pxy
+cext.pxy
 
 Copyright © 2013 Nikolaus Rath <Nikolaus.org>
 
@@ -18,7 +18,7 @@ __version__ = LLFUSE_VERSION.decode('utf-8')
 ###########
 
 from fuse_lowlevel cimport *
-from posix.stat cimport struct_stat, S_IFMT, S_IFDIR
+from posix.stat cimport struct_stat, S_IFMT, S_IFDIR, S_IFREG
 from posix.types cimport mode_t, dev_t, off_t
 from libc.stdint cimport uint32_t
 from libc.stdlib cimport const_char
@@ -78,7 +78,6 @@ import logging
 import sys
 import os.path
 import threading
-from llfuse.pyapi import FUSEError, strerror, Operations, RequestContext, EntryAttributes
 from collections import namedtuple
 
 if PY_MAJOR_VERSION < 3:
