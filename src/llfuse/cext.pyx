@@ -61,7 +61,8 @@ cdef extern from "macros.c" nogil:
 
 cdef extern from "Python.h" nogil:
     void PyEval_InitThreads()
-
+    ctypedef class __builtin__.Exception [object PyBaseExceptionObject]:
+        pass
 
 # Missing in the Cython provided libc/errno.pxd:
 cdef extern from *:

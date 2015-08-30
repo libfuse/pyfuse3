@@ -460,7 +460,7 @@ class StatvfsData:
         for name in self.__slots__:
             setattr(self, name, None)
 
-class FUSEError(Exception):
+cdef class FUSEError(Exception):
     '''
     This exception may be raised by request handlers to indicate that
     the requested operation could not be carried out. The system call
@@ -468,11 +468,20 @@ class FUSEError(Exception):
     code *errno_*.
     '''
 
-    __slots__ = [ 'errno' ]
+    # If we call this variable "errno", we will get syntax errors
+    # during C compilation (maybe something else declares errno as
+    # a macro?)
+    cdef int errno_
 
-    def __init__(self, errno_):
-        super(FUSEError, self).__init__()
-        self.errno = errno_
+    property errno:
+        '''Error code to return to client process'''
+        def __get__(self):
+            return self.errno_
+        def __set__(self, val):
+            self.errno_ = val
+
+    def __init__(self, errno):
+        self.errno_ = errno
 
     def __str__(self):
-        return strerror(self.errno)
+        return strerror(self.errno_)
