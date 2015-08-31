@@ -131,19 +131,18 @@ class Operations(object):
         raise FUSEError(errno.ENOSYS)
 
 
-    def setattr(self, inode, attr):
+    def setattr(self, inode, attr, fields):
         '''Change attributes of *inode*
 
-        *attr* is an `EntryAttributes` instance with the new
-        attributes. Only the attributes `~EntryAttributes.st_size`,
-        `~EntryAttributes.st_mode`, `~EntryAttributes.st_uid`,
-        `~EntryAttributes.st_gid`, `~EntryAttributes.st_atime` and
-        `~EntryAttributes.st_mtime` are relevant. Unchanged attributes
-        will have a value `None`.
+        *fields* will be an `SetattrFields` instance that specifies which
+        attributes are to be updated. *attr* will be an `EntryAttributes`
+        instance for *inode* that contains the new values for changed attributes
+        and the original (unchanged) values for all other attributes.
 
-        The method should return a new `EntryAttributes` instance
-        with the updated attributes (i.e., all attributes except for
-        `~EntryAttributes.entry_timeout` should be set).
+        The method should return an `EntryAttributes` instance with the updated
+        attributes. If all (and only) the requested changes were applied the
+        method may simply return the provided *attr* instance after updating
+        the `~EntryAttributes.attr_timeout` attribute.
         '''
 
         raise FUSEError(errno.ENOSYS)

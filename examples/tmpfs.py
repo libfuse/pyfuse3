@@ -265,9 +265,9 @@ class Operations(llfuse.Operations):
 
         return self.getattr(inode)
 
-    def setattr(self, inode, attr):
+    def setattr(self, inode, attr, fields):
 
-        if attr.st_size is not None:
+        if fields.update_size:
             data = self.get_row('SELECT data FROM inodes WHERE id=?', (inode,))[0]
             if data is None:
                 data = b''
@@ -277,33 +277,25 @@ class Operations(llfuse.Operations):
                 data = data[:attr.st_size]
             self.cursor.execute('UPDATE inodes SET data=?, size=? WHERE id=?',
                                 (buffer(data), attr.st_size, inode))
-        if attr.st_mode is not None:
+        if fields.update_mode:
             self.cursor.execute('UPDATE inodes SET mode=? WHERE id=?',
                                 (attr.st_mode, inode))
 
-        if attr.st_uid is not None:
+        if fields.update_uid:
             self.cursor.execute('UPDATE inodes SET uid=? WHERE id=?',
                                 (attr.st_uid, inode))
 
-        if attr.st_gid is not None:
+        if fields.update_gid:
             self.cursor.execute('UPDATE inodes SET gid=? WHERE id=?',
                                 (attr.st_gid, inode))
 
-        if attr.st_rdev is not None:
-            self.cursor.execute('UPDATE inodes SET rdev=? WHERE id=?',
-                                (attr.st_rdev, inode))
-
-        if attr.st_atime_ns is not None:
+        if fields.update_atime:
             self.cursor.execute('UPDATE inodes SET atime_ns=? WHERE id=?',
                                 (attr.st_atime_ns, inode))
 
-        if attr.st_mtime_ns is not None:
+        if fields.update_mtime:
             self.cursor.execute('UPDATE inodes SET mtime_ns=? WHERE id=?',
                                 (attr.st_mtime_ns, inode))
-
-        if attr.st_ctime_ns is not None:
-            self.cursor.execute('UPDATE inodes SET ctime_ns=? WHERE id=?',
-                                (attr.st_ctime_ns, inode))
 
         return self.getattr(inode)
 

@@ -166,10 +166,10 @@ class Fs(llfuse.Operations):
         else:
             raise llfuse.FUSEError(errno.ENOENT)
 
-        stamp = 1438467123.985654
-        entry.st_atime = stamp
-        entry.st_ctime = stamp
-        entry.st_mtime = stamp
+        stamp = int(1438467123.985654*1e9)
+        entry.st_atime_ns = stamp
+        entry.st_ctime_ns = stamp
+        entry.st_mtime_ns = stamp
         entry.st_gid = os.getgid()
         entry.st_uid = os.getuid()
         entry.st_ino = inode

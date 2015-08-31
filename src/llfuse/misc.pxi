@@ -10,54 +10,6 @@ This file is part of Python-LLFUSE. This work may be distributed under
 the terms of the GNU LGPL.
 '''
 
-cdef object fill_entry_param(object attr, fuse_entry_param* entry):
-    entry.ino = attr.st_ino
-    entry.generation = attr.generation
-    entry.entry_timeout = attr.entry_timeout
-    entry.attr_timeout = attr.attr_timeout
-
-    fill_c_stat(attr, &entry.attr)
-
-cdef object fill_c_stat(object attr, struct_stat* stat):
-
-    # Under OS-X, struct_stat has an additional st_flags field. The memset
-    # below sets this to zero without the need for an explicit
-    # platform check (although, admittedly, this explanatory comment
-    # make take even more space than the check would have taken).
-    string.memset(stat, 0, sizeof(struct_stat))
-
-    stat.st_ino = attr.st_ino
-    stat.st_mode = attr.st_mode
-    stat.st_nlink = attr.st_nlink
-    stat.st_uid = attr.st_uid
-    stat.st_gid = attr.st_gid
-    stat.st_rdev = attr.st_rdev
-    stat.st_size = attr.st_size
-    stat.st_blksize = attr.st_blksize
-    stat.st_blocks = attr.st_blocks
-
-    if attr.st_atime_ns is not None:
-        stat.st_atime = attr.st_atime_ns / 10**9
-        SET_ATIME_NS(stat, attr.st_atime_ns % 10**9)
-    else:
-        stat.st_atime = attr.st_atime
-        SET_ATIME_NS(stat, (attr.st_atime - stat.st_atime) * 1e9)
-
-    if attr.st_ctime_ns is not None:
-        stat.st_ctime = attr.st_ctime_ns / 10**9
-        SET_CTIME_NS(stat, attr.st_ctime_ns % 10**9)
-    else:
-        stat.st_ctime = attr.st_ctime
-        SET_CTIME_NS(stat, (attr.st_ctime - stat.st_ctime) * 1e9)
-
-    if attr.st_mtime_ns is not None:
-        stat.st_mtime = attr.st_mtime_ns / 10**9
-        SET_MTIME_NS(stat, attr.st_mtime_ns % 10**9)
-    else:
-        stat.st_mtime = attr.st_mtime
-        SET_MTIME_NS(stat, (attr.st_mtime - stat.st_mtime) * 1e9)
-
-
 cdef object fill_statvfs(object attr, statvfs* stat):
     stat.f_bsize = attr.f_bsize
     stat.f_frsize = attr.f_frsize
@@ -67,7 +19,6 @@ cdef object fill_statvfs(object attr, statvfs* stat):
     stat.f_files = attr.f_files
     stat.f_ffree = attr.f_ffree
     stat.f_favail = attr.f_favail
-
 
 cdef int handle_exc(fuse_req_t req):
     '''Try to call fuse_reply_err and terminate main loop'''
@@ -358,55 +309,136 @@ cdef class RequestContext:
     cdef readonly gid_t gid
     cdef readonly mode_t umask
 
-class EntryAttributes:
+cdef class SetattrFields:
+    '''
+    `SetattrFields` instances are passed to the `~Operations.setattr` handler
+    to specify which attributes should be updated.
+    '''
+
+    cdef readonly object update_atime
+    cdef readonly object update_mtime
+    cdef readonly object update_mode
+    cdef readonly object update_uid
+    cdef readonly object update_gid
+    cdef readonly object update_size
+
+    def __cinit__(self):
+        self.update_atime = False
+        self.update_mtime = False
+        self.update_mode = False
+        self.update_uid = False
+        self.update_gid = False
+        self.update_size = False
+
+cdef class EntryAttributes:
     '''
     Instances of this class store attributes of directory entries.
     Most of the attributes correspond to the elements of the ``stat``
     C struct as returned by e.g. ``fstat`` and should be
     self-explanatory.
-
-    The access, modification and creation times may be specified
-    either in nanoseconds (via the *st_Xtime_ns* attributes) or in
-    seconds (via the *st_Xtime* attributes). When times are specified
-    both in seconds and nanoseconds, the nanosecond representation
-    takes precedence. If times are represented in seconds, floating
-    point numbers may be used to achieve sub-second
-    resolution. Nanosecond time stamps must be integers. Note that
-    using integer nanoseconds is more accurately than using float
-    seconds.
-
-    Request handlers do not need to return objects that inherit from
-    `EntryAttributes` directly as long as they provide the required
-    attributes.
     '''
 
     # Attributes are documented in rst/data.rst
 
-    __slots__ = [ 'st_ino', 'generation', 'entry_timeout',
-                  'attr_timeout', 'st_mode', 'st_nlink', 'st_uid', 'st_gid',
-                  'st_rdev', 'st_size', 'st_blksize', 'st_blocks',
-                  'st_atime', 'st_atime_ns', 'st_mtime', 'st_mtime_ns',
-                  'st_ctime', 'st_ctime_ns' ]
+    cdef fuse_entry_param fuse_param
+    cdef struct_stat *attr
 
-    def __init__(self):
-        self.st_ino = None
-        self.generation = 0
-        self.entry_timeout = 300
-        self.attr_timeout = 300
-        self.st_mode = S_IFREG
-        self.st_nlink = 1
-        self.st_uid = 0
-        self.st_gid = 0
-        self.st_rdev = 0
-        self.st_size = 0
-        self.st_blksize = 4096
-        self.st_blocks = 0
-        self.st_atime = 0
-        self.st_mtime = 0
-        self.st_ctime = 0
-        self.st_atime_ns = None
-        self.st_mtime_ns = None
-        self.st_ctime_ns = None
+    def __cinit__(self):
+        string.memset(&self.fuse_param, 0, sizeof(fuse_entry_param))
+        self.attr = &self.fuse_param.attr
+        self.fuse_param.generation = 0
+        self.fuse_param.entry_timeout = 300
+        self.fuse_param.attr_timeout = 300
+
+        self.attr.st_mode = S_IFREG
+        self.attr.st_blksize = 4096
+        self.attr.st_nlink = 1
+
+    property st_ino:
+        def __get__(self): return self.fuse_param.ino
+        def __set__(self, val):
+            self.fuse_param.ino = val
+            self.attr.st_ino = val
+
+    property generation:
+        '''The inode generation number'''
+        def __get__(self): return self.fuse_param.generation
+        def __set__(self, val): self.fuse_param.generation = val
+
+    property attr_timeout:
+        '''Validity timeout for the name of the directory entry
+
+        Floating point numbers may be used. Units are seconds.
+        '''
+        def __get__(self): return self.fuse_param.attr_timeout
+        def __set__(self, val): self.fuse_param.attr_timeout = val
+
+    property entry_timeout:
+        '''Validity timeout for the attributes of the directory entry
+
+        Floating point numbers may be used. Units are seconds.
+        '''
+        def __get__(self): return self.fuse_param.entry_timeout
+        def __set__(self, val): self.fuse_param.entry_timeout = val
+
+    property st_mode:
+        def __get__(self): return self.attr.st_mode
+        def __set__(self, val): self.attr.st_mode = val
+
+    property st_nlink:
+        def __get__(self): return self.attr.st_nlink
+        def __set__(self, val): self.attr.st_nlink = val
+
+    property st_uid:
+        def __get__(self): return self.attr.st_uid
+        def __set__(self, val): self.attr.st_uid = val
+
+    property st_gid:
+        def __get__(self): return self.attr.st_gid
+        def __set__(self, val): self.attr.st_gid = val
+
+    property st_rdev:
+        def __get__(self): return self.attr.st_rdev
+        def __set__(self, val): self.attr.st_rdev = val
+
+    property st_size:
+        def __get__(self): return self.attr.st_size
+        def __set__(self, val): self.attr.st_size = val
+
+    property st_blocks:
+        def __get__(self): return self.attr.st_blocks
+        def __set__(self, val): self.attr.st_blocks = val
+
+    property st_blksize:
+        def __get__(self): return self.attr.st_blksize
+        def __set__(self, val): self.attr.st_blksize = val
+
+    property st_atime_ns:
+        '''Time of last access in (integer) nanoseconds'''
+        def __get__(self):
+            return (self.attr.st_atime * 10**9
+                    + GET_ATIME_NS(self.attr))
+        def __set__(self, val):
+            self.attr.st_atime = val / 10**9
+            SET_ATIME_NS(self.attr, val % 10**9)
+
+    property st_mtime_ns:
+        '''Time of last modification in (integer) nanoseconds'''
+        def __get__(self):
+            return (self.attr.st_mtime * 10**9
+                    + GET_MTIME_NS(self.attr))
+        def __set__(self, val):
+            self.attr.st_mtime = val / 10**9
+            SET_MTIME_NS(self.attr, val % 10**9)
+
+    property st_ctime_ns:
+        '''Time of last inode modification in (integer) nanoseconds'''
+        def __get__(self):
+            return (self.attr.st_ctime * 10**9
+                    + GET_CTIME_NS(self.attr))
+        def __set__(self, val):
+            self.attr.st_ctime = val / 10**9
+            SET_CTIME_NS(self.attr, val % 10**9)
 
 class StatvfsData:
     '''

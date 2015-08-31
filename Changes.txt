@@ -9,6 +9,19 @@ UNRELEASED, python-llfuse tip
 
    * Implemented a forget_multi handler (used behind the scenes).
 
+   BACKWARDS INCOMPATIBLE CHANGES:
+
+   * Ducktyping the `EntryAttributes` class is no longer allowed,
+     `Operations` methods must return instances of this class (rather
+     than any object that provides the neccessary attributes).
+
+   * The `st_Xtime` attributes of the `EntryAttributes` have been
+     dropped in favor of the `st_Xtime_ns` attributes.
+
+   * The `setattr` method now always receives a completely filled
+     `EntryAttributes` instance. To determine which attributes should
+     be changed, a new *fields* argument has been introduced.
+
 2015-08-22, python-llfuse 0.41.1
 
    * Added some files in test/ that were missing in the 0.41 tarball.

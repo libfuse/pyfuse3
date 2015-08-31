@@ -32,15 +32,15 @@ cdef void fuse_destroy (void *userdata) with gil:
             log.exception('Exception after kill:')
 
 cdef void fuse_lookup (fuse_req_t req, fuse_ino_t parent,
-                       const_char *name) with gil:
-    cdef fuse_entry_param entry
+                       const_char *c_name) with gil:
+    cdef EntryAttributes entry
     cdef int ret
 
     try:
+        name = PyBytes_FromString(c_name)
         with lock:
-            attr = operations.lookup(parent, PyBytes_FromString(name))
-        fill_entry_param(attr, &entry)
-        ret = fuse_reply_entry(req, &entry)
+            entry = <EntryAttributes?> operations.lookup(parent, name)
+        ret = fuse_reply_entry(req, &entry.fuse_param)
     except FUSEError as e:
         ret = fuse_reply_err(req, e.errno)
     except:
@@ -74,17 +74,14 @@ cdef void fuse_forget_multi(fuse_req_t req, size_t count,
 
 cdef void fuse_getattr (fuse_req_t req, fuse_ino_t ino,
                         fuse_file_info *fi) with gil:
-    cdef struct_stat stat
     cdef int ret
-    cdef int timeout
+    cdef EntryAttributes entry
 
     try:
         with lock:
-            attr = operations.getattr(ino)
+            entry = <EntryAttributes?> operations.getattr(ino)
 
-        fill_c_stat(attr, &stat)
-        timeout = attr.attr_timeout
-        ret = fuse_reply_attr(req, &stat, timeout)
+        ret = fuse_reply_attr(req, entry.attr, entry.fuse_param.attr_timeout)
     except FUSEError as e:
         ret = fuse_reply_err(req, e.errno)
     except:
@@ -96,64 +93,46 @@ cdef void fuse_getattr (fuse_req_t req, fuse_ino_t ino,
 cdef void fuse_setattr (fuse_req_t req, fuse_ino_t ino, struct_stat *stat,
                         int to_set, fuse_file_info *fi) with gil:
     cdef int ret
-    cdef struct_stat stat_n
-    cdef int timeout
     cdef timespec now
+    cdef EntryAttributes entry
+    cdef SetattrFields fields
+    cdef struct_stat *attr
 
     try:
-        attr = EntryAttributes()
+        entry = EntryAttributes()
+        fields = SetattrFields()
+        string.memcpy(entry.attr, stat, sizeof(struct_stat))
+
+        attr = entry.attr
         if to_set & (FUSE_SET_ATTR_ATIME_NOW | FUSE_SET_ATTR_MTIME_NOW):
             ret = clock_gettime(CLOCK_REALTIME, &now)
             if ret != 0:
                 log.error('fuse_setattr(): clock_gettime(CLOCK_REALTIME) failed with %s',
                           strerror(errno.errno))
 
-        # Type casting required on 64bit, where double
-        # is smaller than long int.
         if to_set & FUSE_SET_ATTR_ATIME:
-            attr.st_atime = <double> stat.st_atime + <double> GET_ATIME_NS(stat) * 1e-9
-            attr.st_atime_ns = stat.st_atime * 10**9 + GET_ATIME_NS(stat)
+            fields.update_atime = True
         elif to_set & FUSE_SET_ATTR_ATIME_NOW:
+            fields.update_atime = True
             attr.st_atime = now.tv_sec
-            attr.st_atime_ns = now.tv_nsec
-        else:
-            attr.st_atime = attr.st_atime_ns = None
+            SET_ATIME_NS(attr, now.tv_nsec)
 
         if to_set & FUSE_SET_ATTR_MTIME:
-            attr.st_mtime = <double> stat.st_mtime + <double> GET_MTIME_NS(stat) * 1e-9
-            attr.st_mtime_ns = stat.st_mtime * 10**9 + GET_MTIME_NS(stat)
+            fields.update_mtime = True
         elif to_set & FUSE_SET_ATTR_MTIME_NOW:
+            fields.update_mtime = True
             attr.st_mtime = now.tv_sec
-            attr.st_mtime_ns = now.tv_nsec
-        else:
-            attr.st_mtime = attr.st_mtime_ns = None
+            SET_MTIME_NS(attr, now.tv_nsec)
 
-        if to_set & FUSE_SET_ATTR_MODE:
-            attr.st_mode = stat.st_mode
-        else:
-            attr.st_mode = None
-
-        if to_set & FUSE_SET_ATTR_UID:
-            attr.st_uid = stat.st_uid
-        else:
-            attr.st_uid = None
-
-        if to_set & FUSE_SET_ATTR_GID:
-            attr.st_gid = stat.st_gid
-        else:
-            attr.st_gid = None
-
-        if to_set & FUSE_SET_ATTR_SIZE:
-            attr.st_size = stat.st_size
-        else:
-            attr.st_size = None
+        fields.update_mode = bool(to_set & FUSE_SET_ATTR_MODE)
+        fields.update_uid = bool(to_set & FUSE_SET_ATTR_UID)
+        fields.update_gid = bool(to_set & FUSE_SET_ATTR_GID)
+        fields.update_size = bool(to_set & FUSE_SET_ATTR_SIZE)
 
         with lock:
-            attr = operations.setattr(ino, attr)
+            entry = <EntryAttributes?> operations.setattr(ino, entry, fields)
 
-        fill_c_stat(attr, &stat_n)
-        timeout = attr.attr_timeout
-        ret = fuse_reply_attr(req, &stat_n, timeout)
+        ret = fuse_reply_attr(req, entry.attr, entry.fuse_param.attr_timeout)
     except FUSEError as e:
         ret = fuse_reply_err(req, e.errno)
     except:
@@ -181,15 +160,14 @@ cdef void fuse_readlink (fuse_req_t req, fuse_ino_t ino) with gil:
 cdef void fuse_mknod (fuse_req_t req, fuse_ino_t parent, const_char *name,
                       mode_t mode, dev_t rdev) with gil:
     cdef int ret
-    cdef fuse_entry_param entry
+    cdef EntryAttributes entry
 
     try:
         ctx = get_request_context(req)
         with lock:
-            attr = operations.mknod(parent, PyBytes_FromString(name), mode,
-                                    rdev, ctx)
-        fill_entry_param(attr, &entry)
-        ret = fuse_reply_entry(req, &entry)
+            entry = <EntryAttributes?> operations.mknod(parent, PyBytes_FromString(name),
+                                                        mode, rdev, ctx)
+        ret = fuse_reply_entry(req, &entry.fuse_param)
     except FUSEError as e:
         ret = fuse_reply_err(req, e.errno)
     except:
@@ -201,7 +179,7 @@ cdef void fuse_mknod (fuse_req_t req, fuse_ino_t parent, const_char *name,
 cdef void fuse_mkdir (fuse_req_t req, fuse_ino_t parent, const_char *name,
                       mode_t mode) with gil:
     cdef int ret
-    cdef fuse_entry_param entry
+    cdef EntryAttributes entry
 
     try:
         # Force the entry type to directory. We need to explicitly cast,
@@ -209,9 +187,9 @@ cdef void fuse_mkdir (fuse_req_t req, fuse_ino_t parent, const_char *name,
         mode = <mode_t> ((mode & ~S_IFMT) | S_IFDIR)
         ctx = get_request_context(req)
         with lock:
-            attr = operations.mkdir(parent, PyBytes_FromString(name), mode, ctx)
-        fill_entry_param(attr, &entry)
-        ret = fuse_reply_entry(req, &entry)
+            entry = <EntryAttributes?> operations.mkdir(parent, PyBytes_FromString(name),
+                                                        mode, ctx)
+        ret = fuse_reply_entry(req, &entry.fuse_param)
     except FUSEError as e:
         ret = fuse_reply_err(req, e.errno)
     except:
@@ -253,15 +231,14 @@ cdef void fuse_rmdir (fuse_req_t req, fuse_ino_t parent, const_char *name) with 
 cdef void fuse_symlink (fuse_req_t req, const_char *link, fuse_ino_t parent,
                         const_char *name) with gil:
     cdef int ret
-    cdef fuse_entry_param entry
+    cdef EntryAttributes entry
 
     try:
         ctx = get_request_context(req)
         with lock:
-            attr = operations.symlink(parent, PyBytes_FromString(name),
-                                      PyBytes_FromString(link), ctx)
-        fill_entry_param(attr, &entry)
-        ret = fuse_reply_entry(req, &entry)
+            entry = <EntryAttributes?> operations.symlink(parent, PyBytes_FromString(name),
+                                                          PyBytes_FromString(link), ctx)
+        ret = fuse_reply_entry(req, &entry.fuse_param)
     except FUSEError as e:
         ret = fuse_reply_err(req, e.errno)
     except:
@@ -290,13 +267,13 @@ cdef void fuse_rename (fuse_req_t req, fuse_ino_t parent, const_char *name,
 cdef void fuse_link (fuse_req_t req, fuse_ino_t ino, fuse_ino_t newparent,
                      const_char *newname) with gil:
     cdef int ret
-    cdef fuse_entry_param entry
+    cdef EntryAttributes entry
 
     try:
         with lock:
-            attr = operations.link(ino, newparent, PyBytes_FromString(newname))
-        fill_entry_param(attr, &entry)
-        ret = fuse_reply_entry(req, &entry)
+            entry = <EntryAttributes?> operations.link(ino, newparent,
+                                                       PyBytes_FromString(newname))
+        ret = fuse_reply_entry(req, &entry.fuse_param)
     except FUSEError as e:
         ret = fuse_reply_err(req, e.errno)
     except:
@@ -436,7 +413,7 @@ cdef void fuse_readdir (fuse_req_t req, fuse_ino_t ino, size_t size, off_t off,
     cdef char *cname
     cdef char *buf
     cdef size_t len_, acc_size
-    cdef struct_stat stat
+    cdef EntryAttributes entry
 
     # GCC thinks this may end up uninitialized
     ret = 0
@@ -446,12 +423,12 @@ cdef void fuse_readdir (fuse_req_t req, fuse_ino_t ino, size_t size, off_t off,
         buf = NULL
         with lock:
             for (name, attr, next_) in operations.readdir(fi.fh, off):
+                entry = <EntryAttributes?> attr
                 if buf == NULL:
                     buf = <char*> stdlib.malloc(size * sizeof(char))
                 cname = PyBytes_AsString(name)
-                fill_c_stat(attr, &stat)
                 len_ = fuse_add_direntry(req, buf + acc_size, size - acc_size,
-                                         cname, &stat, next_)
+                                         cname, entry.attr, next_)
                 if len_ > (size - acc_size):
                     break
                 acc_size += len_
@@ -690,20 +667,21 @@ cdef void fuse_access (fuse_req_t req, fuse_ino_t ino, int mask) with gil:
 cdef void fuse_create (fuse_req_t req, fuse_ino_t parent, const_char *cname,
                        mode_t mode, fuse_file_info *fi) with gil:
     cdef int ret
-    cdef fuse_entry_param entry
+    cdef EntryAttributes entry
 
     try:
         ctx = get_request_context(req)
         name = PyBytes_FromString(cname)
         with lock:
-            (fi.fh, attr) = operations.create(parent, name, mode, fi.flags, ctx)
+            tmp = operations.create(parent, name, mode, fi.flags, ctx)
+            fi.fh = tmp[0]
+            entry = <EntryAttributes?> tmp[1]
 
         # Cached file data does not need to be invalidated.
         # http://article.gmane.org/gmane.comp.file-systems.fuse.devel/5325/
         fi.keep_cache = 1
 
-        fill_entry_param(attr, &entry)
-        ret = fuse_reply_create(req, &entry, fi)
+        ret = fuse_reply_create(req, &entry.fuse_param, fi)
     except FUSEError as e:
         ret = fuse_reply_err(req, e.errno)
     except:

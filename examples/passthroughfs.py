@@ -124,7 +124,8 @@ class Operations(llfuse.Operations):
 
         entry = llfuse.EntryAttributes()
         for attr in ('st_ino', 'st_mode', 'st_nlink', 'st_uid', 'st_gid',
-                     'st_rdev', 'st_size', 'st_atime', 'st_mtime', 'st_ctime'):
+                     'st_rdev', 'st_size', 'st_atime_ns', 'st_mtime_ns',
+                     'st_ctime_ns'):
             setattr(entry, attr, getattr(stat, attr))
         entry.generation = 0
         entry.entry_timeout = 5
@@ -248,24 +249,21 @@ class Operations(llfuse.Operations):
         self._add_path(inode, path)
         return self.getattr(inode)
 
-    def setattr(self, inode, attr):
+    def setattr(self, inode, attr, fields):
         path = self._inode_to_path(inode)
 
         try:
-            if attr.st_size is not None:
+            if fields.update_size:
                 os.truncate(path, attr.st_size)
 
-            if attr.st_mode is not None:
+            if fields.update_mode:
                 os.chmod(path, ~stat_m.S_IFMT & attr.st_mode,
                          follow_symlinks=False)
 
-
-            assert (attr.st_uid is None) == (attr.st_gid is None)
-            if attr.st_uid is not None:
+            if fields.update_uid or fields.update_gid:
                 os.chown(path, attr.st_uid, attr.st_gid, follow_symlinks=False)
 
-            assert (attr.st_atime is None) == (attr.st_mtime is None)
-            if attr.st_atime is not None:
+            if fields.update_atime or fields.update_mtime:
                 os.utime(path, None, follow_symlinks=False,
                          ns=(attr.st_atime_ns, attr.st_mtime_ns))
 
