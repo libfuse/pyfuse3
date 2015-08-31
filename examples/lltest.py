@@ -128,7 +128,9 @@ def main():
     init_logging(options.debug)
 
     testfs = TestFs()
-    llfuse.init(testfs, options.mountpoint, [ 'fsname=lltest' ])
+    fuse_options = set(llfuse.default_options)
+    fuse_options.add('fsname=lltest')
+    llfuse.init(testfs, options.mountpoint, fuse_options)
     try:
         llfuse.main(single=True)
     except:

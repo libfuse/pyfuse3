@@ -232,7 +232,9 @@ class Fs(llfuse.Operations):
 
 def run_fs(mountpoint, cross_process):
     testfs = Fs(cross_process)
-    llfuse.init(testfs, mountpoint, [ 'fsname=llfuse_test_fs' ])
+    fuse_options = set(llfuse.default_options)
+    fuse_options.add('fsname=llfuse_testfs')
+    llfuse.init(testfs, mountpoint, fuse_options)
     try:
         llfuse.main(single=True)
     finally:

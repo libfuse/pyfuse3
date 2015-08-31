@@ -432,8 +432,10 @@ if __name__ == '__main__':
     init_logging(options.debug)
     operations = Operations()
 
-    llfuse.init(operations, options.mountpoint,
-                [  'fsname=tmpfs', "nonempty" ])
+    fuse_options = set(llfuse.default_options)
+    fuse_options.add('fsname=tmpfs')
+    fuse_options.discard('default_permissions')
+    llfuse.init(operations, options.mountpoint, fuse_options)
 
     # sqlite3 does not support multithreading
     try:

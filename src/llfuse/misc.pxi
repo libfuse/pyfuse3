@@ -148,8 +148,6 @@ cdef make_fuse_args(args, fuse_args* f_args):
 
     args_new = [ b'Python-LLFUSE' ]
     for el in args:
-        if not isinstance(el, str_t):
-            raise TypeError('fuse options must be of type str')
         args_new.append(b'-o')
         args_new.append(el.encode('us-ascii'))
     args = args_new

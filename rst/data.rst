@@ -22,6 +22,9 @@
    of options as well, but you should only deviate from the defaults
    with good reason.
 
+   (The :samp:`fsname=<foo>` option is guaranteed never to be included in the
+   default options, so you can always safely add it to the set).
+
 .. autoexception:: FUSEError
 
 .. autoclass:: RequestContext

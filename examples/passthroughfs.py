@@ -395,9 +395,10 @@ def main():
     operations = Operations(options.source)
 
     log.debug('Mounting...')
-    llfuse.init(operations, options.mountpoint,
-                [  'fsname=passthroughfs', "nonempty",
-                   'default_permissions' ])
+    fuse_options = set(llfuse.default_options)
+    fuse_options.add('fsname=passthroughfs')
+    fuse_options.add('default_permissions')
+    llfuse.init(operations, options.mountpoint, fuse_options)
 
     try:
         log.debug('Entering main loop..')
