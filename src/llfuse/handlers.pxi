@@ -59,6 +59,19 @@ cdef void fuse_forget (fuse_req_t req, fuse_ino_t ino,
         handle_exc(NULL)
     fuse_reply_none(req)
 
+
+cdef void fuse_forget_multi(fuse_req_t req, size_t count,
+                            fuse_forget_data *forgets) with gil:
+    try:
+        forget_list = list()
+        for i in range(0, count):
+            forget_list.append((forgets[i].ino, forgets[i].nlookup))
+        with lock:
+            operations.forget(forget_list)
+    except:
+        handle_exc(NULL)
+    fuse_reply_none(req)
+
 cdef void fuse_getattr (fuse_req_t req, fuse_ino_t ino,
                         fuse_file_info *fi) with gil:
     cdef struct_stat stat

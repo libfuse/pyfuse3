@@ -7,8 +7,11 @@ This file is part of Python-LLFUSE. This work may be distributed under
 the terms of the GNU LGPL.
 */
 
-#define FUSE_USE_VERSION 28
 #include <fuse.h>
+
+#if FUSE_VERSION < 28
+#error FUSE version too old, 2.8.0 or newer required
+#endif
 
 #if FUSE_MAJOR_VERSION != 2
 #error This version of the FUSE library is not yet supported.

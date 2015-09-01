@@ -57,6 +57,8 @@ cdef extern from "macros.c" nogil:
     void SET_CTIME_NS(struct_stat* buf, long val)
     void SET_MTIME_NS(struct_stat* buf, long val)
 
+    void FUSE29_ASSIGN(void*, void*)
+
 cdef extern from "Python.h" nogil:
     void PyEval_InitThreads()
 

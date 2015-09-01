@@ -72,9 +72,12 @@ def main():
         long_desc = fh.read()
 
     compile_args = pkg_config('fuse', cflags=True, ldflags=False, min_ver='2.8.0')
-    compile_args += ['-DFUSE_USE_VERSION=28', '-Wall', '-Wextra', '-Wconversion',
+    compile_args += ['-DFUSE_USE_VERSION=29', '-Wall', '-Wextra', '-Wconversion',
                      '-Wno-sign-conversion',
                      '-DLLFUSE_VERSION="%s"' % LLFUSE_VERSION]
+
+    # We may have unused functions if we compile for older FUSE versions
+    compile_args.append('-Wno-unused-function')
 
     # Enable fatal warnings only when compiling from Mercurial tip.  (otherwise
     # we break forward compatibility because compilation with newer compiler may

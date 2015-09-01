@@ -8,10 +8,10 @@ the terms of the GNU LGPL.
 */
 
 
-/******
- * Functions to access the nanosecond attributes in struct stat in a
+/*
+ * Macros to access the nanosecond attributes in struct stat in a
  * platform independent way. Stolen from fuse_misc.h.
- *******/
+ */
 
 /* Linux */
 #ifdef HAVE_STRUCT_STAT_ST_ATIM
@@ -39,4 +39,16 @@ the terms of the GNU LGPL.
 #define SET_ATIME_NS(stbuf, val) do { } while (0)
 #define SET_CTIME_NS(stbuf, val) do { } while (0)
 #define SET_MTIME_NS(stbuf, val) do { } while (0)
+#endif
+
+
+/*
+ * Macros for conditional assignments that depend on the installed
+ * FUSE version.
+ */
+
+#if FUSE_VERSION >= 29
+#define FUSE29_ASSIGN(x,y) ((x) = (y))
+#else
+#define FUSE29_ASSIGN(x,y)
 #endif
