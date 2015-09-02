@@ -498,7 +498,7 @@ cdef class FUSEError(Exception):
         def __set__(self, val):
             self.errno_ = val
 
-    def __init__(self, errno):
+    def __cinit__(self, errno):
         self.errno_ = errno
 
     def __str__(self):
