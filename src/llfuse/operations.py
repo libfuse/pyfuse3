@@ -468,6 +468,9 @@ class Operations(object):
 
         If the ``default_permissions`` mount option is given, this method is not
         called.
+
+        When implementing this method, the `get_sup_groups` function may be
+        useful.
         '''
 
         raise FUSEError(errno.ENOSYS)

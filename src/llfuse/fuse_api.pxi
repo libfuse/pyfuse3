@@ -447,3 +447,25 @@ def notify_store(inode, offset, data):
     PyBuffer_Release(&pybuf)
     if ret != 0:
         raise OSError(-ret, 'fuse_lowlevel_notify_store returned: ' + strerror(-ret))
+
+def get_sup_groups(pid):
+    '''Return supplementary group ids of *pid*
+
+    This function is relatively expensive because it has to read the group ids
+    from ``/proc/[pid]/status``. For the same reason, it will also not work on
+    systems that do not provide a ``/proc`` file system.
+
+    Returns a set.
+    '''
+
+    with open('/proc/%d/status' % pid, 'r') as fh:
+        for line in fh:
+            if line.startswith('Groups:'):
+                break
+        else:
+            raise RuntimeError("Unable to parse %s" % fh.name)
+    gids = set()
+    for x in line.split()[1:]:
+        gids.add(int(x))
+
+    return gids

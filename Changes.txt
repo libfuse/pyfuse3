@@ -4,6 +4,8 @@ UNRELEASED, python-llfuse tip
 
    * Added `notify_store` function.
 
+   * Added `get_sup_groups` function.
+
    * The `read()` handler may now return arbitrary objects that
      as long as they implement the buffer protocol.
 

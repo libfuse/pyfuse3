@@ -33,6 +33,10 @@ def test_listdir():
     list2 = set(llfuse.listdir('/usr/bin'))
     assert list1 == list2
 
+def test_sup_groups():
+    gids = llfuse.get_sup_groups(os.getpid())
+    gids2 = set(os.getgroups())
+    assert gids == gids2
 
 def _getxattr_helper(path, name):
     try:
