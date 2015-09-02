@@ -25,6 +25,8 @@ from libc.stdlib cimport const_char
 from libc cimport stdlib, string, errno, dirent, xattr
 from libc.errno cimport ETIMEDOUT, EPROTO, EINVAL, EPERM, ENOMSG
 from posix.unistd cimport getpid
+from posix.signal cimport kill
+from libc.signal cimport SIGTERM
 from posix.time cimport clock_gettime, CLOCK_REALTIME, timespec
 from cpython.bytes cimport (PyBytes_AsStringAndSize, PyBytes_FromStringAndSize,
                             PyBytes_AsString, PyBytes_FromString)
@@ -38,10 +40,6 @@ from cpython.version cimport PY_MAJOR_VERSION
 ######################
 # EXTERNAL DEFINITIONS
 ######################
-
-cdef extern from "signal.h" nogil:
-    int kill(pid_t pid, int sig)
-    enum: SIGTERM
 
 cdef extern from "lock.h" nogil:
     int acquire(double timeout) nogil
