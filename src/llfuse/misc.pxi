@@ -234,29 +234,27 @@ def _notify_loop():
     '''Read notifications from queue and send to FUSE kernel module'''
 
     cdef ssize_t len_
-    cdef fuse_ino_t ino
     cdef char *cname
+    cdef NotifyRequest req
 
     while True:
         req = _notify_queue.get()
         if req is None:
             return
 
-        if isinstance(req, inval_inode_req):
-            ino = req.inode
+        if req.kind == NOTIFY_INVAL_INODE:
             if req.attr_only:
                 with nogil:
-                    fuse_lowlevel_notify_inval_inode(channel, ino, -1, 0)
+                    fuse_lowlevel_notify_inval_inode(channel, req.ino, -1, 0)
             else:
                 with nogil:
-                    fuse_lowlevel_notify_inval_inode(channel, ino, 0, 0)
-        elif isinstance(req, inval_entry_req):
+                    fuse_lowlevel_notify_inval_inode(channel, req.ino, 0, 0)
+        elif req.kind == NOTIFY_INVAL_ENTRY:
             PyBytes_AsStringAndSize(req.name, &cname, &len_)
-            ino = req.inode_p
             with nogil:
-                fuse_lowlevel_notify_inval_entry(channel, ino, cname, len_)
+                fuse_lowlevel_notify_inval_entry(channel, req.ino, cname, len_)
         else:
-            raise RuntimeError("Weird request received: %r", req)
+            raise RuntimeError("Weird request kind received: %d", req.kind)
 
 cdef str2bytes(s):
     '''Convert *s* to bytes
@@ -511,3 +509,10 @@ cdef class FUSEError(Exception):
 
     def __str__(self):
         return strerror(self.errno_)
+
+@cython.freelist(300)
+cdef class NotifyRequest:
+    cdef fuse_ino_t ino
+    cdef char attr_only
+    cdef object name
+    cdef int kind

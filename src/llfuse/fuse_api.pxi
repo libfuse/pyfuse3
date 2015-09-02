@@ -373,7 +373,7 @@ def close(unmount=True):
         else:
             raise tmp[1].with_traceback(tmp[2])
 
-def invalidate_inode(int inode, attr_only=False):
+def invalidate_inode(fuse_ino_t inode, attr_only=False):
     '''Invalidate cache for *inode*
 
     Instructs the FUSE kernel module to forgot cached attributes and
@@ -382,9 +382,14 @@ def invalidate_inode(int inode, attr_only=False):
     kernel has executed the request.
     '''
 
-    _notify_queue.put(inval_inode_req(inode, attr_only))
+    cdef NotifyRequest req
+    req = NotifyRequest.__new__(NotifyRequest)
+    req.kind = NOTIFY_INVAL_INODE
+    req.ino = inode
+    req.attr_only = bool(attr_only)
+    _notify_queue.put(req)
 
-def invalidate_entry(int inode_p, bytes name):
+def invalidate_entry(fuse_ino_t inode_p, bytes name):
     '''Invalidate directory entry
 
     Instructs the FUSE kernel module to forget about the directory
@@ -393,7 +398,12 @@ def invalidate_entry(int inode_p, bytes name):
     the kernel has executed the request.
     '''
 
-    _notify_queue.put(inval_entry_req(inode_p, name))
+    cdef NotifyRequest req
+    req = NotifyRequest.__new__(NotifyRequest)
+    req.kind = NOTIFY_INVAL_ENTRY
+    req.ino = inode_p
+    req.name = name
+    _notify_queue.put(req)
 
 def get_ino_t_bits():
     '''Return number of bits available for inode numbers

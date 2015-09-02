@@ -60,6 +60,10 @@ cdef extern from "macros.c" nogil:
 
     void FUSE29_ASSIGN(void*, void*)
 
+    enum:
+        NOTIFY_INVAL_INODE
+        NOTIFY_INVAL_ENTRY
+
 cdef extern from "Python.h" nogil:
     void PyEval_InitThreads()
     ctypedef class __builtin__.Exception [object PyBaseExceptionObject]:
@@ -80,7 +84,6 @@ import logging
 import sys
 import os.path
 import threading
-from collections import namedtuple
 
 if PY_MAJOR_VERSION < 3:
     from Queue import Queue
@@ -107,9 +110,8 @@ init_lock()
 lock = Lock.__new__(Lock)
 lock_released = NoLockManager.__new__(NoLockManager)
 
+cdef object _notify_queue
 _notify_queue = Queue(maxsize=1000)
-inval_inode_req = namedtuple('inval_inode_req', [ 'inode', 'attr_only' ])
-inval_entry_req = namedtuple('inval_entry_req', [ 'inode_p', 'name' ])
 
 # Exported for access from Python code
 ROOT_INODE = FUSE_ROOT_ID

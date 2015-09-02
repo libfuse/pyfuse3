@@ -52,3 +52,10 @@ the terms of the GNU LGPL.
 #else
 #define FUSE29_ASSIGN(x,y)
 #endif
+
+
+/*
+ * Constants
+ */
+#define NOTIFY_INVAL_INODE 1
+#define NOTIFY_INVAL_ENTRY 2
