@@ -1,5 +1,5 @@
 /*
-cext.c
+llfuse.c
 
 Copyright © 2013 Nikolaus Rath <Nikolaus.org>
 
@@ -18,13 +18,13 @@ the terms of the GNU LGPL.
 #endif
 
 #ifdef __gnu_linux__
-#include "cext_linux.c"
+#include "llfuse_linux.c"
 #elif __FreeBSD__
-#include "cext_freebsd.c"
+#include "llfuse_freebsd.c"
 #elif __NetBSD__
-#include "cext_freebsd.c"
+#include "llfuse_freebsd.c"
 #elif __APPLE__ && __MACH__
-#include "cext_darwin.c"
+#include "llfuse_darwin.c"
 #else
 #error "Unable to determine system (Linux/FreeBSD/Darwin)"
 #endif

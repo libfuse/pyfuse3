@@ -1,5 +1,5 @@
 '''
-cext.pxy
+llfuse.pxy
 
 Copyright © 2013 Nikolaus Rath <Nikolaus.org>
 
@@ -114,13 +114,16 @@ cdef object _notify_queue
 _notify_queue = Queue(maxsize=1000)
 
 # Exported for access from Python code
+# (in the Cython source, we want ENOATTR to refer
+#  to the C constant, not a Python object)
 ROOT_INODE = FUSE_ROOT_ID
-ENOATTR_obj = ENOATTR
+globals()['ENOATTR'] = ENOATTR
 
 #######################
 # FUSE REQUEST HANDLERS
 #######################
 
+include "operations.pxi"
 include "handlers.pxi"
 
 ####################

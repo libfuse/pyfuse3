@@ -7,6 +7,6 @@ syntax: regexp
 ^doc/doctrees$
 
 syntax: glob
-src/llfuse/cext_*.c
-src/llfuse/*.so
+src/llfuse_*.c
+src/llfuse*.so
 test/.cache/

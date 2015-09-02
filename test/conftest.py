@@ -41,7 +41,7 @@ def pytest_configure(config):
     if not config.getoption('installed'):
         llfuse_path = os.path.join(basedir, 'src')
         if (os.path.exists(os.path.join(basedir, 'setup.py')) and
-            os.path.exists(os.path.join(basedir, 'src', 'llfuse'))):
+            os.path.exists(os.path.join(basedir, 'src', 'llfuse.pyx'))):
             sys.path.insert(0, llfuse_path)
 
         # Make sure that called processes use the same path

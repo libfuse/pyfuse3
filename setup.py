@@ -137,8 +137,8 @@ def main():
           package_dir={'': 'src'},
           packages=setuptools.find_packages('src'),
           provides=['llfuse'],
-          ext_modules=[Extension('llfuse.cext', ['src/llfuse/cext.c',
-                                                 'src/llfuse/lock.c'],
+          ext_modules=[Extension('llfuse', ['src/llfuse.c',
+                                            'src/lock.c'],
                                   extra_compile_args=compile_args,
                                   extra_link_args=link_args)],
           cmdclass={'build_cython': build_cython },
@@ -216,20 +216,19 @@ class build_cython(setuptools.Command):
                    'compiler_directives': directives }
 
         for sysname in ('linux', 'freebsd', 'darwin'):
-            print('compiling cext.pyx to cext_%s.c...' % (sysname,))
+            print('compiling llfuse.pyx to llfuse_%s.c...' % (sysname,))
             options['compile_time_env']['TARGET_PLATFORM'] = sysname
-            options['output_file'] = os.path.join(basedir, 'src', 'llfuse',
-                                                  'cext_%s.c' % (sysname,))
-            res = cython_compile(os.path.join(basedir, 'src', 'llfuse', 'cext.pyx'),
-                                 full_module_name='llfuse.cext', **options)
+            options['output_file'] = os.path.join(basedir, 'src',
+                                                  'llfuse_%s.c' % (sysname,))
+            res = cython_compile(os.path.join(basedir, 'src', 'llfuse.pyx'),
+                                 full_module_name='llfuse', **options)
             if res.num_errors != 0:
                 raise SystemExit('Cython encountered errors.')
 
-
-        # distutils doesn't know that cext.c #includes other files
+        # distutils doesn't know that llfuse.c #includes other files
         # and thus does not recompile unless we change the modification
         # date.
-        os.utime(os.path.join(basedir, 'src', 'llfuse', 'cext.c'), None)
+        os.utime(os.path.join(basedir, 'src', 'llfuse.c'), None)
 
 def fix_docutils():
     '''Work around https://bitbucket.org/birkenfeld/sphinx/issue/1154/'''

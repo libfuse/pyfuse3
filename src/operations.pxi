@@ -1,21 +1,12 @@
 # -*- coding: utf-8 -*-
 '''
-pyapi.py
+operations.pxi
 
 Copyright © 2013 Nikolaus Rath <Nikolaus.org>
 
 This file is part of Python-LLFUSE. This work may be distributed under
 the terms of the GNU LGPL.
 '''
-
-from __future__ import division, print_function, absolute_import
-
-import os
-import errno
-import logging
-from llfuse.cext import FUSEError
-
-log = logging.getLogger('llfuse')
 
 class Operations(object):
     '''
