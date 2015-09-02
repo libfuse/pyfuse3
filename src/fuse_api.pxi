@@ -93,13 +93,12 @@ def setxattr(path, name, bytes value, namespace='user'):
     cdef char *cvalue
     cdef char *cpath
     cdef char *cname
+    cdef int cnamespace
 
-    IF TARGET_PLATFORM == 'freebsd':
-        cdef int cnamespace
-        if namespace == 'system':
-            cnamespace = xattr.EXTATTR_NAMESPACE_SYSTEM
-        else:
-            cnamespace = xattr.EXTATTR_NAMESPACE_USER
+    if namespace == 'system':
+        cnamespace = EXTATTR_NAMESPACE_SYSTEM
+    else:
+        cnamespace = EXTATTR_NAMESPACE_USER
 
     path_b = str2bytes(path)
     name_b = str2bytes(name)
@@ -107,13 +106,8 @@ def setxattr(path, name, bytes value, namespace='user'):
     cpath = <char*> path_b
     cname = <char*> name_b
 
-
     with nogil:
-        IF TARGET_PLATFORM == 'freebsd':
-            ret = xattr.extattr_set_file(cpath, cnamespace, cname,
-                                         cvalue, len_)
-        ELSE:
-            ret = xattr.setxattr(cpath, cname, cvalue, len_, 0)
+        ret = setxattr_p(cpath, cname, cvalue, len_, cnamespace)
 
     if ret != 0:
         raise OSError(errno.errno, strerror(errno.errno), path)
@@ -155,13 +149,12 @@ def getxattr(path, name, int size_guess=128, namespace='user'):
     cdef char *cpath
     cdef char *cname
     cdef size_t bufsize
+    cdef int cnamespace
 
-    IF TARGET_PLATFORM == 'freebsd':
-        cdef int cnamespace
-        if namespace == 'system':
-            cnamespace = xattr.EXTATTR_NAMESPACE_SYSTEM
-        else:
-            cnamespace = xattr.EXTATTR_NAMESPACE_USER
+    if namespace == 'system':
+        cnamespace = EXTATTR_NAMESPACE_SYSTEM
+    else:
+        cnamespace = EXTATTR_NAMESPACE_USER
 
     path_b = str2bytes(path)
     name_b = str2bytes(name)
@@ -176,22 +169,11 @@ def getxattr(path, name, int size_guess=128, namespace='user'):
 
     try:
         with nogil:
-            IF TARGET_PLATFORM == 'freebsd':
-                ret = xattr.extattr_get_file(cpath, cnamespace, cname,
-                                             buf, bufsize)
-                if ret == bufsize:
-                    ret = -1
-                    errno.errno = errno.ERANGE
-            ELSE:
-                ret = xattr.getxattr(cpath, cname, buf, bufsize)
+            ret = getxattr_p(cpath, cname, buf, bufsize, cnamespace)
 
         if ret < 0 and errno.errno == errno.ERANGE:
             with nogil:
-                IF TARGET_PLATFORM == 'freebsd':
-                    ret = xattr.extattr_get_file(cpath, cnamespace, cname,
-                                                 NULL, 0)
-                ELSE:
-                    ret = xattr.getxattr(cpath, cname, NULL, 0)
+                ret = getxattr_p(cpath, cname, NULL, 0, cnamespace)
             if ret < 0:
                 raise OSError(errno.errno, strerror(errno.errno), path)
             bufsize = <size_t> ret
@@ -201,11 +183,7 @@ def getxattr(path, name, int size_guess=128, namespace='user'):
                 cpython.exc.PyErr_NoMemory()
 
             with nogil:
-                IF TARGET_PLATFORM == 'freebsd':
-                    ret = xattr.extattr_get_file(cpath, cnamespace, cname,
-                                                 buf, bufsize)
-                ELSE:
-                    ret = xattr.getxattr(cpath, cname, buf, bufsize)
+                ret = getxattr_p(cpath, cname, buf, bufsize, cnamespace)
 
         if ret < 0:
             raise OSError(errno.errno, strerror(errno.errno), path)

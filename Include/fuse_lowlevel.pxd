@@ -54,18 +54,6 @@ cdef extern from "fuse_lowlevel.h" nogil:
     int FUSE_SET_ATTR_ATIME_NOW
     int FUSE_SET_ATTR_MTIME_NOW
 
-    IF TARGET_PLATFORM == 'darwin':
-        ctypedef void(*setxattr_fn_t)(fuse_req_t req, fuse_ino_t ino, const_char *name,
-                                      const_char *value, size_t size, int flags,
-                                      uint32_t position)
-        ctypedef void(*getxattr_fn_t)(fuse_req_t req, fuse_ino_t ino, const_char *name,
-                                      size_t size, uint32_t position)
-    ELSE:
-        ctypedef void(*setxattr_fn_t)(fuse_req_t req, fuse_ino_t ino, const_char *name,
-                                      const_char *value, size_t size, int flags)
-        ctypedef void(*getxattr_fn_t)(fuse_req_t req, fuse_ino_t ino, const_char *name,
-                                      size_t size)
-
     struct fuse_lowlevel_ops:
         void (*init) (void *userdata, fuse_conn_info *conn)
         void (*destroy) (void *userdata)
@@ -109,8 +97,10 @@ cdef extern from "fuse_lowlevel.h" nogil:
         void (*fsyncdir) (fuse_req_t req, fuse_ino_t ino, int datasync,
                           fuse_file_info *fi)
         void (*statfs) (fuse_req_t req, fuse_ino_t ino)
-        setxattr_fn_t setxattr
-        getxattr_fn_t getxattr
+        void (*setxattr) (fuse_req_t req, fuse_ino_t ino, const_char *name,
+                          const_char *value, size_t size, int flags)
+        void (*getxattr) (fuse_req_t req, fuse_ino_t ino, const_char *name,
+                          size_t size)
         void (*listxattr) (fuse_req_t req, fuse_ino_t ino, size_t size)
         void (*removexattr) (fuse_req_t req, fuse_ino_t ino, const_char *name)
         void (*access) (fuse_req_t req, fuse_ino_t ino, int mask)

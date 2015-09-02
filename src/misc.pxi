@@ -72,18 +72,16 @@ cdef void init_fuse_ops():
     fuse_ops.releasedir = fuse_releasedir
     fuse_ops.fsyncdir = fuse_fsyncdir
     fuse_ops.statfs = fuse_statfs
-    IF TARGET_PLATFORM == 'darwin':
-        fuse_ops.setxattr = fuse_setxattr_darwin
-        fuse_ops.getxattr = fuse_getxattr_darwin
-    ELSE:
-        fuse_ops.setxattr = fuse_setxattr
-        fuse_ops.getxattr = fuse_getxattr
+    ASSIGN_DARWIN(fuse_ops.setxattr, &fuse_setxattr_darwin)
+    ASSIGN_DARWIN(fuse_ops.getxattr, &fuse_getxattr_darwin)
+    ASSIGN_NOT_DARWIN(fuse_ops.setxattr, &fuse_setxattr)
+    ASSIGN_NOT_DARWIN(fuse_ops.getxattr, &fuse_getxattr)
     fuse_ops.listxattr = fuse_listxattr
     fuse_ops.removexattr = fuse_removexattr
     fuse_ops.access = fuse_access
     fuse_ops.create = fuse_create
 
-    FUSE29_ASSIGN(fuse_ops.forget_multi, &fuse_forget_multi)
+    ASSIGN_FUSE29(fuse_ops.forget_multi, &fuse_forget_multi)
 
 cdef make_fuse_args(args, fuse_args* f_args):
     cdef char* arg

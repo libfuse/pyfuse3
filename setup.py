@@ -17,6 +17,7 @@ import sys
 import os
 import subprocess
 import warnings
+import re
 
 # Disable Cython support in setuptools. It fails under some conditions
 # (http://trac.cython.org/ticket/859), and we have our own build_cython command
@@ -39,6 +40,7 @@ except ImportError:
     raise SystemExit('Setuptools package not found. Please install from '
                      'https://pypi.python.org/pypi/setuptools')
 from setuptools import Extension
+from distutils.version import LooseVersion
 
 # Add util to load path
 basedir = os.path.abspath(os.path.dirname(sys.argv[0]))
@@ -190,45 +192,37 @@ class build_cython(setuptools.Command):
         pass
 
     def finalize_options(self):
-        pass
+        self.extensions = self.distribution.ext_modules
 
     def run(self):
         try:
-            from Cython.Compiler.Main import compile as cython_compile
-            from Cython.Compiler import Options as DefaultOptions
-        except ImportError:
+            version = subprocess.check_output(['cython', '--version'],
+                                              universal_newlines=True,
+                                              stderr=subprocess.STDOUT)
+        except OSError:
             raise SystemExit('Cython needs to be installed for this command')
 
-        # Cannot be passed directly to cython_compile()
-        DefaultOptions.warning_errors = True
-        DefaultOptions.fast_fail = True
+        hit = re.match('^Cython version (.+)$', version)
+        if not hit or LooseVersion(hit.group(1)) < "0.21.1":
+            raise SystemExit('Need Cython 0.21.1 or newer, found ' + version)
 
-        directives = dict()
-        directives.update(DefaultOptions.extra_warnings)
-        directives['embedsignature'] = True
-        directives['language_level'] = 3
+        cmd = ['cython', '-Wextra', '--force', '-3', '--fast-fail',
+               '--directive', 'embedsignature=True', '--include-dir',
+               os.path.join(basedir, 'Include'), '--verbose' ]
+        if DEVELOPER_MODE:
+            cmd.append('-Werror')
 
-        # http://trac.cython.org/cython_trac/ticket/714
-        directives['warn.maybe_uninitialized'] = False
+        # Work around http://trac.cython.org/cython_trac/ticket/714
+        cmd += ['-X', 'warn.maybe_uninitialized=False' ]
 
-        options = {'include_path': [ os.path.join(basedir, 'Include') ],
-                   'verbose': True, 'timestamps': False, 'compile_time_env': {},
-                   'compiler_directives': directives }
-
-        for sysname in ('linux', 'freebsd', 'darwin'):
-            print('compiling llfuse.pyx to llfuse_%s.c...' % (sysname,))
-            options['compile_time_env']['TARGET_PLATFORM'] = sysname
-            options['output_file'] = os.path.join(basedir, 'src',
-                                                  'llfuse_%s.c' % (sysname,))
-            res = cython_compile(os.path.join(basedir, 'src', 'llfuse.pyx'),
-                                 full_module_name='llfuse', **options)
-            if res.num_errors != 0:
-                raise SystemExit('Cython encountered errors.')
-
-        # distutils doesn't know that llfuse.c #includes other files
-        # and thus does not recompile unless we change the modification
-        # date.
-        os.utime(os.path.join(basedir, 'src', 'llfuse.c'), None)
+        for extension in self.extensions:
+            for file_ in extension.sources:
+                (file_, ext) = os.path.splitext(file_)
+                path = os.path.join(basedir, file_)
+                if ext != '.c':
+                    continue
+                if os.path.exists(path + '.pyx'):
+                    subprocess.check_call(cmd + [path + '.pyx'])
 
 def fix_docutils():
     '''Work around https://bitbucket.org/birkenfeld/sphinx/issue/1154/'''

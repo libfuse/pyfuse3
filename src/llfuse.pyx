@@ -7,11 +7,12 @@ This file is part of Python-LLFUSE. This work may be distributed under
 the terms of the GNU LGPL.
 '''
 
-# Version is defined in setup.py
-cdef extern from *:
-    char* LLFUSE_VERSION
-__version__ = LLFUSE_VERSION.decode('utf-8')
-
+cdef extern from "llfuse.h":
+    int PLATFORM
+    enum:
+        PLATFORM_LINUX
+        PLATFORM_BSD
+        PLATFORM_DARWIN
 
 ###########
 # C IMPORTS
@@ -22,7 +23,7 @@ from posix.stat cimport struct_stat, S_IFMT, S_IFDIR, S_IFREG
 from posix.types cimport mode_t, dev_t, off_t
 from libc.stdint cimport uint32_t
 from libc.stdlib cimport const_char
-from libc cimport stdlib, string, errno, dirent, xattr
+from libc cimport stdlib, string, errno, dirent
 from libc.errno cimport ETIMEDOUT, EPROTO, EINVAL, EPERM, ENOMSG
 from posix.unistd cimport getpid
 from posix.signal cimport kill
@@ -56,11 +57,29 @@ cdef extern from "macros.c" nogil:
     void SET_CTIME_NS(struct_stat* buf, long val)
     void SET_MTIME_NS(struct_stat* buf, long val)
 
-    void FUSE29_ASSIGN(void*, void*)
+    void ASSIGN_FUSE29(void*, void*)
+    void ASSIGN_DARWIN(void*, void*)
+    void ASSIGN_NOT_DARWIN(void*, void*)
 
     enum:
         NOTIFY_INVAL_INODE
         NOTIFY_INVAL_ENTRY
+
+cdef extern from "xattr.h" nogil:
+    int setxattr_p (char *path, char *name,
+                    void *value, int size, int namespace)
+
+    ssize_t getxattr_p (char *path, char *name,
+                        void *value, int size, int namespace)
+
+    enum:
+        EXTATTR_NAMESPACE_SYSTEM
+        EXTATTR_NAMESPACE_USER
+        XATTR_CREATE
+        XATTR_REPLACE
+        XATTR_NOFOLLOW
+        XATTR_NODEFAULT
+        XATTR_NOSECURITY
 
 cdef extern from "Python.h" nogil:
     void PyEval_InitThreads()
@@ -72,6 +91,10 @@ cdef extern from *:
     enum:
         EDEADLK
         ENOATTR
+
+# Actually passed as -D to cc (and defined in setup.py)
+cdef extern from *:
+    char* LLFUSE_VERSION
 
 ################
 # PYTHON IMPORTS
@@ -115,6 +138,7 @@ _notify_queue = Queue(maxsize=1000)
 # (in the Cython source, we want ENOATTR to refer
 #  to the C constant, not a Python object)
 ROOT_INODE = FUSE_ROOT_ID
+__version__ = LLFUSE_VERSION.decode('utf-8')
 globals()['ENOATTR'] = ENOATTR
 
 #######################

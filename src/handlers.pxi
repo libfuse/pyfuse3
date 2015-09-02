@@ -494,27 +494,25 @@ cdef void fuse_statfs (fuse_req_t req, fuse_ino_t ino) with gil:
     if ret != 0:
         log.error('fuse_statfs(): fuse_reply_* failed with %s', strerror(-ret))
 
-IF TARGET_PLATFORM == 'darwin':
-    cdef void fuse_setxattr_darwin (fuse_req_t req, fuse_ino_t ino, const_char *cname,
-                                    const_char *cvalue, size_t size, int flags,
-                                    uint32_t position) with gil:
-        cdef int ret
+cdef void fuse_setxattr_darwin (fuse_req_t req, fuse_ino_t ino, const_char *cname,
+                                const_char *cvalue, size_t size, int flags,
+                                uint32_t position) with gil:
+    cdef int ret
 
-        if position != 0:
-            log.error('fuse_setxattr(): non-zero position (%d) not supported', position)
-            ret = fuse_reply_err(req, errno.EIO)
-            if ret != 0:
-                log.error('fuse_setxattr(): fuse_reply_err failed with %s', strerror(-ret))
-            return
+    if position != 0:
+        log.error('fuse_setxattr(): non-zero position (%d) not supported', position)
+        ret = fuse_reply_err(req, errno.EIO)
+        if ret != 0:
+            log.error('fuse_setxattr(): fuse_reply_err failed with %s', strerror(-ret))
+        return
 
-        # Filter out flags that don't make any sense for a FUSE
-        # file system, but that FUSE4x nevertheless stupidly
-        # passes through.
-        # (cf. https://groups.google.com/d/msg/fuse4x/bRnh7J_nsts/Z7raJ06DB4sJ)
-        flags &= ~(xattr.XATTR_NOFOLLOW | xattr.XATTR_NODEFAULT |
-                   xattr.XATTR_NOSECURITY)
-        fuse_setxattr(req, ino, cname, cvalue, size, flags)
-
+    # Filter out flags that don't make any sense for a FUSE
+    # file system, but that FUSE4x nevertheless stupidly
+    # passes through.
+    # (cf. https://groups.google.com/d/msg/fuse4x/bRnh7J_nsts/Z7raJ06DB4sJ)
+    flags &= ~(XATTR_NOFOLLOW | XATTR_NODEFAULT |
+               XATTR_NOSECURITY)
+    fuse_setxattr(req, ino, cname, cvalue, size, flags)
 
 cdef void fuse_setxattr (fuse_req_t req, fuse_ino_t ino, const_char *cname,
                          const_char *cvalue, size_t size, int flags) with gil:
@@ -528,17 +526,17 @@ cdef void fuse_setxattr (fuse_req_t req, fuse_ino_t ino, const_char *cname,
         if ino == FUSE_ROOT_ID and string.strcmp(cname, 'fuse_stacktrace') == 0:
             operations.stacktrace()
         else:
-            IF TARGET_PLATFORM == 'freebsd':
+            if PLATFORM == PLATFORM_DARWIN:
                 # No known flags
                 with lock:
                     operations.setxattr(ino, name, value)
-            ELSE:
+            else:
                 # Make sure we know all the flags
-                if flags & ~(xattr.XATTR_CREATE | xattr.XATTR_REPLACE):
+                if flags & ~(XATTR_CREATE | XATTR_REPLACE):
                     raise ValueError('unknown flag(s): %o' % flags)
 
                 with lock:
-                    if flags & xattr.XATTR_CREATE: # Attribute must not exist
+                    if flags & XATTR_CREATE: # Attribute must not exist
                         try:
                             operations.getxattr(ino, name)
                         except FUSEError as e:
@@ -547,7 +545,7 @@ cdef void fuse_setxattr (fuse_req_t req, fuse_ino_t ino, const_char *cname,
                         else:
                             raise FUSEError(errno.EEXIST)
 
-                    elif flags & xattr.XATTR_REPLACE: # Attribute must exist
+                    elif flags & XATTR_REPLACE: # Attribute must exist
                         operations.getxattr(ino, name)
 
                     operations.setxattr(ino, name, value)
@@ -561,18 +559,17 @@ cdef void fuse_setxattr (fuse_req_t req, fuse_ino_t ino, const_char *cname,
     if ret != 0:
         log.error('fuse_setxattr(): fuse_reply_* failed with %s', strerror(-ret))
 
-IF TARGET_PLATFORM == 'darwin':
-    cdef void fuse_getxattr_darwin (fuse_req_t req, fuse_ino_t ino, const_char *cname,
-                                    size_t size, uint32_t position) with gil:
-        cdef int ret
+cdef void fuse_getxattr_darwin (fuse_req_t req, fuse_ino_t ino, const_char *cname,
+                                size_t size, uint32_t position) with gil:
+    cdef int ret
 
-        if position != 0:
-            log.error('fuse_getxattr(): non-zero position (%d) not supported' % position)
-            ret = fuse_reply_err(req, errno.EIO)
-            if ret != 0:
-                log.error('fuse_getxattr(): fuse_reply_* failed with %s', strerror(-ret))
-        else:
-            fuse_getxattr(req, ino, cname, size)
+    if position != 0:
+        log.error('fuse_getxattr(): non-zero position (%d) not supported' % position)
+        ret = fuse_reply_err(req, errno.EIO)
+        if ret != 0:
+            log.error('fuse_getxattr(): fuse_reply_* failed with %s', strerror(-ret))
+    else:
+        fuse_getxattr(req, ino, cname, size)
 
 cdef void fuse_getxattr (fuse_req_t req, fuse_ino_t ino, const_char *cname,
                          size_t size) with gil:

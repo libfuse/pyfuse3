@@ -1,5 +1,5 @@
 /*
-llfuse.c
+llfuse.h
 
 Copyright © 2013 Nikolaus Rath <Nikolaus.org>
 
@@ -17,14 +17,18 @@ the terms of the GNU LGPL.
 #error This version of the FUSE library is not yet supported.
 #endif
 
+#define PLATFORM_LINUX 1
+#define PLATFORM_BSD 2
+#define PLATFORM_DARWIN 3
+
 #ifdef __gnu_linux__
-#include "llfuse_linux.c"
+#define PLATFORM PLATFORM_LINUX
 #elif __FreeBSD__
-#include "llfuse_freebsd.c"
+#define PLATFORM PLATFORM_BSD
 #elif __NetBSD__
-#include "llfuse_freebsd.c"
+#define PLATFORM PLATFORM_BSD
 #elif __APPLE__ && __MACH__
-#include "llfuse_darwin.c"
+#define PLATFORM PLATFORM_DARWIN
 #else
-#error "Unable to determine system (Linux/FreeBSD/Darwin)"
+#error "Unable to determine system (Linux/FreeBSD/NetBSD/Darwin)"
 #endif
