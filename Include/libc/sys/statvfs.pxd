@@ -14,12 +14,11 @@ cdef extern from "sys/statvfs.h" nogil:
     ctypedef int fsfilcnt_t
 
     struct statvfs:
-        int f_bsize
-        int f_frsize
+        unsigned long f_bsize
+        unsigned long f_frsize
         fsblkcnt_t     f_blocks
         fsblkcnt_t     f_bfree
         fsblkcnt_t     f_bavail
         fsfilcnt_t     f_files
         fsfilcnt_t     f_ffree
         fsfilcnt_t     f_favail
-

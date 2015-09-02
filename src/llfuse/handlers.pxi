@@ -479,16 +479,13 @@ cdef void fuse_fsyncdir (fuse_req_t req, fuse_ino_t ino, int datasync,
 
 cdef void fuse_statfs (fuse_req_t req, fuse_ino_t ino) with gil:
     cdef int ret
-    cdef statvfs cstats
+    cdef StatvfsData stats
 
     # We don't set all the components
-    string.memset(&cstats, 0, sizeof(cstats))
     try:
         with lock:
-            stats = operations.statfs()
-
-        fill_statvfs(stats, &cstats)
-        ret = fuse_reply_statfs(req, &cstats)
+            stats = <StatvfsData?> operations.statfs()
+        ret = fuse_reply_statfs(req, &stats.stat)
     except FUSEError as e:
         ret = fuse_reply_err(req, e.errno)
     except:

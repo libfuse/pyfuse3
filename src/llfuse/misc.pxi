@@ -10,16 +10,6 @@ This file is part of Python-LLFUSE. This work may be distributed under
 the terms of the GNU LGPL.
 '''
 
-cdef object fill_statvfs(object attr, statvfs* stat):
-    stat.f_bsize = attr.f_bsize
-    stat.f_frsize = attr.f_frsize
-    stat.f_blocks = attr.f_blocks
-    stat.f_bfree = attr.f_bfree
-    stat.f_bavail = attr.f_bavail
-    stat.f_files = attr.f_files
-    stat.f_ffree = attr.f_ffree
-    stat.f_favail = attr.f_favail
-
 cdef int handle_exc(fuse_req_t req):
     '''Try to call fuse_reply_err and terminate main loop'''
 
@@ -440,7 +430,7 @@ cdef class EntryAttributes:
             self.attr.st_ctime = val / 10**9
             SET_CTIME_NS(self.attr, val % 10**9)
 
-class StatvfsData:
+cdef class StatvfsData:
     '''
     Instances of this class store information about the file system.
     The attributes correspond to the elements of the ``statvfs``
@@ -451,14 +441,42 @@ class StatvfsData:
     attributes.
     '''
 
-    # Attributes are documented in rst/operations.rst
+    cdef statvfs stat
 
-    __slots__ = [ 'f_bsize', 'f_frsize', 'f_blocks', 'f_bfree',
-                  'f_bavail', 'f_files', 'f_ffree', 'f_favail' ]
+    def __cinit__(self):
+        string.memset(&self.stat, 0, sizeof(statvfs))
 
-    def __init__(self):
-        for name in self.__slots__:
-            setattr(self, name, None)
+    property f_bsize:
+        def __get__(self): return self.stat.f_bsize
+        def __set__(self, val): self.stat.f_bsize = val
+
+    property f_frsize:
+        def __get__(self): return self.stat.f_frsize
+        def __set__(self, val): self.stat.f_frsize = val
+
+    property f_blocks:
+        def __get__(self): return self.stat.f_blocks
+        def __set__(self, val): self.stat.f_blocks = val
+
+    property f_bfree:
+        def __get__(self): return self.stat.f_bfree
+        def __set__(self, val): self.stat.f_bfree = val
+
+    property f_bavail:
+        def __get__(self): return self.stat.f_bavail
+        def __set__(self, val): self.stat.f_bavail = val
+
+    property f_files:
+        def __get__(self): return self.stat.f_files
+        def __set__(self, val): self.stat.f_files = val
+
+    property f_ffree:
+        def __get__(self): return self.stat.f_ffree
+        def __set__(self, val): self.stat.f_ffree = val
+
+    property f_favail:
+        def __get__(self): return self.stat.f_favail
+        def __set__(self, val): self.stat.f_favail = val
 
 cdef class FUSEError(Exception):
     '''
