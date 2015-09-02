@@ -100,7 +100,7 @@ cdef void fuse_setattr (fuse_req_t req, fuse_ino_t ino, struct_stat *stat,
 
     try:
         entry = EntryAttributes()
-        fields = SetattrFields()
+        fields = SetattrFields.__new__(SetattrFields)
         string.memcpy(entry.attr, stat, sizeof(struct_stat))
 
         attr = entry.attr

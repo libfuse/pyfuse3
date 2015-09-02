@@ -31,9 +31,10 @@ cdef object get_request_context(fuse_req_t req):
     '''Get RequestContext() object'''
 
     cdef const_fuse_ctx* context
+    cdef RequestContext ctx
 
     context = fuse_req_ctx(req)
-    ctx = RequestContext()
+    ctx = RequestContext.__new__(RequestContext)
     ctx.pid = context.pid
     ctx.uid = context.uid
     ctx.gid = context.gid
@@ -287,6 +288,7 @@ cdef strerror(int errno):
     except ValueError:
         return 'errno: %d' % errno
 
+@cython.freelist(10)
 cdef class RequestContext:
     '''
     Instances of this class are passed to some `Operations` methods to
@@ -299,6 +301,7 @@ cdef class RequestContext:
     cdef readonly gid_t gid
     cdef readonly mode_t umask
 
+@cython.freelist(10)
 cdef class SetattrFields:
     '''
     `SetattrFields` instances are passed to the `~Operations.setattr` handler
@@ -320,6 +323,7 @@ cdef class SetattrFields:
         self.update_gid = False
         self.update_size = False
 
+@cython.freelist(30)
 cdef class EntryAttributes:
     '''
     Instances of this class store attributes of directory entries.
@@ -430,6 +434,7 @@ cdef class EntryAttributes:
             self.attr.st_ctime = val / 10**9
             SET_CTIME_NS(self.attr, val % 10**9)
 
+@cython.freelist(1)
 cdef class StatvfsData:
     '''
     Instances of this class store information about the file system.
@@ -478,6 +483,9 @@ cdef class StatvfsData:
         def __get__(self): return self.stat.f_favail
         def __set__(self, val): self.stat.f_favail = val
 
+
+# As of Cython 0.23.1, @cython.freelist cannot be used for
+# classes that derive from a builtin type.
 cdef class FUSEError(Exception):
     '''
     This exception may be raised by request handlers to indicate that
