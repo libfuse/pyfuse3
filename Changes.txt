@@ -11,6 +11,8 @@ UNRELEASED, python-llfuse tip
 
    * Implemented a forget_multi handler (used behind the scenes).
 
+   * Many classes were rewritten in Cython for improved performance.
+
    BACKWARDS INCOMPATIBLE CHANGES:
 
    * Ducktyping the `EntryAttributes` class is no longer allowed,
