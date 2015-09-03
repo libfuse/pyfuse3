@@ -222,7 +222,8 @@ class build_cython(setuptools.Command):
                 if ext != '.c':
                     continue
                 if os.path.exists(path + '.pyx'):
-                    subprocess.check_call(cmd + [path + '.pyx'])
+                    if subprocess.call(cmd + [path + '.pyx']) != 0:
+                        raise SystemExit('Cython compilation failed')
 
 def fix_docutils():
     '''Work around https://bitbucket.org/birkenfeld/sphinx/issue/1154/'''
