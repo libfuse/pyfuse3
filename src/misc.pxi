@@ -80,8 +80,8 @@ cdef void init_fuse_ops():
     fuse_ops.removexattr = fuse_removexattr
     fuse_ops.access = fuse_access
     fuse_ops.create = fuse_create
-
     ASSIGN_FUSE29(fuse_ops.forget_multi, &fuse_forget_multi)
+    ASSIGN_FUSE29(fuse_ops.write_buf, &fuse_write_buf)
 
 cdef make_fuse_args(args, fuse_args* f_args):
     cdef char* arg
@@ -514,3 +514,30 @@ cdef class NotifyRequest:
     cdef char attr_only
     cdef object name
     cdef int kind
+
+cdef PyBytes_from_bufvec(fuse_bufvec *src):
+    cdef Py_buffer pybuf
+    cdef fuse_bufvec dst
+    cdef size_t len_
+    cdef ssize_t res
+
+    len_ = fuse_buf_size(src) - src.off
+    buf = bytearray(len_)
+    PyObject_GetBuffer(buf, &pybuf, PyBUF_CONTIG)
+    try:
+        dst.count = 1
+        dst.idx = 0
+        dst.off = 0
+        dst.buf[0].mem = pybuf.buf
+        dst.buf[0].size = len_
+        dst.buf[0].flags = 0
+        res = fuse_buf_copy(&dst, src, 0)
+        if res < 0:
+            raise OSError(errno.errno, 'fuse_buf_copy failed with '
+                          + strerror(errno.errno))
+        elif <size_t> res < len_:
+            return memoryview(buf)[:-len_]
+        else:
+            return buf
+    finally:
+        PyBuffer_Release(&pybuf)

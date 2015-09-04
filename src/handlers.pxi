@@ -345,6 +345,24 @@ cdef void fuse_write (fuse_req_t req, fuse_ino_t ino, const_char *buf,
     if ret != 0:
         log.error('fuse_write(): fuse_reply_* failed with %s', strerror(-ret))
 
+cdef void fuse_write_buf(fuse_req_t req, fuse_ino_t ino, fuse_bufvec *bufv,
+                         off_t off, fuse_file_info *fi) with gil:
+    cdef int ret
+    cdef size_t len_
+
+    try:
+        buf = PyBytes_from_bufvec(bufv)
+        with lock:
+            len_ = operations.write(fi.fh, off, buf)
+        ret = fuse_reply_write(req, len_)
+    except FUSEError as e:
+        ret = fuse_reply_err(req, e.errno)
+    except:
+        ret = handle_exc(req)
+
+    if ret != 0:
+        log.error('fuse_write_buf(): fuse_reply_* failed with %s', strerror(-ret))
+
 cdef void fuse_flush (fuse_req_t req, fuse_ino_t ino, fuse_file_info *fi) with gil:
     cdef int ret
 

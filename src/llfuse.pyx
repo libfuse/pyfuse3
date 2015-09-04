@@ -32,7 +32,7 @@ from posix.time cimport clock_gettime, CLOCK_REALTIME, timespec
 from cpython.bytes cimport (PyBytes_AsStringAndSize, PyBytes_FromStringAndSize,
                             PyBytes_AsString, PyBytes_FromString)
 from cpython.buffer cimport (PyObject_GetBuffer, PyBuffer_Release,
-                             PyBUF_CONTIG_RO)
+                             PyBUF_CONTIG_RO, PyBUF_CONTIG)
 cimport cpython.exc
 cimport cython
 from cpython.version cimport PY_MAJOR_VERSION
