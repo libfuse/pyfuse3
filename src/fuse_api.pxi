@@ -193,8 +193,27 @@ def getxattr(path, name, int size_guess=128, namespace='user'):
     finally:
         stdlib.free(buf)
 
+# Default options:
+#
+# * splice_write just means to use splice if possible (i.e., if data is passed
+#   in a fd), and can be overriden using FUSE_BUF_NO_SPLICE. So it's a good idea
+#   to always activate it.
+#
+# * splice_read means that requests are spliced from the fuse fd to a
+#   (thread-specific) intermediate pipe (this is presumably done to prevent the
+#   write handler from reading part of the next request). If splice_read is not
+#   set, fuse instead reads the whole request into memory and passes this buffer
+#   along.  If we eventually read the request into a buffer anyway (as we have
+#   to if we want to create a Python object), using splice_read() is thus
+#   expected to *decrease* performance because of the intermediate pipe.
+#
+# * splice_move is a no-op as of Linux 2.6.21. However, it will become active as
+#   soon as some problems with the initial implementation have been solved.  If
+#   active, it's expected to improve performance because we move pages from the
+#   page instead of copying them.
+#
 default_options = frozenset(('big_writes', 'nonempty', 'default_permissions',
-                             'splice_read', 'splice_write', 'splice_move'))
+                             'no_splice_read', 'splice_write', 'splice_move'))
 def init(ops, mountpoint, options=default_options):
     '''Initialize and mount FUSE file system
 
