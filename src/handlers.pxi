@@ -441,9 +441,6 @@ cdef void fuse_readdir (fuse_req_t req, fuse_ino_t ino, size_t size, off_t off,
     cdef size_t len_, acc_size
     cdef EntryAttributes entry
 
-    # GCC thinks this may end up uninitialized
-    ret = 0
-
     try:
         acc_size = 0
         buf = NULL
