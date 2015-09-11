@@ -329,11 +329,14 @@ cdef void fuse_write (fuse_req_t req, fuse_ino_t ino, const_char *buf,
     cdef int ret
     cdef size_t len_
 
-    # GCC thinks this may end up uninitialized
-    len_ = 0
-
     try:
         pbuf = PyBytes_FromStringAndSize(buf, size)
+
+        # `with` statement may theoretically swallow exception, so we have to
+        # initialize len_ to prevent gcc warning about it potentially
+        # not initialized.
+        len_ = 0
+
         with lock:
             len_ = operations.write(fi.fh, off, pbuf)
         ret = fuse_reply_write(req, len_)
@@ -351,6 +354,11 @@ cdef void fuse_write_buf(fuse_req_t req, fuse_ino_t ino, fuse_bufvec *bufv,
     cdef size_t len_
 
     try:
+        # `with` statement may theoretically swallow exception, so we have to
+        # initialize len_ to prevent gcc warning about it potentially
+        # not initialized.
+        len_ = 0
+
         buf = PyBytes_from_bufvec(bufv)
         with lock:
             len_ = operations.write(fi.fh, off, buf)
