@@ -30,7 +30,7 @@ from posix.signal cimport kill
 from libc.signal cimport SIGTERM
 from posix.time cimport clock_gettime, CLOCK_REALTIME, timespec
 from cpython.bytes cimport (PyBytes_AsStringAndSize, PyBytes_FromStringAndSize,
-                            PyBytes_AsString, PyBytes_FromString)
+                            PyBytes_AsString, PyBytes_FromString, PyBytes_AS_STRING)
 from cpython.buffer cimport (PyObject_GetBuffer, PyBuffer_Release,
                              PyBUF_CONTIG_RO, PyBUF_CONTIG)
 cimport cpython.exc

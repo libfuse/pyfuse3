@@ -520,31 +520,26 @@ cdef class NotifyRequest:
     cdef int kind
 
 cdef PyBytes_from_bufvec(fuse_bufvec *src):
-    cdef Py_buffer pybuf
     cdef fuse_bufvec dst
-    cdef ssize_t len_, res
-    cdef size_t len_s
+    cdef size_t len_
+    cdef ssize_t res
 
-    len_s = fuse_buf_size(src) - src.off
-    if len_s > PY_SSIZE_T_MAX:
+    len_ = fuse_buf_size(src) - src.off
+    if len_ > PY_SSIZE_T_MAX:
         raise OverflowError('Value too long to convert to Python')
-    len_ = <ssize_t> len_s
-    buf = bytearray(len_)
-    PyObject_GetBuffer(buf, &pybuf, PyBUF_CONTIG)
-    try:
-        dst.count = 1
-        dst.idx = 0
-        dst.off = 0
-        dst.buf[0].mem = pybuf.buf
-        dst.buf[0].size = len_s
-        dst.buf[0].flags = 0
-        res = fuse_buf_copy(&dst, src, 0)
-        if res < 0:
-            raise OSError(errno.errno, 'fuse_buf_copy failed with '
-                          + strerror(errno.errno))
-        elif res < len_:
-            return memoryview(buf)[:-len_]
-        else:
-            return buf
-    finally:
-        PyBuffer_Release(&pybuf)
+    buf = PyBytes_FromStringAndSize(NULL, <ssize_t> len_)
+    dst.count = 1
+    dst.idx = 0
+    dst.off = 0
+    dst.buf[0].mem = PyBytes_AS_STRING(buf)
+    dst.buf[0].size = len_
+    dst.buf[0].flags = 0
+    res = fuse_buf_copy(&dst, src, 0)
+    if res < 0:
+        raise OSError(errno.errno, 'fuse_buf_copy failed with '
+                      + strerror(errno.errno))
+    elif <size_t> res < len_:
+        # This is expected to be rare
+        return buf[:res]
+    else:
+        return buf
