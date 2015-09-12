@@ -161,8 +161,15 @@ cdef extern from "fuse_lowlevel.h" nogil:
 
     fuse_session *fuse_session_new(fuse_session_ops *op, void *data)
     void fuse_session_add_chan(fuse_session *se, fuse_chan *ch)
+    int fuse_session_receive_buf(fuse_session *se, fuse_buf *buf,
+                                 fuse_chan **chp)
+    void fuse_session_process_buf(fuse_session *se,
+                                  fuse_buf *buf, fuse_chan *ch)
     void fuse_session_remove_chan(fuse_chan *ch)
+    void fuse_session_reset(fuse_session *se)
     void fuse_session_destroy(fuse_session *se)
     int fuse_session_loop(fuse_session *se)
     int fuse_session_loop_mt(fuse_session *se)
     void fuse_chan_destroy(fuse_chan *ch)
+    size_t fuse_chan_bufsize(fuse_chan *ch)
+    int fuse_session_exited(fuse_session *se)

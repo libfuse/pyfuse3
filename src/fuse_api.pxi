@@ -294,23 +294,20 @@ def main(single=False):
     t = threading.Thread(target=_notify_loop)
     t.daemon = True
     t.start()
+    try:
+        exc_info = None
 
-    exc_info = None
-
-    if single:
-        log.debug('Calling fuse_session_loop')
-        with nogil:
-            ret = fuse_session_loop(session)
+        if single:
+            log.debug('Calling fuse_session_loop')
+            session_loop()
+        else:
+            log.debug('Calling fuse_session_loop_mt')
+            with nogil:
+                ret = fuse_session_loop_mt(session)
+            if ret != 0:
+                raise RuntimeError("fuse_session_loop_mt() failed")
+    finally:
         _notify_queue.put(None, block=True, timeout=5) # Stop notification thread
-        if ret != 0:
-            raise RuntimeError("fuse_session_loop failed")
-    else:
-        log.debug('Calling fuse_session_loop_mt')
-        with nogil:
-            ret = fuse_session_loop_mt(session)
-        _notify_queue.put(None, block=True, timeout=5) # Stop notification thread
-        if ret != 0:
-            raise RuntimeError("fuse_session_loop_mt() failed")
 
     if exc_info:
         # Re-raise expression from request handler
@@ -325,6 +322,40 @@ def main(single=False):
             raise tmp[0], tmp[1], tmp[2]
         else:
             raise tmp[1].with_traceback(tmp[2])
+
+cdef session_loop():
+    cdef int res
+    cdef fuse_chan *ch
+    cdef void* mem
+    cdef size_t size
+    cdef fuse_buf buf
+
+    size = fuse_chan_bufsize(channel)
+    mem = stdlib.malloc(size)
+    if mem is NULL:
+        raise MemoryError()
+
+    while not fuse_session_exited(session):
+        ch = channel
+        buf.mem = mem
+        buf.size = size
+        buf.pos = 0
+        buf.flags = 0
+        with nogil:
+            res = fuse_session_receive_buf(session, &buf, &ch)
+
+        if res == -errno.EINTR:
+            continue
+        elif res < 0:
+            raise OSError(-res, 'fuse_session_receive_buf failed with '
+                          + strerror(-res))
+        elif res == 0:
+            break
+
+        fuse_session_process_buf(session, &buf, ch)
+
+    stdlib.free(mem)
+    fuse_session_reset(session)
 
 def close(unmount=True):
     '''Unmount file system and clean up
