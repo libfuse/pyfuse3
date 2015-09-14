@@ -86,11 +86,14 @@ cdef extern from "Python.h" nogil:
     ctypedef class __builtin__.Exception [object PyBaseExceptionObject]:
         pass
 
-# Missing in the Cython provided libc/errno.pxd:
 cdef extern from *:
+    # Missing in the Cython provided libc/errno.pxd:
     enum:
         EDEADLK
         ENOATTR
+
+    # From Python.h:
+    int PY_SSIZE_T_MAX
 
 # Actually passed as -D to cc (and defined in setup.py)
 cdef extern from *:

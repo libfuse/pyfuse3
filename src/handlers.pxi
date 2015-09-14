@@ -184,7 +184,7 @@ cdef void fuse_mkdir (fuse_req_t req, fuse_ino_t parent, const_char *name,
     try:
         # Force the entry type to directory. We need to explicitly cast,
         # because on BSD the S_* are not of type mode_t.
-        mode = <mode_t> ((mode & ~S_IFMT) | S_IFDIR)
+        mode = (mode & ~ <mode_t> S_IFMT) | <mode_t> S_IFDIR
         ctx = get_request_context(req)
         with lock:
             entry = <EntryAttributes?> operations.mkdir(parent, PyBytes_FromString(name),
@@ -314,7 +314,7 @@ cdef void fuse_read (fuse_req_t req, fuse_ino_t ino, size_t size, off_t off,
 
         PyObject_GetBuffer(buf, &pybuf, PyBUF_CONTIG_RO)
         with nogil:
-            ret = fuse_reply_buf(req, <const_char*> pybuf.buf, pybuf.len)
+            ret = fuse_reply_buf(req, <const_char*> pybuf.buf, <size_t> pybuf.len)
         PyBuffer_Release(&pybuf)
     except FUSEError as e:
         ret = fuse_reply_err(req, e.errno)
@@ -330,13 +330,14 @@ cdef void fuse_write (fuse_req_t req, fuse_ino_t ino, const_char *buf,
     cdef size_t len_
 
     try:
-        pbuf = PyBytes_FromStringAndSize(buf, size)
+        if size > PY_SSIZE_T_MAX:
+            raise OverflowError('Value too long to convert to Python')
+        pbuf = PyBytes_FromStringAndSize(buf, <ssize_t> size)
 
         # `with` statement may theoretically swallow exception, so we have to
         # initialize len_ to prevent gcc warning about it potentially
         # not initialized.
         len_ = 0
-
         with lock:
             len_ = operations.write(fi.fh, off, pbuf)
         ret = fuse_reply_write(req, len_)
@@ -543,7 +544,9 @@ cdef void fuse_setxattr (fuse_req_t req, fuse_ino_t ino, const_char *cname,
 
     try:
         name = PyBytes_FromString(cname)
-        value = PyBytes_FromStringAndSize(cvalue, size)
+        if size > PY_SSIZE_T_MAX:
+            raise OverflowError('Value too long to convert to Python')
+        value = PyBytes_FromStringAndSize(cvalue, <ssize_t> size)
 
         # Special case for deadlock debugging
         if ino == FUSE_ROOT_ID and string.strcmp(cname, 'fuse_stacktrace') == 0:
@@ -597,17 +600,19 @@ cdef void fuse_getxattr_darwin (fuse_req_t req, fuse_ino_t ino, const_char *cnam
 cdef void fuse_getxattr (fuse_req_t req, fuse_ino_t ino, const_char *cname,
                          size_t size) with gil:
     cdef int ret
-    cdef ssize_t len_
+    cdef ssize_t len_s
+    cdef size_t len_
     cdef char *cbuf
     try:
         name = PyBytes_FromString(cname)
         with lock:
             buf = operations.getxattr(ino, name)
-        PyBytes_AsStringAndSize(buf, &cbuf, &len_)
+        PyBytes_AsStringAndSize(buf, &cbuf, &len_s)
+        len_ = <size_t> len_s # guaranteed positive
 
         if size == 0:
             ret = fuse_reply_xattr(req, len_)
-        elif <size_t> len_ <= size:
+        elif len_ <= size:
             ret = fuse_reply_buf(req, cbuf, len_)
         else:
             ret = fuse_reply_err(req, errno.ERANGE)
@@ -621,20 +626,22 @@ cdef void fuse_getxattr (fuse_req_t req, fuse_ino_t ino, const_char *cname,
 
 cdef void fuse_listxattr (fuse_req_t req, fuse_ino_t ino, size_t size) with gil:
     cdef int ret
-    cdef ssize_t len_
+    cdef ssize_t len_s
+    cdef size_t len_
     cdef char *cbuf
     try:
         with lock:
             buf = b'\0'.join(operations.listxattr(ino)) + b'\0'
 
-        PyBytes_AsStringAndSize(buf, &cbuf, &len_)
+        PyBytes_AsStringAndSize(buf, &cbuf, &len_s)
+        len_ = <size_t> len_s # guaranteed positive
 
         if len_ == 1: # No attributes
             len_ = 0
 
         if size == 0:
             ret = fuse_reply_xattr(req, len_)
-        elif <size_t> len_ <= size:
+        elif len_ <= size:
             ret = fuse_reply_buf(req, cbuf, len_)
         else:
             ret = fuse_reply_err(req, errno.ERANGE)

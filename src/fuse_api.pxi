@@ -107,13 +107,14 @@ def setxattr(path, name, bytes value, namespace='user'):
     cname = <char*> name_b
 
     with nogil:
-        ret = setxattr_p(cpath, cname, cvalue, len_, cnamespace)
+        # len_ is guaranteed positive
+        ret = setxattr_p(cpath, cname, cvalue, <size_t> len_, cnamespace)
 
     if ret != 0:
         raise OSError(errno.errno, strerror(errno.errno), path)
 
 
-def getxattr(path, name, int size_guess=128, namespace='user'):
+def getxattr(path, name, size_t size_guess=128, namespace='user'):
     '''Get extended attribute
 
     *path* and *name* have to be of type `str`. In Python 3.x, they may
@@ -475,7 +476,7 @@ def notify_store(inode, offset, data):
     buf = bufvec.buf
     buf[0].flags = 0
     buf[0].mem = pybuf.buf
-    buf[0].size = pybuf.len
+    buf[0].size = <size_t> pybuf.len # guaranteed positive
 
     ino = inode
     off = offset

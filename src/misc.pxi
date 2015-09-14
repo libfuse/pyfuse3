@@ -86,7 +86,8 @@ cdef void init_fuse_ops():
 cdef make_fuse_args(args, fuse_args* f_args):
     cdef char* arg
     cdef int i
-    cdef ssize_t size
+    cdef ssize_t size_s
+    cdef size_t size
 
     args_new = [ b'Python-LLFUSE' ]
     for el in args:
@@ -100,14 +101,15 @@ cdef make_fuse_args(args, fuse_args* f_args):
         return
 
     f_args.allocated = 1
-    f_args.argv = <char**> stdlib.calloc(f_args.argc, sizeof(char*))
+    f_args.argv = <char**> stdlib.calloc(<size_t> f_args.argc, sizeof(char*))
 
     if f_args.argv is NULL:
         cpython.exc.PyErr_NoMemory()
 
     try:
         for (i, el) in enumerate(args):
-            PyBytes_AsStringAndSize(el, &arg, &size)
+            PyBytes_AsStringAndSize(el, &arg, &size_s)
+            size = <size_t> size_s # guaranteed positive
             f_args.argv[i] = <char*> stdlib.malloc((size+1)*sizeof(char))
 
             if f_args.argv[i] is NULL:
@@ -250,7 +252,9 @@ def _notify_loop():
         elif req.kind == NOTIFY_INVAL_ENTRY:
             PyBytes_AsStringAndSize(req.name, &cname, &len_)
             with nogil:
-                fuse_lowlevel_notify_inval_entry(channel, req.ino, cname, len_)
+                # len_ is guaranteed positive
+                fuse_lowlevel_notify_inval_entry(channel, req.ino, cname,
+                                                 <size_t> len_)
         else:
             raise RuntimeError("Weird request kind received: %d", req.kind)
 
@@ -518,10 +522,13 @@ cdef class NotifyRequest:
 cdef PyBytes_from_bufvec(fuse_bufvec *src):
     cdef Py_buffer pybuf
     cdef fuse_bufvec dst
-    cdef size_t len_
-    cdef ssize_t res
+    cdef ssize_t len_, res
+    cdef size_t len_s
 
-    len_ = fuse_buf_size(src) - src.off
+    len_s = fuse_buf_size(src) - src.off
+    if len_s > PY_SSIZE_T_MAX:
+        raise OverflowError('Value too long to convert to Python')
+    len_ = <ssize_t> len_s
     buf = bytearray(len_)
     PyObject_GetBuffer(buf, &pybuf, PyBUF_CONTIG)
     try:
@@ -529,13 +536,13 @@ cdef PyBytes_from_bufvec(fuse_bufvec *src):
         dst.idx = 0
         dst.off = 0
         dst.buf[0].mem = pybuf.buf
-        dst.buf[0].size = len_
+        dst.buf[0].size = len_s
         dst.buf[0].flags = 0
         res = fuse_buf_copy(&dst, src, 0)
         if res < 0:
             raise OSError(errno.errno, 'fuse_buf_copy failed with '
                           + strerror(errno.errno))
-        elif <size_t> res < len_:
+        elif res < len_:
             return memoryview(buf)[:-len_]
         else:
             return buf

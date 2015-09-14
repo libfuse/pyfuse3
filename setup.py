@@ -75,17 +75,25 @@ def main():
 
     compile_args = pkg_config('fuse', cflags=True, ldflags=False, min_ver='2.8.0')
     compile_args += ['-DFUSE_USE_VERSION=29', '-Wall', '-Wextra', '-Wconversion',
-                     '-Wno-sign-conversion',
-                     '-DLLFUSE_VERSION="%s"' % LLFUSE_VERSION]
+                     '-Wsign-compare', '-DLLFUSE_VERSION="%s"' % LLFUSE_VERSION]
 
     # We may have unused functions if we compile for older FUSE versions
     compile_args.append('-Wno-unused-function')
 
-    # Enable fatal warnings only when compiling from Mercurial tip.  (otherwise
-    # we break forward compatibility because compilation with newer compiler may
-    # fail if additional warnings are added)
+    # Value-changing conversions should always be explicit.
+    compile_args.append('-Werror=conversion')
+
+    # Note that (i > -1) is false if i is unsigned (-1 will be converted to
+    # a large positive value). We certainly don't want to do this by
+    # accident.
+    compile_args.append('-Werror=sign-compare')
+
+    # Enable all fatal warnings only when compiling from Mercurial tip.
+    # (otherwise we break forward compatibility because compilation with newer
+    # compiler may fail if additional warnings are added)
     if DEVELOPER_MODE:
         compile_args.append('-Werror')
+        compile_args.append('-Wfatal-errors')
 
     # http://bugs.python.org/issue7576
     if sys.version_info[0] == 3 and sys.version_info[1] < 2:
@@ -197,8 +205,8 @@ class build_cython(setuptools.Command):
             raise SystemExit('Cython needs to be installed for this command')
 
         hit = re.match('^Cython version (.+)$', version)
-        if not hit or LooseVersion(hit.group(1)) < "0.21.1":
-            raise SystemExit('Need Cython 0.21.1 or newer, found ' + version)
+        if not hit or LooseVersion(hit.group(1)) < "0.24":
+            raise SystemExit('Need Cython 0.24 or newer, found ' + version)
 
         cmd = ['cython', '-Wextra', '--force', '-3', '--fast-fail',
                '--directive', 'embedsignature=True', '--include-dir',
