@@ -117,8 +117,7 @@ def umount(mount_process, mnt_dir):
         if code is not None:
             if code == 0:
                 return
-            pytest.fail('file system process terminated with code %d' %
-                        mount_process.exitcode)
+            pytest.fail('file system process terminated with code %s' % (code,))
         time.sleep(0.1)
         elapsed += 0.1
     pytest.fail('mount process did not terminate')
