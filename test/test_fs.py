@@ -236,6 +236,6 @@ def run_fs(mountpoint, cross_process):
     fuse_options.add('fsname=llfuse_testfs')
     llfuse.init(testfs, mountpoint, fuse_options)
     try:
-        llfuse.main(single=True)
+        llfuse.main(workers=1)
     finally:
         llfuse.close()

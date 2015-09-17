@@ -252,9 +252,6 @@ def init(ops, mountpoint, options=default_options):
     mountpoint_b = str2bytes(os.path.abspath(mountpoint))
     operations = ops
 
-    # Initialize Python thread support
-    PyEval_InitThreads()
-
     make_fuse_args(options, &f_args)
     log.debug('Calling fuse_mount')
     channel = fuse_mount(<char*>mountpoint_b, &f_args)
@@ -268,47 +265,44 @@ def init(ops, mountpoint, options=default_options):
         fuse_unmount(<char*>mountpoint_b, channel)
         raise RuntimeError("fuse_lowlevel_new() failed")
 
-    log.debug('Calling fuse_set_signal_handlers')
-    if fuse_set_signal_handlers(session) == -1:
-        fuse_session_destroy(session)
-        fuse_unmount(<char*>mountpoint_b, channel)
-        raise RuntimeError("fuse_set_signal_handlers() failed")
-
     log.debug('Calling fuse_session_add_chan')
     fuse_session_add_chan(session, channel)
 
-def main(single=False):
+    pthread_mutex_init(&exc_info_mutex, NULL)
+
+def main(workers=30):
     '''Run FUSE main loop
 
-    If *single* is True, all requests will be handled sequentially by
-    the thread that has called `main`. If *single* is False, multiple
-    worker threads will be started and work on requests concurrently.
+    *workers* specifies the number of threads that will process requests
+    concurrently.
     '''
 
-    cdef int ret
     global exc_info
 
     if session == NULL:
         raise RuntimeError('Need to call init() before main()')
 
-    # Start notification handling thread
-    t = threading.Thread(target=_notify_loop)
-    t.daemon = True
-    t.start()
-    try:
-        exc_info = None
+    with contextlib.ExitStack() as on_exit:
+        log.debug('Calling fuse_set_signal_handlers')
+        if fuse_set_signal_handlers(session) == -1:
+            raise RuntimeError("fuse_set_signal_handlers() failed")
+        # FIXME: We should really *restore* the original signal handlers,
+        # otherwise Ctrl-C won't work anymore.
+        on_exit.callback(lambda: fuse_remove_signal_handlers(session))
 
-        if single:
-            log.debug('Calling fuse_session_loop')
-            session_loop()
+        # Start notification handling thread
+        t = threading.Thread(target=_notify_loop)
+        t.daemon = True
+        t.start()
+        on_exit.callback(_notify_queue.put, None, block=True, timeout=5)
+
+        on_exit.callback(lambda: fuse_session_reset(session))
+        exc_info = None
+        log.debug('Calling fuse_session_loop')
+        if workers == 1:
+            session_loop_single()
         else:
-            log.debug('Calling fuse_session_loop_mt')
-            with nogil:
-                ret = fuse_session_loop_mt(session)
-            if ret != 0:
-                raise RuntimeError("fuse_session_loop_mt() failed")
-    finally:
-        _notify_queue.put(None, block=True, timeout=5) # Stop notification thread
+            session_loop_mt(workers)
 
     if exc_info:
         # Re-raise expression from request handler
@@ -324,17 +318,30 @@ def main(single=False):
         else:
             raise tmp[1].with_traceback(tmp[2])
 
-cdef session_loop():
-    cdef int res
-    cdef fuse_chan *ch
+cdef void* calloc_or_raise(size_t nmemb, size_t size) except NULL:
     cdef void* mem
-    cdef size_t size
-    cdef fuse_buf buf
-
-    size = fuse_chan_bufsize(channel)
-    mem = stdlib.malloc(size)
+    mem = stdlib.calloc(nmemb, size)
     if mem is NULL:
         raise MemoryError()
+    return mem
+
+cdef session_loop_single():
+    cdef void* mem
+    cdef size_t size
+
+    size = fuse_chan_bufsize(channel)
+    mem = calloc_or_raise(1, size)
+    try:
+        session_loop(mem, size)
+    finally:
+        stdlib.free(mem)
+
+cdef session_loop(void* mem, size_t size):
+    '''Process requests'''
+
+    cdef int res
+    cdef fuse_chan *ch
+    cdef fuse_buf buf
 
     while not fuse_session_exited(session):
         ch = channel
@@ -343,7 +350,9 @@ cdef session_loop():
         buf.pos = 0
         buf.flags = 0
         with nogil:
+            pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
             res = fuse_session_receive_buf(session, &buf, &ch)
+            pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
 
         if res == -errno.EINTR:
             continue
@@ -355,8 +364,102 @@ cdef session_loop():
 
         fuse_session_process_buf(session, &buf, ch)
 
-    stdlib.free(mem)
-    fuse_session_reset(session)
+ctypedef struct worker_data_t:
+    sem_t* sem
+    int thread_no
+    int started
+    pthread_t thread_id
+    void* buf
+    size_t bufsize
+
+cdef void* worker_start(void* data) with gil:
+    cdef worker_data_t *wd
+    cdef int res
+    global exc_info
+
+    wd = <worker_data_t*> data
+
+    t = threading.current_thread()
+    t.name = 'fuse-worker-%d' % (wd.thread_no+1,)
+
+    try:
+        session_loop(wd.buf, wd.bufsize)
+    except:
+        fuse_session_exit(session)
+        log.error('FUSE worker thread %d terminated with exception, '
+                  'aborting processing', wd.thread_id)
+        res = pthread_mutex_lock(&exc_info_mutex)
+        if res != 0:
+            log.error('pthread_mutex_lock failed with %s',
+                      strerror(res))
+        if not exc_info:
+            exc_info = sys.exc_info()
+        else:
+            log.exception('Only one exception can be re-raised, the following '
+                          'exception will be lost:')
+        pthread_mutex_unlock(&exc_info_mutex)
+        if res != 0:
+            log.error('pthread_mutex_ulock failed with %s',
+                      strerror(res))
+
+    finally:
+        sem_post(wd.sem)
+
+cdef session_loop_mt(workers):
+    cdef worker_data_t *wd
+    cdef sigset_t newset, oldset
+    cdef int res, i
+    cdef size_t bufsize
+    cdef sem_t sem
+
+    if sem_init(&sem, 0, 0) != 0:
+        raise OSError(errno.errno, 'sem_init failed with '
+                      + strerror(errno.errno))
+
+    sigemptyset(&newset);
+    sigaddset(&newset, signal.SIGTERM);
+    sigaddset(&newset, signal.SIGINT);
+    sigaddset(&newset, signal.SIGHUP);
+    sigaddset(&newset, signal.SIGQUIT);
+
+    PyEval_InitThreads()
+    bufsize = fuse_chan_bufsize(channel)
+    wd = <worker_data_t*> calloc_or_raise(workers, sizeof(worker_data_t))
+    try:
+        for i in range(workers):
+            wd[i].sem = &sem
+            wd[i].thread_no = i
+            wd[i].bufsize = bufsize
+            wd[i].buf = calloc_or_raise(1, bufsize)
+
+            # Disable signal reception in new thread
+            # (FUSE does the same, probably for a good reason)
+            pthread_sigmask(SIG_BLOCK, &newset, &oldset)
+            res = pthread_create(&wd[i].thread_id, NULL, &worker_start, wd+i)
+            pthread_sigmask(SIG_SETMASK, &oldset, NULL)
+            if res != 0:
+                raise OSError(res, 'pthread_create failed with '
+                              + strerror(res))
+            wd[i].started = 1
+
+        with nogil:
+            while not fuse_session_exited(session):
+                sem_wait(&sem) # also interrupted by signals
+
+    finally:
+        for i in range(workers):
+            if wd[i].started:
+                pthread_cancel(wd[i].thread_id)
+                with nogil:
+                    res = pthread_join(wd[i].thread_id, NULL)
+                if res != 0:
+                    log.error('pthread_join failed with: %s', strerror(res))
+
+            if wd[i].buf != NULL:
+                stdlib.free(wd[i].buf)
+
+        stdlib.free(wd)
+
 
 def close(unmount=True):
     '''Unmount file system and clean up
@@ -374,8 +477,6 @@ def close(unmount=True):
 
     log.debug('Calling fuse_session_remove_chan')
     fuse_session_remove_chan(channel)
-    log.debug('Calling fuse_remove_signal_handlers')
-    fuse_remove_signal_handlers(session)
     log.debug('Calling fuse_session_destroy')
     fuse_session_destroy(session)
 

@@ -410,7 +410,10 @@ def main():
 
     try:
         log.debug('Entering main loop..')
-        llfuse.main(options.single)
+        if options.single:
+            llfuse.main(workers=1)
+        else:
+            llfuse.main()
     except:
         llfuse.close(unmount=False)
         raise

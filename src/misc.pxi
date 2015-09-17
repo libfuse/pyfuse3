@@ -13,14 +13,27 @@ the terms of the GNU LGPL.
 cdef int handle_exc(fuse_req_t req):
     '''Try to call fuse_reply_err and terminate main loop'''
 
+    cdef int res
     global exc_info
 
+    res = pthread_mutex_lock(&exc_info_mutex)
+    if res != 0:
+        log.error('pthread_mutex_lock failed with %s',
+                  strerror(res))
     if not exc_info:
+        # This is theoretically a race, but in practice unlikely
+        # enough that we don't care
         exc_info = sys.exc_info()
-        log.debug('handler raised exception, sending SIGTERM to self.')
-        kill(getpid(), SIGTERM)
+        log.debug('handler raised exception, aborting processing.')
+        fuse_session_exit(session)
     else:
-        log.exception('Exception after kill:')
+        log.exception('Only one exception can be re-raised in `llfuse.main`, '
+                      'the following exception will be lost')
+
+    pthread_mutex_unlock(&exc_info_mutex)
+    if res != 0:
+        log.error('pthread_mutex_ulock failed with %s',
+                  strerror(res))
 
     if req is NULL:
         return 0
@@ -543,3 +556,15 @@ cdef PyBytes_from_bufvec(fuse_bufvec *src):
         return buf[:res]
     else:
         return buf
+
+cdef class VoidPtrCapsule:
+    cdef void* ptr
+
+cdef free_p(VoidPtrCapsule cap):
+    stdlib.free(cap.ptr)
+
+cdef inline encap_ptr(void *ptr):
+    cdef VoidPtrCapsule cap
+    cap = VoidPtrCapsule.__new__(VoidPtrCapsule)
+    cap.ptr = ptr
+    return cap

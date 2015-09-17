@@ -441,7 +441,7 @@ if __name__ == '__main__':
 
     # sqlite3 does not support multithreading
     try:
-        llfuse.main(single=True)
+        llfuse.main(workers=1)
     except:
         llfuse.close(unmount=False)
         raise

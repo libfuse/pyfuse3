@@ -14,6 +14,8 @@ In order to build and run Python-LLFUSE you need the following software:
 * Python_ 2.6 or newer (including Python 3.x), installed with
   development headers
 * The `setuptools`_ Python module, version 1.0 or newer.
+* When running under Python 2.x, the `contextlib2`_ Python module from
+  PyPi.
 * the `pkg-config`_ tool
 * the `attr`_ library
 * A C compiler (only for building)
@@ -75,3 +77,4 @@ the necessary commands are::
 .. _FUSE4BSD: http://www.freshports.org/sysutils/fusefs-kmod/
 .. _FUSE4X: http://fuse4x.org/
 .. _setuptools: https://pypi.python.org/pypi/setuptools
+.. _contextlib2: https://pypi.python.org/pypi/contextlib2/

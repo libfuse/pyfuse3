@@ -13,6 +13,9 @@ UNRELEASED, python-llfuse tip
 
    * Many classes were rewritten in Cython for improved performance.
 
+   * Python thread-specific data is now initialized only once rather
+     than every time a handler is called.
+
    BACKWARDS INCOMPATIBLE CHANGES:
 
    * Ducktyping the `EntryAttributes` class is no longer allowed,
@@ -25,6 +28,9 @@ UNRELEASED, python-llfuse tip
    * The `setattr` method now always receives a completely filled
      `EntryAttributes` instance. To determine which attributes should
      be changed, a new *fields* argument has been introduced.
+
+   * The `llfuse.main` function now has a `workers` parameter, and
+     the `single` parameter was dropped.
 
 2015-08-22, python-llfuse 0.41.1
 

@@ -142,7 +142,7 @@ def main():
     fuse_options.add('fsname=lltest')
     llfuse.init(testfs, options.mountpoint, fuse_options)
     try:
-        llfuse.main(single=True)
+        llfuse.main(workers=1)
     except:
         llfuse.close(unmount=False)
         raise

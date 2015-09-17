@@ -116,6 +116,10 @@ def main():
         print("NOTE: unknown system (%s), nanosecond resolution file times "
               "will not be available" % os.uname()[0])
 
+    install_requires = []
+    if sys.version_info[0] == 2:
+        install_requires.append('contextlib2')
+
     setuptools.setup(
           name='llfuse',
           zip_safe=True,
@@ -150,7 +154,8 @@ def main():
             'build_sphinx': {
                 'version': ('setup.py', LLFUSE_VERSION),
                 'release': ('setup.py', LLFUSE_VERSION),
-            }}
+            }},
+          install_requires=install_requires,
           )
 
 
