@@ -16,6 +16,9 @@ UNRELEASED, python-llfuse tip
    * Python thread-specific data is now initialized only once rather
      than every time a handler is called.
 
+   * SIGINT (Ctrl-C) now properly terminates `llfuse.main` also when
+     running with multiple workers.
+
    BACKWARDS INCOMPATIBLE CHANGES:
 
    * Ducktyping the `EntryAttributes` class is no longer allowed,

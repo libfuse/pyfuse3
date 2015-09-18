@@ -568,3 +568,38 @@ cdef inline encap_ptr(void *ptr):
     cap = VoidPtrCapsule.__new__(VoidPtrCapsule)
     cap.ptr = ptr
     return cap
+
+cdef void signal_handler(int sig, siginfo_t *si, void* ctx) nogil:
+    if session != NULL:
+        fuse_session_exit(session)
+
+
+cdef int sigaction_p(int sig, sigaction_t *sa,
+                     sigaction_t *old_sa) except -1:
+    cdef int res
+    res = sigaction(sig, sa, old_sa)
+    if res != 0:
+        raise OSError(errno.errno, 'sigaction failed with '
+                      + strerror(errno.errno))
+    return 0
+
+cdef sigaction_t sa_backup[4]
+cdef set_signal_handlers():
+    cdef sigaction_t sa
+
+    sigemptyset(&sa.sa_mask)
+    sa.sa_sigaction = &signal_handler
+    sa.sa_flags = SA_SIGINFO
+    sigaction_p(signal.SIGTERM, &sa, &sa_backup[0])
+    sigaction_p(signal.SIGINT, &sa, &sa_backup[1])
+    sigaction_p(signal.SIGHUP, &sa, &sa_backup[2])
+
+    sa.sa_handler = signal.SIG_IGN
+    sa.sa_flags = 0
+    sigaction_p(signal.SIGPIPE, &sa, &sa_backup[3])
+
+cdef restore_signal_handlers():
+    sigaction_p(signal.SIGTERM, &sa_backup[0], NULL)
+    sigaction_p(signal.SIGINT, &sa_backup[1], NULL)
+    sigaction_p(signal.SIGHUP, &sa_backup[2], NULL)
+    sigaction_p(signal.SIGPIPE, &sa_backup[3], NULL)

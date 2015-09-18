@@ -27,7 +27,8 @@ from libc.stdlib cimport const_char
 from libc cimport stdlib, string, errno, dirent
 from libc.errno cimport ETIMEDOUT, EPROTO, EINVAL, EPERM, ENOMSG
 from posix.unistd cimport getpid
-from posix.signal cimport sigemptyset, sigaddset, SIG_BLOCK, SIG_SETMASK
+from posix.signal cimport (sigemptyset, sigaddset, SIG_BLOCK, SIG_SETMASK,
+                           siginfo_t, sigaction_t, sigaction, SA_SIGINFO)
 from posix.time cimport clock_gettime, CLOCK_REALTIME, timespec
 from cpython.bytes cimport (PyBytes_AsStringAndSize, PyBytes_FromStringAndSize,
                             PyBytes_AsString, PyBytes_FromString, PyBytes_AS_STRING)

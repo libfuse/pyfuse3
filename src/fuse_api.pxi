@@ -275,6 +275,14 @@ def main(workers=30):
 
     *workers* specifies the number of threads that will process requests
     concurrently.
+
+    While this function is running, special signal handlers will be
+    installed for the *SIGTERM*, *SIGINT* (Ctrl-C), *SIGHUP* and *SIGPIPE*
+    signals. *SIGPIPE* will be ignored, while the other three signals
+    will cause request processing to stop and the function to return.
+
+    Note that *SIGINT* (Ctrl-C) will thus *not* result in a `KeyboardInterrupt`
+    exception while this function is runnnig.
     '''
 
     global exc_info
@@ -283,12 +291,8 @@ def main(workers=30):
         raise RuntimeError('Need to call init() before main()')
 
     with contextlib.ExitStack() as on_exit:
-        log.debug('Calling fuse_set_signal_handlers')
-        if fuse_set_signal_handlers(session) == -1:
-            raise RuntimeError("fuse_set_signal_handlers() failed")
-        # FIXME: We should really *restore* the original signal handlers,
-        # otherwise Ctrl-C won't work anymore.
-        on_exit.callback(lambda: fuse_remove_signal_handlers(session))
+        set_signal_handlers()
+        on_exit.callback(lambda: restore_signal_handlers())
 
         # Start notification handling thread
         t = threading.Thread(target=_notify_loop)
