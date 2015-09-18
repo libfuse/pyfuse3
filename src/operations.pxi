@@ -59,13 +59,15 @@ class Operations(object):
 
         pass
 
-    def lookup(self, parent_inode, name):
+    def lookup(self, parent_inode, name, ctx):
         '''Look up a directory entry by name and get its attributes.
 
         If the entry *name* does not exist in the directory with inode
         *parent_inode*, this method must raise `FUSEError` with an
         errno of `errno.ENOENT`. Otherwise it must return an
         `EntryAttributes` instance.
+
+        *ctx* will be a `RequestContext` instance.
 
         Once an inode has been returned by `lookup`, `create`,
         `symlink`, `link`, `mknod` or `mkdir`, it must be kept by the
@@ -110,8 +112,10 @@ class Operations(object):
 
         pass
 
-    def getattr(self, inode):
+    def getattr(self, inode, ctx):
         '''Get attributes for *inode*
+
+        *ctx* will be a `RequestContext` instance.
 
         This method should return an `EntryAttributes` instance with
         the attributes of *inode*. The
@@ -122,13 +126,15 @@ class Operations(object):
         raise FUSEError(errno.ENOSYS)
 
 
-    def setattr(self, inode, attr, fields):
+    def setattr(self, inode, attr, fields, ctx):
         '''Change attributes of *inode*
 
         *fields* will be an `SetattrFields` instance that specifies which
         attributes are to be updated. *attr* will be an `EntryAttributes`
         instance for *inode* that contains the new values for changed attributes
         and the original (unchanged) values for all other attributes.
+
+        *ctx* will be a `RequestContext` instance.
 
         The method should return an `EntryAttributes` instance with the updated
         attributes. If all (and only) the requested changes were applied the
@@ -138,10 +144,11 @@ class Operations(object):
 
         raise FUSEError(errno.ENOSYS)
 
-    def readlink(self, inode):
+    def readlink(self, inode, ctx):
         '''Return target of symbolic link
 
         The return value must have type `bytes`.
+        *ctx* will be a `RequestContext` instance.
         '''
 
         raise FUSEError(errno.ENOSYS)
@@ -183,8 +190,10 @@ class Operations(object):
 
         raise FUSEError(errno.ENOSYS)
 
-    def unlink(self, parent_inode, name):
+    def unlink(self, parent_inode, name, ctx):
         '''Remove a (possibly special) file
+
+        *ctx* will be a `RequestContext` instance.
 
         If the file system has received a `lookup`, but no `forget`
         call for this file yet, `unlink` is expected to remove only
@@ -198,8 +207,10 @@ class Operations(object):
 
         raise FUSEError(errno.ENOSYS)
 
-    def rmdir(self, inode_parent, name):
+    def rmdir(self, inode_parent, name, ctx):
         '''Remove a directory
+
+        *ctx* will be a `RequestContext` instance.
 
         If the file system has received a `lookup`, but no `forget`
         call for this file yet, `unlink` is expected to remove only
@@ -228,8 +239,11 @@ class Operations(object):
 
         raise FUSEError(errno.ENOSYS)
 
-    def rename(self, inode_parent_old, name_old, inode_parent_new, name_new):
+    def rename(self, inode_parent_old, name_old, inode_parent_new,
+               name_new, ctx):
         '''Rename a directory entry
+
+        *ctx* will be a `RequestContext` instance.
 
         If *name_new* already exists, it should be overwritten.
 
@@ -242,8 +256,10 @@ class Operations(object):
 
         raise FUSEError(errno.ENOSYS)
 
-    def link(self, inode, new_parent_inode, new_name):
+    def link(self, inode, new_parent_inode, new_name, ctx):
         '''Create a hard link.
+
+        *ctx* will be a `RequestContext` instance.
 
         The method must return an `EntryAttributes` instance with the
         attributes of the newly created directory entry.
@@ -259,8 +275,10 @@ class Operations(object):
 
         raise FUSEError(errno.ENOSYS)
 
-    def open(self, inode, flags):
+    def open(self, inode, flags, ctx):
         '''Open a file.
+
+        *ctx* will be a `RequestContext` instance.
 
         *flags* will be a bitwise or of the open flags described in
         the :manpage:`open(2)` manpage and defined in the `os` module
@@ -327,8 +345,10 @@ class Operations(object):
 
         raise FUSEError(errno.ENOSYS)
 
-    def opendir(self, inode):
+    def opendir(self, inode, ctx):
         '''Open a directory.
+
+        *ctx* will be a `RequestContext` instance.
 
         This method should return an integer file handle. The file
         handle will be passed to the `readdir`, `fsyncdir`
@@ -380,8 +400,10 @@ class Operations(object):
 
         raise FUSEError(errno.ENOSYS)
 
-    def statfs(self):
+    def statfs(self, ctx):
         '''Get file system statistics
+
+        *ctx* will be a `RequestContext` instance.
 
         The method is expected to return an appropriately filled
         `StatvfsData` instance.
@@ -412,8 +434,10 @@ class Operations(object):
 
         log.error("\n".join(code))
 
-    def setxattr(self, inode, name, value):
+    def setxattr(self, inode, name, value, ctx):
         '''Set an extended attribute.
+
+        *ctx* will be a `RequestContext` instance.
 
         The attribute may or may not exist already. Both *name* and *value* must
         be of type `bytes`. *name* must not contain zero-bytes (``\0``).
@@ -421,8 +445,10 @@ class Operations(object):
 
         raise FUSEError(errno.ENOSYS)
 
-    def getxattr(self, inode, name):
+    def getxattr(self, inode, name, ctx):
         '''Return extended attribute value
+
+        *ctx* will be a `RequestContext` instance.
 
         If the attribute does not exist, the method must raise `FUSEError` with
         an error code of `ENOATTR`. *name* must be of type `bytes` and must
@@ -431,8 +457,10 @@ class Operations(object):
 
         raise FUSEError(errno.ENOSYS)
 
-    def listxattr(self, inode):
+    def listxattr(self, inode, ctx):
         '''Get list of extended attribute names.
+
+        *ctx* will be a `RequestContext` instance.
 
         This method will return an iterator over a sequence of `bytes` objects.
         The objects are guaranteed not to include zero-bytes (``\0``).
@@ -440,8 +468,10 @@ class Operations(object):
 
         raise FUSEError(errno.ENOSYS)
 
-    def removexattr(self, inode, name):
+    def removexattr(self, inode, name, ctx):
         '''Remove extended attribute
+
+        *ctx* will be a `RequestContext` instance.
 
         If the attribute does not exist, the method must raise `FUSEError` with
         an error code of `ENOATTR`. *name* must be of type `bytes` and must not

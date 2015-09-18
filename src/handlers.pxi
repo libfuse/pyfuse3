@@ -8,7 +8,6 @@ Copyright © 2013 Nikolaus Rath <Nikolaus.org>
 
 This file is part of Python-LLFUSE. This work may be distributed under
 the terms of the GNU LGPL.
-
 '''
 
 cdef void fuse_init (void *userdata, fuse_conn_info *conn) with gil:
@@ -37,9 +36,10 @@ cdef void fuse_lookup (fuse_req_t req, fuse_ino_t parent,
     cdef int ret
 
     try:
+        ctx = get_request_context(req)
         name = PyBytes_FromString(c_name)
         with lock:
-            entry = <EntryAttributes?> operations.lookup(parent, name)
+            entry = <EntryAttributes?> operations.lookup(parent, name, ctx)
         ret = fuse_reply_entry(req, &entry.fuse_param)
     except FUSEError as e:
         ret = fuse_reply_err(req, e.errno)
@@ -78,8 +78,9 @@ cdef void fuse_getattr (fuse_req_t req, fuse_ino_t ino,
     cdef EntryAttributes entry
 
     try:
+        ctx = get_request_context(req)
         with lock:
-            entry = <EntryAttributes?> operations.getattr(ino)
+            entry = <EntryAttributes?> operations.getattr(ino, ctx)
 
         ret = fuse_reply_attr(req, entry.attr, entry.fuse_param.attr_timeout)
     except FUSEError as e:
@@ -99,6 +100,7 @@ cdef void fuse_setattr (fuse_req_t req, fuse_ino_t ino, struct_stat *stat,
     cdef struct_stat *attr
 
     try:
+        ctx = get_request_context(req)
         entry = EntryAttributes()
         fields = SetattrFields.__new__(SetattrFields)
         string.memcpy(entry.attr, stat, sizeof(struct_stat))
@@ -130,7 +132,7 @@ cdef void fuse_setattr (fuse_req_t req, fuse_ino_t ino, struct_stat *stat,
         fields.update_size = bool(to_set & FUSE_SET_ATTR_SIZE)
 
         with lock:
-            entry = <EntryAttributes?> operations.setattr(ino, entry, fields)
+            entry = <EntryAttributes?> operations.setattr(ino, entry, fields, ctx)
 
         ret = fuse_reply_attr(req, entry.attr, entry.fuse_param.attr_timeout)
     except FUSEError as e:
@@ -145,8 +147,9 @@ cdef void fuse_readlink (fuse_req_t req, fuse_ino_t ino) with gil:
     cdef int ret
     cdef char* name
     try:
+        ctx = get_request_context(req)
         with lock:
-            target = operations.readlink(ino)
+            target = operations.readlink(ino, ctx)
         name = PyBytes_AsString(target)
         ret = fuse_reply_readlink(req, name)
     except FUSEError as e:
@@ -202,8 +205,9 @@ cdef void fuse_unlink (fuse_req_t req, fuse_ino_t parent, const_char *name) with
     cdef int ret
 
     try:
+        ctx = get_request_context(req)
         with lock:
-            operations.unlink(parent, PyBytes_FromString(name))
+            operations.unlink(parent, PyBytes_FromString(name), ctx)
         ret = fuse_reply_err(req, 0)
     except FUSEError as e:
         ret = fuse_reply_err(req, e.errno)
@@ -217,8 +221,9 @@ cdef void fuse_rmdir (fuse_req_t req, fuse_ino_t parent, const_char *name) with 
     cdef int ret
 
     try:
+        ctx = get_request_context(req)
         with lock:
-            operations.rmdir(parent, PyBytes_FromString(name))
+            operations.rmdir(parent, PyBytes_FromString(name), ctx)
         ret = fuse_reply_err(req, 0)
     except FUSEError as e:
         ret = fuse_reply_err(req, e.errno)
@@ -252,9 +257,10 @@ cdef void fuse_rename (fuse_req_t req, fuse_ino_t parent, const_char *name,
     cdef int ret
 
     try:
+        ctx = get_request_context(req)
         with lock:
             operations.rename(parent, PyBytes_FromString(name),
-                              newparent, PyBytes_FromString(newname))
+                              newparent, PyBytes_FromString(newname), ctx)
         ret = fuse_reply_err(req, 0)
     except FUSEError as e:
         ret = fuse_reply_err(req, e.errno)
@@ -270,9 +276,10 @@ cdef void fuse_link (fuse_req_t req, fuse_ino_t ino, fuse_ino_t newparent,
     cdef EntryAttributes entry
 
     try:
+        ctx = get_request_context(req)
         with lock:
             entry = <EntryAttributes?> operations.link(ino, newparent,
-                                                       PyBytes_FromString(newname))
+                                                       PyBytes_FromString(newname), ctx)
         ret = fuse_reply_entry(req, &entry.fuse_param)
     except FUSEError as e:
         ret = fuse_reply_err(req, e.errno)
@@ -287,8 +294,9 @@ cdef void fuse_open (fuse_req_t req, fuse_ino_t ino, fuse_file_info *fi) with gi
     cdef int ret
 
     try:
+        ctx = get_request_context(req)
         with lock:
-            fi.fh = operations.open(ino, fi.flags)
+            fi.fh = operations.open(ino, fi.flags, ctx)
 
         # Cached file data does not need to be invalidated.
         # http://article.gmane.org/gmane.comp.file-systems.fuse.devel/5325/
@@ -422,8 +430,9 @@ cdef void fuse_opendir (fuse_req_t req, fuse_ino_t ino, fuse_file_info *fi) with
     cdef int ret
 
     try:
+        ctx = get_request_context(req)
         with lock:
-            fi.fh = operations.opendir(ino)
+            fi.fh = operations.opendir(ino, ctx)
 
         ret = fuse_reply_open(req, fi)
     except FUSEError as e:
@@ -507,8 +516,9 @@ cdef void fuse_statfs (fuse_req_t req, fuse_ino_t ino) with gil:
 
     # We don't set all the components
     try:
+        ctx = get_request_context(req)
         with lock:
-            stats = <StatvfsData?> operations.statfs()
+            stats = <StatvfsData?> operations.statfs(ctx)
         ret = fuse_reply_statfs(req, &stats.stat)
     except FUSEError as e:
         ret = fuse_reply_err(req, e.errno)
@@ -543,6 +553,7 @@ cdef void fuse_setxattr (fuse_req_t req, fuse_ino_t ino, const_char *cname,
     cdef int ret
 
     try:
+        ctx = get_request_context(req)
         name = PyBytes_FromString(cname)
         if size > PY_SSIZE_T_MAX:
             raise OverflowError('Value too long to convert to Python')
@@ -555,7 +566,7 @@ cdef void fuse_setxattr (fuse_req_t req, fuse_ino_t ino, const_char *cname,
             if PLATFORM == PLATFORM_DARWIN:
                 # No known flags
                 with lock:
-                    operations.setxattr(ino, name, value)
+                    operations.setxattr(ino, name, value, ctx)
             else:
                 # Make sure we know all the flags
                 if flags & ~(XATTR_CREATE | XATTR_REPLACE):
@@ -574,7 +585,7 @@ cdef void fuse_setxattr (fuse_req_t req, fuse_ino_t ino, const_char *cname,
                     elif flags & XATTR_REPLACE: # Attribute must exist
                         operations.getxattr(ino, name)
 
-                    operations.setxattr(ino, name, value)
+                    operations.setxattr(ino, name, value, ctx)
 
         ret = fuse_reply_err(req, 0)
     except FUSEError as e:
@@ -604,9 +615,10 @@ cdef void fuse_getxattr (fuse_req_t req, fuse_ino_t ino, const_char *cname,
     cdef size_t len_
     cdef char *cbuf
     try:
+        ctx = get_request_context(req)
         name = PyBytes_FromString(cname)
         with lock:
-            buf = operations.getxattr(ino, name)
+            buf = operations.getxattr(ino, name, ctx)
         PyBytes_AsStringAndSize(buf, &cbuf, &len_s)
         len_ = <size_t> len_s # guaranteed positive
 
@@ -630,8 +642,9 @@ cdef void fuse_listxattr (fuse_req_t req, fuse_ino_t ino, size_t size) with gil:
     cdef size_t len_
     cdef char *cbuf
     try:
+        ctx = get_request_context(req)
         with lock:
-            buf = b'\0'.join(operations.listxattr(ino)) + b'\0'
+            buf = b'\0'.join(operations.listxattr(ino, ctx)) + b'\0'
 
         PyBytes_AsStringAndSize(buf, &cbuf, &len_s)
         len_ = <size_t> len_s # guaranteed positive
@@ -656,9 +669,10 @@ cdef void fuse_listxattr (fuse_req_t req, fuse_ino_t ino, size_t size) with gil:
 cdef void fuse_removexattr (fuse_req_t req, fuse_ino_t ino, const_char *cname) with gil:
     cdef int ret
     try:
+        ctx = get_request_context(req)
         name = PyBytes_FromString(cname)
         with lock:
-            operations.removexattr(ino, name)
+            operations.removexattr(ino, name, ctx)
         ret = fuse_reply_err(req, 0)
     except FUSEError as e:
         ret = fuse_reply_err(req, e.errno)

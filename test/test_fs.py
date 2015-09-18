@@ -155,7 +155,7 @@ class Fs(llfuse.Operations):
         self.status.entry_timeout = 2
         self.status.attr_timeout = 2
 
-    def getattr(self, inode):
+    def getattr(self, inode, ctx=None):
         entry = llfuse.EntryAttributes()
         if inode == llfuse.ROOT_INODE:
             entry.st_mode = (stat.S_IFDIR | 0o755)
@@ -187,14 +187,14 @@ class Fs(llfuse.Operations):
             else:
                 assert inode == llfuse.ROOT_INODE
 
-    def lookup(self, parent_inode, name):
+    def lookup(self, parent_inode, name, ctx=None):
         if parent_inode != llfuse.ROOT_INODE or name != self.hello_name:
             raise llfuse.FUSEError(errno.ENOENT)
         self.lookup_cnt += 1
         self.status.lookup_called = True
         return self.getattr(self.hello_inode)
 
-    def opendir(self, inode):
+    def opendir(self, inode, ctx):
         if inode != llfuse.ROOT_INODE:
             raise llfuse.FUSEError(errno.ENOENT)
         return inode
@@ -204,7 +204,7 @@ class Fs(llfuse.Operations):
         if off == 0:
             yield (self.hello_name, self.getattr(self.hello_inode), 1)
 
-    def open(self, inode, flags):
+    def open(self, inode, flags, ctx):
         if inode != self.hello_inode:
             raise llfuse.FUSEError(errno.ENOENT)
         if flags & os.O_RDWR or flags & os.O_WRONLY:
@@ -216,7 +216,7 @@ class Fs(llfuse.Operations):
         self.status.read_called = True
         return self.hello_data[off:off+size]
 
-    def setxattr(self, inode, name, value):
+    def setxattr(self, inode, name, value, ctx):
         if inode != llfuse.ROOT_INODE or name != b'command':
             raise FUSEError(errno.ENOTSUP)
 

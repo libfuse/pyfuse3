@@ -137,7 +137,7 @@ class Operations(llfuse.Operations):
 
         return row
 
-    def lookup(self, inode_p, name):
+    def lookup(self, inode_p, name, ctx=None):
         if name == '.':
             inode = inode_p
         elif name == '..':
@@ -150,10 +150,10 @@ class Operations(llfuse.Operations):
             except NoSuchRowError:
                 raise(llfuse.FUSEError(errno.ENOENT))
 
-        return self.getattr(inode)
+        return self.getattr(inode, ctx)
 
 
-    def getattr(self, inode):
+    def getattr(self, inode, ctx=None):
         row = self.get_row('SELECT * FROM inodes WHERE id=?', (inode,))
 
         entry = llfuse.EntryAttributes()
@@ -177,10 +177,10 @@ class Operations(llfuse.Operations):
 
         return entry
 
-    def readlink(self, inode):
+    def readlink(self, inode, ctx):
         return self.get_row('SELECT * FROM inodes WHERE id=?', (inode,))['target']
 
-    def opendir(self, inode):
+    def opendir(self, inode, ctx):
         return inode
 
     def readdir(self, inode, off):
@@ -194,7 +194,7 @@ class Operations(llfuse.Operations):
         for row in cursor2:
             yield (row['name'], self.getattr(row['inode']), row['rowid'])
 
-    def unlink(self, inode_p, name):
+    def unlink(self, inode_p, name,ctx):
         entry = self.lookup(inode_p, name)
 
         if stat.S_ISDIR(entry.st_mode):
@@ -202,7 +202,7 @@ class Operations(llfuse.Operations):
 
         self._remove(inode_p, name, entry)
 
-    def rmdir(self, inode_p, name):
+    def rmdir(self, inode_p, name, ctx):
         entry = self.lookup(inode_p, name)
 
         if not stat.S_ISDIR(entry.st_mode):
@@ -227,7 +227,7 @@ class Operations(llfuse.Operations):
                 stat.S_IROTH | stat.S_IWOTH | stat.S_IXOTH)
         return self._create(inode_p, name, mode, ctx, target=target)
 
-    def rename(self, inode_p_old, name_old, inode_p_new, name_new):
+    def rename(self, inode_p_old, name_old, inode_p_new, name_new, ctx):
         entry_old = self.lookup(inode_p_old, name_old)
 
         try:
@@ -263,7 +263,7 @@ class Operations(llfuse.Operations):
             self.cursor.execute("DELETE FROM inodes WHERE id=?", (entry_new.st_ino,))
 
 
-    def link(self, inode, new_inode_p, new_name):
+    def link(self, inode, new_inode_p, new_name, ctx):
         entry_p = self.getattr(new_inode_p)
         if entry_p.st_nlink == 0:
             log.warn('Attempted to create entry %s with unlinked parent %d',
@@ -275,7 +275,7 @@ class Operations(llfuse.Operations):
 
         return self.getattr(inode)
 
-    def setattr(self, inode, attr, fields):
+    def setattr(self, inode, attr, fields, ctx):
 
         if fields.update_size:
             data = self.get_row('SELECT data FROM inodes WHERE id=?', (inode,))[0]
@@ -315,7 +315,7 @@ class Operations(llfuse.Operations):
     def mkdir(self, inode_p, name, mode, ctx):
         return self._create(inode_p, name, mode, ctx)
 
-    def statfs(self):
+    def statfs(self, ctx):
         stat_ = llfuse.StatvfsData()
 
         stat_.f_bsize = 512
@@ -333,7 +333,7 @@ class Operations(llfuse.Operations):
 
         return stat_
 
-    def open(self, inode, flags):
+    def open(self, inode, flags, ctx):
         # Yeah, unused arguments
         #pylint: disable=W0613
         self.inode_open_count[inode] += 1

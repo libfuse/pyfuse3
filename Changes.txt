@@ -35,6 +35,9 @@ UNRELEASED, python-llfuse tip
    * The `llfuse.main` function now has a `workers` parameter, and
      the `single` parameter was dropped.
 
+   * Almost all request handlers now receive a `RequestContext`
+     instance in an additional parameter.
+
 2015-08-22, python-llfuse 0.41.1
 
    * Added some files in test/ that were missing in the 0.41 tarball.

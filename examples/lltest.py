@@ -57,7 +57,7 @@ class TestFs(llfuse.Operations):
         self.hello_inode = llfuse.ROOT_INODE+1
         self.hello_data = b"hello world\n"
 
-    def getattr(self, inode):
+    def getattr(self, inode, ctx=None):
         entry = llfuse.EntryAttributes()
         if inode == llfuse.ROOT_INODE:
             entry.st_mode = (stat.S_IFDIR | 0o755)
@@ -78,12 +78,12 @@ class TestFs(llfuse.Operations):
 
         return entry
 
-    def lookup(self, parent_inode, name):
+    def lookup(self, parent_inode, name, ctx=None):
         if parent_inode != llfuse.ROOT_INODE or name != self.hello_name:
             raise llfuse.FUSEError(errno.ENOENT)
         return self.getattr(self.hello_inode)
 
-    def opendir(self, inode):
+    def opendir(self, inode, ctx):
         if inode != llfuse.ROOT_INODE:
             raise llfuse.FUSEError(errno.ENOENT)
         return inode
@@ -95,7 +95,7 @@ class TestFs(llfuse.Operations):
         if off == 0:
             yield (self.hello_name, self.getattr(self.hello_inode), 1)
 
-    def open(self, inode, flags):
+    def open(self, inode, flags, ctx):
         if inode != self.hello_inode:
             raise llfuse.FUSEError(errno.ENOENT)
         if flags & os.O_RDWR or flags & os.O_WRONLY:

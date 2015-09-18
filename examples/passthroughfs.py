@@ -114,7 +114,7 @@ class Operations(llfuse.Operations):
             except KeyError: # may have been deleted
                 pass
 
-    def lookup(self, inode_p, name):
+    def lookup(self, inode_p, name, ctx=None):
         name = fsdecode(name)
         log.debug('lookup for %s in %d', name, inode_p)
         path = os.path.join(self._inode_to_path(inode_p), name)
@@ -123,7 +123,7 @@ class Operations(llfuse.Operations):
             self._add_path(attr.st_ino, path)
         return attr
 
-    def getattr(self, inode):
+    def getattr(self, inode, ctx=None):
         return self.getattr_path(self._inode_to_path(inode))
 
     def getattr_path(self, path):
@@ -145,7 +145,7 @@ class Operations(llfuse.Operations):
 
         return entry
 
-    def readlink(self, inode):
+    def readlink(self, inode, ctx):
         path = self._inode_to_path(inode)
         try:
             target = os.readlink(path)
@@ -153,7 +153,7 @@ class Operations(llfuse.Operations):
             raise FUSEError(exc.errno)
         return fsencode(target)
 
-    def opendir(self, inode):
+    def opendir(self, inode, ctx):
         return inode
 
     def readdir(self, inode, off):
@@ -177,7 +177,7 @@ class Operations(llfuse.Operations):
                 continue
             yield (fsencode(name), attr, ino)
 
-    def unlink(self, inode_p, name):
+    def unlink(self, inode_p, name, ctx):
         name = fsdecode(name)
         parent = self._inode_to_path(inode_p)
         path = os.path.join(parent, name)
@@ -189,7 +189,7 @@ class Operations(llfuse.Operations):
         if inode in self._lookup_cnt:
             self._forget_path(inode, path)
 
-    def rmdir(self, inode_p, name):
+    def rmdir(self, inode_p, name, ctx):
         name = fsdecode(name)
         parent = self._inode_to_path(inode_p)
         path = os.path.join(parent, name)
@@ -224,7 +224,7 @@ class Operations(llfuse.Operations):
         self._add_path(stat.st_ino, path)
         return self.getattr(stat.st_ino)
 
-    def rename(self, inode_p_old, name_old, inode_p_new, name_new):
+    def rename(self, inode_p_old, name_old, inode_p_new, name_new, ctx):
         name_old = fsdecode(name_old)
         name_new = fsdecode(name_new)
         parent_old = self._inode_to_path(inode_p_old)
@@ -248,7 +248,7 @@ class Operations(llfuse.Operations):
             assert val == path_old
             self._inode_path_map[inode] = path_new
 
-    def link(self, inode, new_inode_p, new_name):
+    def link(self, inode, new_inode_p, new_name, ctx):
         new_name = fsdecode(new_name)
         parent = self._inode_to_path(new_inode_p)
         path = os.path.join(parent, new_name)
@@ -259,7 +259,7 @@ class Operations(llfuse.Operations):
         self._add_path(inode, path)
         return self.getattr(inode)
 
-    def setattr(self, inode, attr, fields):
+    def setattr(self, inode, attr, fields, ctx):
         path = self._inode_to_path(inode)
 
         try:
@@ -304,7 +304,7 @@ class Operations(llfuse.Operations):
         self._add_path(attr.st_ino, path)
         return attr
 
-    def statfs(self):
+    def statfs(self, ctx):
         stat_ = llfuse.StatvfsData()
         try:
             statfs = os.statvfs(self._inode_path_map[llfuse.ROOT_INODE])
@@ -315,7 +315,7 @@ class Operations(llfuse.Operations):
             setattr(stat_, attr, getattr(statfs, attr))
         return stat_
 
-    def open(self, inode, flags):
+    def open(self, inode, flags, ctx):
         if inode in self._inode_fd_map:
             fd = self._inode_fd_map[inode]
             self._fd_open_count[fd] += 1
