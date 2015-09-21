@@ -1,5 +1,8 @@
 UNRELEASED, python-llfuse tip
 
+   * Python-LLFUSE is now considered stable. Future releases will
+     preserve backwards compatibility.
+
    * Extended coverage of unit tests.
 
    * Added `notify_store` function.
