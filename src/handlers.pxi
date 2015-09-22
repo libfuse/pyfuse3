@@ -458,7 +458,7 @@ cdef void fuse_readdir (fuse_req_t req, fuse_ino_t ino, size_t size, off_t off,
             for (name, attr, next_) in operations.readdir(fi.fh, off):
                 entry = <EntryAttributes?> attr
                 if buf == NULL:
-                    buf = <char*> stdlib.malloc(size * sizeof(char))
+                    buf = <char*> calloc_or_raise(size, sizeof(char))
                 cname = PyBytes_AsString(name)
                 len_ = fuse_add_direntry(req, buf + acc_size, size - acc_size,
                                          cname, entry.attr, next_)

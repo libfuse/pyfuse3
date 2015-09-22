@@ -322,13 +322,6 @@ def main(workers=30):
         else:
             raise tmp[1].with_traceback(tmp[2])
 
-cdef void* calloc_or_raise(size_t nmemb, size_t size) except NULL:
-    cdef void* mem
-    mem = stdlib.calloc(nmemb, size)
-    if mem is NULL:
-        raise MemoryError()
-    return mem
-
 cdef session_loop_single():
     cdef void* mem
     cdef size_t size

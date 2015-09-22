@@ -603,3 +603,10 @@ cdef restore_signal_handlers():
     sigaction_p(signal.SIGINT, &sa_backup[1], NULL)
     sigaction_p(signal.SIGHUP, &sa_backup[2], NULL)
     sigaction_p(signal.SIGPIPE, &sa_backup[3], NULL)
+
+cdef void* calloc_or_raise(size_t nmemb, size_t size) except NULL:
+    cdef void* mem
+    mem = stdlib.calloc(nmemb, size)
+    if mem is NULL:
+        raise MemoryError()
+    return mem
