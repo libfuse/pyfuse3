@@ -453,10 +453,6 @@ cdef class StatvfsData:
     Instances of this class store information about the file system.
     The attributes correspond to the elements of the ``statvfs``
     struct, see :manpage:`statvfs(2)` for details.
-
-    Request handlers do not need to return objects that inherit from
-    `StatvfsData` directly as long as they provide the required
-    attributes.
     '''
 
     cdef statvfs stat
