@@ -276,13 +276,16 @@ def main(workers=30):
     *workers* specifies the number of threads that will process requests
     concurrently.
 
-    While this function is running, special signal handlers will be
-    installed for the *SIGTERM*, *SIGINT* (Ctrl-C), *SIGHUP* and *SIGPIPE*
-    signals. *SIGPIPE* will be ignored, while the other three signals
-    will cause request processing to stop and the function to return.
+    While this function is running, special signal handlers will be installed
+    for the *SIGTERM*, *SIGINT* (Ctrl-C), *SIGHUP* and *SIGPIPE*
+    signals. *SIGPIPE* will be ignored, while the other three signals will cause
+    request processing to stop and the function to return.  *SIGINT* (Ctrl-C)
+    will thus *not* result in a `KeyboardInterrupt` exception while this
+    function is runnnig.
 
-    Note that *SIGINT* (Ctrl-C) will thus *not* result in a `KeyboardInterrupt`
-    exception while this function is runnnig.
+     This function will start additional threads for internal purposes (even if
+    *workers* is ``1``). These threads are guaranteed to have terminated when
+    `main` returns.
     '''
 
     global exc_info
