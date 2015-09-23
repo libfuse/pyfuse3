@@ -1,13 +1,37 @@
 .. _example file system:
 
-=====================
- Example File System
+======================
+ Example File Systems
+======================
+
+Python-LLFUSE comes with several example file systems in the
+:file:`examples` directory of the release tarball. For completeness,
+these examples are also included here.
+
+Single-file, Read-only File System
+==================================
+
+(shipped as :file:`examples/lltest.py`)
+
+.. literalinclude:: ../examples/lltest.py
+   :linenos:
+   :language: python
+
+In-memory File System
 =====================
 
-The following is an example of a very simple in-memry file system
-based on Python-LLFUSE (this example is also included in the Python-LLFUSE tarball as
-:file:`examples/tmpfs.py`).
+(shipped as :file:`examples/tmpfs.py`)
 
 .. literalinclude:: ../examples/tmpfs.py
    :linenos:
-   :lines: 12-
+   :language: python
+
+
+Passthrough / Overlay File System
+=================================
+
+(shipped as :file:`examples/passthroughfs.py`)
+
+.. literalinclude:: ../examples/passthroughfs.py
+   :linenos:
+   :language: python
