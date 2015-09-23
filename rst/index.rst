@@ -19,6 +19,7 @@ Table of Contents
    data.rst
    lock.rst
    operations.rst
+   util.rst
    example.rst
 
 
