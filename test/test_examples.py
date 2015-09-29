@@ -79,6 +79,7 @@ def test_tmpfs(tmpdir):
         tst_readdir(mnt_dir)
         tst_statvfs(mnt_dir)
         tst_truncate(mnt_dir)
+        tst_unlink(mnt_dir)
     except:
         cleanup(mnt_dir)
         raise
@@ -109,6 +110,7 @@ def test_passthroughfs(tmpdir):
         tst_readdir(mnt_dir)
         tst_statvfs(mnt_dir)
         tst_truncate(mnt_dir)
+        tst_unlink(mnt_dir)
         tst_passthrough(src_dir, mnt_dir)
     except:
         cleanup(mnt_dir)
@@ -185,6 +187,18 @@ def tst_write(mnt_dir):
     shutil.copyfile(TEST_FILE, name)
     assert filecmp.cmp(name, TEST_FILE, False)
     checked_unlink(name, mnt_dir)
+
+def tst_unlink(mnt_dir):
+    name = os.path.join(mnt_dir, name_generator())
+    data1 = b'foo'
+    data2 = b'bar'
+
+    with open(os.path.join(mnt_dir, name), 'wb+') as fh:
+        fh.write(data1)
+        checked_unlink(name, mnt_dir)
+        fh.write(data2)
+        fh.seek(0)
+        assert fh.read() == data1+data2
 
 def tst_statvfs(mnt_dir):
     os.statvfs(mnt_dir)

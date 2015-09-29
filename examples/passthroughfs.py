@@ -118,17 +118,25 @@ class Operations(llfuse.Operations):
         name = fsdecode(name)
         log.debug('lookup for %s in %d', name, inode_p)
         path = os.path.join(self._inode_to_path(inode_p), name)
-        attr = self.getattr_path(path)
+        attr = self._getattr(path=path)
         if name != '.' and name != '..':
             self._add_path(attr.st_ino, path)
         return attr
 
     def getattr(self, inode, ctx=None):
-        return self.getattr_path(self._inode_to_path(inode))
+        if inode in self._inode_fd_map:
+            return self._getattr(fd=self._inode_fd_map[inode])
+        else:
+            return self._getattr(path=self._inode_to_path(inode))
 
-    def getattr_path(self, path):
+    def _getattr(self, path=None, fd=None):
+        assert fd is None or path is None
+        assert not(fd is None and path is None)
         try:
-            stat = os.lstat(path)
+            if fd is None:
+                stat = os.lstat(path)
+            else:
+                stat = os.fstat(fd)
         except OSError as exc:
             raise FUSEError(exc.errno)
 
@@ -161,7 +169,7 @@ class Operations(llfuse.Operations):
         log.debug('reading %s', path)
         entries = []
         for name in os.listdir(path):
-            attr = self.getattr_path(os.path.join(path, name))
+            attr = self._getattr(path=os.path.join(path, name))
             entries.append((attr.st_ino, name, attr))
 
         log.debug('read %d entries, starting at %d', len(entries), off)
@@ -289,7 +297,7 @@ class Operations(llfuse.Operations):
             os.chown(path, ctx.uid, ctx.gid)
         except OSError as exc:
             raise FUSEError(exc.errno)
-        attr = self.getattr_path(path)
+        attr = self._getattr(path=path)
         self._add_path(attr.st_ino, path)
         return attr
 
@@ -300,7 +308,7 @@ class Operations(llfuse.Operations):
             os.chown(path, ctx.uid, ctx.gid)
         except OSError as exc:
             raise FUSEError(exc.errno)
-        attr = self.getattr_path(path)
+        attr = self._getattr(path=path)
         self._add_path(attr.st_ino, path)
         return attr
 
@@ -336,7 +344,7 @@ class Operations(llfuse.Operations):
             fd = os.open(path, flags | os.O_CREAT | os.O_TRUNC)
         except OSError as exc:
             raise FUSEError(exc.errno)
-        attr = self.getattr_path(path)
+        attr = self._getattr(fd=fd)
         self._add_path(attr.st_ino, path)
         self._inode_fd_map[attr.st_ino] = fd
         self._fd_inode_map[fd] = attr.st_ino
