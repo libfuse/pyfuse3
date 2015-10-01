@@ -424,6 +424,8 @@ def parse_args():
                         help='Where to mount the file system')
     parser.add_argument('--debug', action='store_true', default=False,
                         help='Enable debugging output')
+    parser.add_argument('--debug-fuse', action='store_true', default=False,
+                        help='Enable FUSE debugging output')
 
     return parser.parse_args()
 
@@ -437,6 +439,8 @@ if __name__ == '__main__':
     fuse_options = set(llfuse.default_options)
     fuse_options.add('fsname=tmpfs')
     fuse_options.discard('default_permissions')
+    if options.debug_fuse:
+        fuse_options.add('debug')
     llfuse.init(operations, options.mountpoint, fuse_options)
 
     # sqlite3 does not support multithreading

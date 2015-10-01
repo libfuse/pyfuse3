@@ -401,6 +401,8 @@ def parse_args(args):
                         help='Run single threaded')
     parser.add_argument('--debug', action='store_true', default=False,
                         help='Enable debugging output')
+    parser.add_argument('--debug-fuse', action='store_true', default=False,
+                        help='Enable FUSE debugging output')
 
     return parser.parse_args(args)
 
@@ -414,6 +416,8 @@ def main():
     fuse_options = set(llfuse.default_options)
     fuse_options.add('fsname=passthroughfs')
     fuse_options.add('default_permissions')
+    if options.debug_fuse:
+        fuse_options.add('debug')
     llfuse.init(operations, options.mountpoint, fuse_options)
 
     try:

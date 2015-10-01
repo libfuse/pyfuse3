@@ -129,7 +129,8 @@ def parse_args():
                         help='Where to mount the file system')
     parser.add_argument('--debug', action='store_true', default=False,
                         help='Enable debugging output')
-
+    parser.add_argument('--debug-fuse', action='store_true', default=False,
+                        help='Enable FUSE debugging output')
     return parser.parse_args()
 
 
@@ -140,6 +141,8 @@ def main():
     testfs = TestFs()
     fuse_options = set(llfuse.default_options)
     fuse_options.add('fsname=lltest')
+    if options.debug_fuse:
+        fuse_options.add('debug')
     llfuse.init(testfs, options.mountpoint, fuse_options)
     try:
         llfuse.main(workers=1)
