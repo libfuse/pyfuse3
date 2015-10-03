@@ -33,6 +33,9 @@ Unreleased Changes
 * SIGINT (Ctrl-C) now properly terminates `llfuse.main` also when
   running with multiple workers.
 
+* The return value of `llfuse.main` now indicates if the loop was
+  terminated due to an unmount request or due to a signal.
+
 BACKWARDS INCOMPATIBLE CHANGES:
 
 * Ducktyping the `EntryAttributes` class is no longer allowed,

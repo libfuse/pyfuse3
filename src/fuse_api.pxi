@@ -289,13 +289,21 @@ def main(workers=30):
     request processing to stop and the function to return.  *SIGINT* (Ctrl-C)
     will thus *not* result in a `KeyboardInterrupt` exception while this
     function is runnnig.
+
+    When the function returns because the file system has received an unmount
+    request it will return `None`. If it returns because it has received a
+    signal, it will return the signal number.
     '''
 
     global exc_info
+    global exit_reason
 
     if session == NULL:
         raise RuntimeError('Need to call init() before main()')
 
+    # SIGKILL cannot be caught, so we can use it as a placeholder
+    # for "regular exit".
+    exit_reason = signal.SIGKILL
     with contextlib.ExitStack() as on_exit:
         set_signal_handlers()
         on_exit.callback(lambda: restore_signal_handlers())
@@ -327,6 +335,11 @@ def main(workers=30):
             raise tmp[0], tmp[1], tmp[2]
         else:
             raise tmp[1].with_traceback(tmp[2])
+
+    if exit_reason == signal.SIGKILL:
+        return None
+    else:
+        return exit_reason
 
 cdef session_loop_single():
     cdef void* mem

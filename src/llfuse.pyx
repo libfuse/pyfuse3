@@ -134,6 +134,7 @@ cdef fuse_session* session = NULL
 cdef fuse_chan* channel = NULL
 cdef fuse_lowlevel_ops fuse_ops
 cdef object exc_info
+cdef int exit_reason
 cdef pthread_mutex_t exc_info_mutex
 
 init_lock()

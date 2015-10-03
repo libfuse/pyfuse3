@@ -574,9 +574,10 @@ cdef inline encap_ptr(void *ptr):
     return cap
 
 cdef void signal_handler(int sig, siginfo_t *si, void* ctx) nogil:
+    global exit_reason
     if session != NULL:
         fuse_session_exit(session)
-
+    exit_reason = sig
 
 cdef int sigaction_p(int sig, sigaction_t *sa,
                      sigaction_t *old_sa) except -1:
