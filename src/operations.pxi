@@ -110,13 +110,20 @@ class Operations(object):
         raise FUSEError(errno.ENOSYS)
 
 
-    def setattr(self, inode, attr, fields, ctx):
+    def setattr(self, inode, attr, fields, fh, ctx):
         '''Change attributes of *inode*
 
         *fields* will be an `SetattrFields` instance that specifies which
         attributes are to be updated. *attr* will be an `EntryAttributes`
         instance for *inode* that contains the new values for changed attributes
         and the original (unchanged) values for all other attributes.
+
+        If the syscall that is being processed received a file descriptor
+        argument (like e.g. :manpage:`ftruncate(2)` or :manpage:`fchmod(2)`),
+        *fh* will be the file handle returned by the corresponding call to the
+        `open` handler. If the syscall was path based (like
+        e.g. :manpage:`truncate(2)` or :manpage:`chmod(2)`), *fh* will be
+        `None`.
 
         *ctx* will be a `RequestContext` instance.
 

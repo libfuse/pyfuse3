@@ -275,7 +275,7 @@ class Operations(llfuse.Operations):
 
         return self.getattr(inode)
 
-    def setattr(self, inode, attr, fields, ctx):
+    def setattr(self, inode, attr, fields, fh, ctx):
 
         if fields.update_size:
             data = self.get_row('SELECT data FROM inodes WHERE id=?', (inode,))[0]

@@ -46,6 +46,9 @@ BACKWARDS INCOMPATIBLE CHANGES:
   `EntryAttributes` instance. To determine which attributes should
   be changed, a new *fields* argument has been introduced.
 
+* The `~Operations.setattr` method now also receives an *fh*
+  parameter.
+
 * The `llfuse.main` function now has a *workers* parameter, and
   the *single* parameter was dropped.
 

@@ -131,8 +131,12 @@ cdef void fuse_setattr (fuse_req_t req, fuse_ino_t ino, struct_stat *stat,
         fields.update_gid = bool(to_set & FUSE_SET_ATTR_GID)
         fields.update_size = bool(to_set & FUSE_SET_ATTR_SIZE)
 
+        if fi is NULL:
+            fh = None
+        else:
+            fh = fi.fh
         with lock:
-            entry = <EntryAttributes?> operations.setattr(ino, entry, fields, ctx)
+            entry = <EntryAttributes?> operations.setattr(ino, entry, fields, fh, ctx)
 
         ret = fuse_reply_attr(req, entry.attr, entry.fuse_param.attr_timeout)
     except FUSEError as e:

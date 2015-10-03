@@ -267,22 +267,36 @@ class Operations(llfuse.Operations):
         self._add_path(inode, path)
         return self.getattr(inode)
 
-    def setattr(self, inode, attr, fields, ctx):
-        path = self._inode_to_path(inode)
+    def setattr(self, inode, attr, fields, fh, ctx):
+        # We use the f* functions if possible so that we can handle
+        # a setattr() call for an inode without associated directory
+        # handle.
+        if fh is None:
+            path_or_fh = self._inode_to_path(inode)
+            truncate = os.truncate
+            chmod = os.chmod
+            chown = os.chown
+        else:
+            path_or_fh = fh
+            truncate = os.ftruncate
+            chmod = os.fchmod
+            chown = os.fchown
 
         try:
             if fields.update_size:
-                os.truncate(path, attr.st_size)
+                truncate(path_or_fh, attr.st_size)
 
             if fields.update_mode:
-                os.chmod(path, ~stat_m.S_IFMT & attr.st_mode,
-                         follow_symlinks=False)
+                chmod(path_or_fh, ~stat_m.S_IFMT & attr.st_mode,
+                      follow_symlinks=False)
 
             if fields.update_uid or fields.update_gid:
-                os.chown(path, attr.st_uid, attr.st_gid, follow_symlinks=False)
+                chown(path_or_fh, attr.st_uid, attr.st_gid,
+                      follow_symlinks=False)
 
             if fields.update_atime or fields.update_mtime:
-                os.utime(path, None, follow_symlinks=False,
+                # utime accepts both paths and file descriptiors
+                os.utime(path_or_fh, None, follow_symlinks=False,
                          ns=(attr.st_atime_ns, attr.st_mtime_ns))
 
         except OSError as exc:

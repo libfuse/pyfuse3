@@ -24,12 +24,16 @@ import stat
 import shutil
 import filecmp
 import errno
+from tempfile import NamedTemporaryFile
 from util import skip_if_no_fuse, wait_for_mount, umount, cleanup
 
 basename = os.path.join(os.path.dirname(__file__), '..')
 TEST_FILE = __file__
 
 skip_if_no_fuse()
+
+with open(TEST_FILE, 'rb') as fh:
+    TEST_DATA = fh.read()
 
 def name_generator(__ctr=[0]):
     __ctr[0] += 1
@@ -78,7 +82,8 @@ def test_tmpfs(tmpdir):
         tst_link(mnt_dir)
         tst_readdir(mnt_dir)
         tst_statvfs(mnt_dir)
-        tst_truncate(mnt_dir)
+        tst_truncate_path(mnt_dir)
+        tst_truncate_fd(mnt_dir)
         tst_unlink(mnt_dir)
     except:
         cleanup(mnt_dir)
@@ -109,7 +114,8 @@ def test_passthroughfs(tmpdir):
         tst_link(mnt_dir)
         tst_readdir(mnt_dir)
         tst_statvfs(mnt_dir)
-        tst_truncate(mnt_dir)
+        tst_truncate_path(mnt_dir)
+        tst_truncate_fd(mnt_dir)
         tst_unlink(mnt_dir)
         tst_passthrough(src_dir, mnt_dir)
     except:
@@ -245,22 +251,57 @@ def tst_readdir(mnt_dir):
     os.rmdir(subdir)
     os.rmdir(dir_)
 
-def tst_truncate(mnt_dir):
+def tst_truncate_path(mnt_dir):
+    if sys.version_info < (3,0):
+        # 2.x has no os.truncate
+        return
+
+    assert len(TEST_DATA) > 1024
+
     filename = os.path.join(mnt_dir, name_generator())
-    shutil.copyfile(TEST_FILE, filename)
-    assert filecmp.cmp(filename, TEST_FILE, False)
+    with open(filename, 'wb') as fh:
+        fh.write(TEST_DATA)
+
     fstat = os.stat(filename)
     size = fstat.st_size
-    fd = os.open(filename, os.O_RDWR)
+    assert size == len(TEST_DATA)
 
-    os.ftruncate(fd, size + 1024) # add > 1 block
+    # Add zeros at the end
+    os.truncate(filename, size + 1024)
     assert os.stat(filename).st_size == size + 1024
+    with open(filename, 'rb') as fh:
+        assert fh.read(size) == TEST_DATA
+        assert fh.read(1025) == b'\0' * 1024
 
-    os.ftruncate(fd, size - 1024) # Truncate > 1 block
+    # Truncate data
+    os.truncate(filename, size - 1024)
     assert os.stat(filename).st_size == size - 1024
+    with open(filename, 'rb') as fh:
+        assert fh.read(size) == TEST_DATA[:size-1024]
 
-    os.close(fd)
     os.unlink(filename)
+
+def tst_truncate_fd(mnt_dir):
+    assert len(TEST_DATA) > 1024
+    with NamedTemporaryFile(dir=mnt_dir) as fh:
+        fd = fh.fileno()
+        fh.write(TEST_DATA)
+        fstat = os.fstat(fd)
+        size = fstat.st_size
+        assert size == len(TEST_DATA)
+
+        # Add zeros at the end
+        os.ftruncate(fd, size + 1024)
+        assert os.fstat(fd).st_size == size + 1024
+        fh.seek(0)
+        assert fh.read(size) == TEST_DATA
+        assert fh.read(1025) == b'\0' * 1024
+
+        # Truncate data
+        os.ftruncate(fd, size - 1024)
+        assert os.fstat(fd).st_size == size - 1024
+        fh.seek(0)
+        assert fh.read(size) == TEST_DATA[:size-1024]
 
 def tst_utimens(mnt_dir, ns_tol=0):
     filename = os.path.join(mnt_dir, name_generator())
