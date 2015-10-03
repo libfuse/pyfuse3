@@ -18,6 +18,7 @@ Table of Contents
    lock.rst
    operations.rst
    util.rst
+   gotchas.rst
    example.rst
    changes.rst
 
