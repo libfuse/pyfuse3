@@ -3,8 +3,10 @@
   e.g. :file:`foo`) here because this isn't rendered correctly
   by PyPi and/or BitBucket.
 
-About Python-LLFUSE
-===================
+The Python-LLFUSE Module
+========================
+
+.. start-intro
 
 Python-LLFUSE is a set of Python bindings for the low level FUSE_ API. It
 requires at least FUSE 2.8.0 and supports both Python 2.x and 3.x. It

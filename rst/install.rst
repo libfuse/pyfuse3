@@ -1,6 +1,6 @@
-==========================
- Installing Python-LLFUSE
-==========================
+==============
+ Installation
+==============
 
 .. highlight:: sh
 
