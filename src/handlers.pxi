@@ -107,7 +107,7 @@ cdef void fuse_setattr (fuse_req_t req, fuse_ino_t ino, struct_stat *stat,
 
         attr = entry.attr
         if to_set & (FUSE_SET_ATTR_ATIME_NOW | FUSE_SET_ATTR_MTIME_NOW):
-            ret = clock_gettime(CLOCK_REALTIME, &now)
+            ret = gettime_realtime(&now)
             if ret != 0:
                 log.error('fuse_setattr(): clock_gettime(CLOCK_REALTIME) failed with %s',
                           strerror(errno.errno))

@@ -27,9 +27,9 @@ from libc.stdlib cimport const_char
 from libc cimport stdlib, string, errno, dirent
 from libc.errno cimport ETIMEDOUT, EPROTO, EINVAL, EPERM, ENOMSG
 from posix.unistd cimport getpid
+from posix.time cimport timespec
 from posix.signal cimport (sigemptyset, sigaddset, SIG_BLOCK, SIG_SETMASK,
                            siginfo_t, sigaction_t, sigaction, SA_SIGINFO)
-from posix.time cimport clock_gettime, CLOCK_REALTIME, timespec
 from cpython.bytes cimport (PyBytes_AsStringAndSize, PyBytes_FromStringAndSize,
                             PyBytes_AsString, PyBytes_FromString, PyBytes_AS_STRING)
 from cpython.buffer cimport (PyObject_GetBuffer, PyBuffer_Release,
@@ -82,6 +82,9 @@ cdef extern from "xattr.h" nogil:
         XATTR_NOFOLLOW
         XATTR_NODEFAULT
         XATTR_NOSECURITY
+
+cdef extern from "gettime.h" nogil:
+    int gettime_realtime(timespec *tp)
 
 cdef extern from "Python.h" nogil:
     void PyEval_InitThreads()

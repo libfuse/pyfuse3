@@ -16,6 +16,8 @@ Unreleased Changes
 
 * Extended coverage of unit tests.
 
+* Fixed a compile error under OS-X.
+
 * Added `notify_store` function.
 
 * Added `get_sup_groups` function.

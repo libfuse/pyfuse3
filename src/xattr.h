@@ -89,12 +89,12 @@ static int setxattr_p (char *path, char *name, void *value, size_t size,
 #define EXTATTR_NAMESPACE_SYSTEM 0
 
 static ssize_t getxattr_p (char *path, char *name, void *value, size_t size,
-                           UNUSED namespace) {
-    return getxattr(path, name, value, size);
+                           UNUSED int namespace) {
+    return getxattr(path, name, value, size, 0, 0);
 }
 static int setxattr_p (char *path, char *name, void *value, size_t size,
                        UNUSED int namespace) {
-    return setxattr(path, name, value, size, 0, 0, 0);
+    return setxattr(path, name, value, size, 0, 0);
 }
 
 
