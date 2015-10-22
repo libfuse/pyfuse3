@@ -34,11 +34,11 @@
 #define XATTR_NOSECURITY 0
 
 static ssize_t getxattr_p (char *path, char *name, void *value, size_t size,
-			   UNUSED int namespace) {
+                           UNUSED int namespace) {
     return getxattr(path, name, value, size);
 }
 static int setxattr_p (char *path, char *name, void *value, size_t size,
-		       UNUSED int namespace) {
+                       UNUSED int namespace) {
     return setxattr(path, name, value, size, 0);
 }
 
@@ -49,24 +49,32 @@ static int setxattr_p (char *path, char *name, void *value, size_t size,
 #elif PLATFORM == PLATFORM_BSD
 #include <sys/types.h>
 #include <sys/extattr.h>
+#include <limits.h>
 
 #define XATTR_NOFOLLOW 0
 #define XATTR_NODEFAULT 0
 #define XATTR_NOSECURITY 0
 
 static ssize_t getxattr_p (char *path, char *name, void *value, size_t size,
-			   int namespace) {
+                           int namespace) {
+    /* If size > SSIZE_MAX, we cannot determine if we got all the data
+       (because the return value doesn't fit into ssize_t) */
+    if (size >= SSIZE_MAX) {
+        errno = EINVAL;
+        return -1;
+    }
+
     ssize_t ret;
-    ret = extrattr_get_file(path, namespace, name, value, size);
-    if (ret == size) {
-	ret = -1;
-	errno = ERANGE;
+    ret = extattr_get_file(path, namespace, name, value, size);
+    if (ret > 0 && <size_t> ret == size) {
+        errno = ERANGE;
+        return -1;
     }
     return ret;
 }
 
 static int setxattr_p (char *path, char *name, void *value, size_t size,
-		       int namespace) {
+                       int namespace) {
     return extattr_set_file(path, namespace, name, value, size);
 }
 
@@ -81,11 +89,11 @@ static int setxattr_p (char *path, char *name, void *value, size_t size,
 #define EXTATTR_NAMESPACE_SYSTEM 0
 
 static ssize_t getxattr_p (char *path, char *name, void *value, size_t size,
-			   UNUSED namespace) {
+                           UNUSED namespace) {
     return getxattr(path, name, value, size);
 }
 static int setxattr_p (char *path, char *name, void *value, size_t size,
-		       UNUSED int namespace) {
+                       UNUSED int namespace) {
     return setxattr(path, name, value, size, 0, 0, 0);
 }
 
