@@ -8,13 +8,18 @@ The Python-LLFUSE Module
 
 .. start-intro
 
-Python-LLFUSE is a set of Python bindings for the low level FUSE_ API. It
-requires at least FUSE 2.8.0 and supports both Python 2.x and 3.x. It
-runs under Linux, OS-X, FreeBSD and NetBSD.
+Python-LLFUSE is a set of Python bindings for the low level FUSE_
+API. It requires at least FUSE 2.8.0 and supports both Python 2.x and
+3.x. Like FUSE itself, Python-LLFUSE is developed for Linux
+systems. However, we try to maintain compatibility with OS-X, FreeBSD
+and NetBSD as well (but due to lack of pre-release testers we can't
+guarantee that every Python-LLFUSE release will run on these
+platforms - please report any bugs and we will try to fix them).
 
 Python-LLFUSE releases can be downloaded from PyPi_. The documentation
 can be `read online`__ and is also included in the ``doc/html``
 directory of the Python-LLFUSE tarball.
+
 
 Getting Help
 ------------
