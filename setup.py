@@ -95,6 +95,10 @@ def main():
         compile_args.append('-Werror')
         compile_args.append('-Wfatal-errors')
 
+        # Unreachable code is expected because we need to support multiple
+        # platforms and architectures.
+        compile_args.append('-Wno-error=unreachable-code')
+
     # http://bugs.python.org/issue7576
     if sys.version_info[0] == 3 and sys.version_info[1] < 2:
         compile_args.append('-Wno-error=missing-field-initializers')
