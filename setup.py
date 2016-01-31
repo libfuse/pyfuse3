@@ -109,16 +109,21 @@ def main():
 
     link_args = pkg_config('fuse', cflags=False, ldflags=True, min_ver='2.8.0')
     link_args.append('-lpthread')
+    c_sources = ['src/llfuse.c', 'src/lock.c']
 
     if os.uname()[0] == 'Linux':
         link_args.append('-lrt')
         compile_args.append('-DHAVE_STRUCT_STAT_ST_ATIM')
 
-    elif os.uname()[0] in ('Darwin', 'FreeBSD', 'NetBSD'):
+    elif os.uname()[0] == 'Darwin':
+        compile_args.append('-DHAVE_STRUCT_STAT_ST_ATIMESPEC')
+        c_sources.append('src/darwin_compat.c')
+    elif os.uname()[0] in ('FreeBSD', 'NetBSD'):
         compile_args.append('-DHAVE_STRUCT_STAT_ST_ATIMESPEC')
     else:
         print("NOTE: unknown system (%s), nanosecond resolution file times "
               "will not be available" % os.uname()[0])
+
 
     install_requires = []
     if sys.version_info[0] == 2:
@@ -149,8 +154,7 @@ def main():
           package_dir={'': 'src'},
           packages=setuptools.find_packages('src'),
           provides=['llfuse'],
-          ext_modules=[Extension('llfuse', ['src/llfuse.c',
-                                            'src/lock.c'],
+          ext_modules=[Extension('llfuse', c_sources,
                                   extra_compile_args=compile_args,
                                   extra_link_args=link_args)],
           cmdclass={'build_cython': build_cython },
