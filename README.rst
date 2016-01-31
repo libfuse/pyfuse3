@@ -41,7 +41,7 @@ Contributing
 The Python-LLFUSE source code is available both on GitHub_ and BitBucket_.
 
 .. __: http://pythonhosted.org/llfuse/
-.. _FUSE: http://fuse.sourceforge.net/
+.. _FUSE: http://github.com/libfuse/libfuse
 .. _FUSE mailing list: https://lists.sourceforge.net/lists/listinfo/fuse-devel
 .. _issue tracker: https://bitbucket.org/nikratio/python-llfuse/issues
 .. _mailing list archive: http://dir.gmane.org/gmane.comp.file-systems.fuse.devel

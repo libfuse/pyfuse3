@@ -71,7 +71,7 @@ the necessary commands are::
 .. _Cython: http://www.cython.org/
 .. _Sphinx: http://sphinx.pocoo.org/
 .. _Python: http://www.python.org/
-.. _FUSE: http://fuse.sourceforge.net/
+.. _FUSE: http://github.com/libfuse/libfuse
 .. _attr: http://savannah.nongnu.org/projects/attr/
 .. _`pkg-config`: http://www.freedesktop.org/wiki/Software/pkg-config
 .. _FUSE4BSD: http://www.freshports.org/sysutils/fusefs-kmod/
