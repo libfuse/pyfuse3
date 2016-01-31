@@ -5,8 +5,8 @@
 .. currentmodule:: llfuse
 
 
-Unreleased Changes
-==================
+Release 0.42 (2016-01-30)
+=========================
 
 * The documentation has been clarified and extended - please take a
   look even if you're already familiar with Python-LLFUSE.
