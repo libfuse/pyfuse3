@@ -31,9 +31,8 @@ questions, please use the general `FUSE mailing list`_. A searchable
 Development Status
 ------------------
 
-Python-LLFUSE is considered stable, and releases will preserve
-API compatibility.
-
+The Python-LLFUSE API is not yet stable and may change from one release to
+the other.
 
 Contributing
 ------------

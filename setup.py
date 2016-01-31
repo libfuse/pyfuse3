@@ -140,7 +140,7 @@ def main():
           url='https://bitbucket.org/nikratio/python-llfuse/',
           download_url='https://bitbucket.org/nikratio/python-llfuse/downloads',
           license='LGPL',
-          classifiers=['Development Status :: 5 - Production/Stable',
+          classifiers=['Development Status :: 4 - Beta',
                        'Intended Audience :: Developers',
                        'Programming Language :: Python',
                        'Topic :: Software Development :: Libraries :: Python Modules',

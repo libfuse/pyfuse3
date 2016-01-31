@@ -8,9 +8,6 @@
 Unreleased Changes
 ==================
 
-* Python-LLFUSE is now considered stable. Future releases will
-  preserve backwards compatibility.
-
 * The documentation has been clarified and extended - please take a
   look even if you're already familiar with Python-LLFUSE.
 
