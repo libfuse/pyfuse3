@@ -210,7 +210,8 @@ darwin_sem_trywait(darwin_sem_t *sem)
 int
 darwin_sem_wait(darwin_sem_t *sem)
 {
-    int res = 0;
+    /* Must be volatile or will be clobbered by longjmp */
+    volatile int res = 0;
 
     pthread_cleanup_push((void(*)(void*))&pthread_mutex_unlock,
                  &sem->__data.local.count_lock);
