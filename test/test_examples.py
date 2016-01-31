@@ -199,7 +199,7 @@ def tst_unlink(mnt_dir):
     data1 = b'foo'
     data2 = b'bar'
 
-    with open(os.path.join(mnt_dir, name), 'wb+') as fh:
+    with open(os.path.join(mnt_dir, name), 'wb+', buffering=0) as fh:
         fh.write(data1)
         checked_unlink(name, mnt_dir)
         fh.write(data2)
@@ -283,7 +283,7 @@ def tst_truncate_path(mnt_dir):
 
 def tst_truncate_fd(mnt_dir):
     assert len(TEST_DATA) > 1024
-    with NamedTemporaryFile(dir=mnt_dir) as fh:
+    with NamedTemporaryFile('w+b', 0, dir=mnt_dir) as fh:
         fd = fh.fileno()
         fh.write(TEST_DATA)
         fstat = os.fstat(fd)
