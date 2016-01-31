@@ -1,4 +1,4 @@
-include Changes.txt
+include Changes.rst
 include LICENSE
 graft doc/html
 graft Include
