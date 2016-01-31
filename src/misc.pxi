@@ -93,8 +93,8 @@ cdef void init_fuse_ops():
     fuse_ops.removexattr = fuse_removexattr
     fuse_ops.access = fuse_access
     fuse_ops.create = fuse_create
-    ASSIGN_FUSE29(fuse_ops.forget_multi, &fuse_forget_multi)
-    ASSIGN_FUSE29(fuse_ops.write_buf, &fuse_write_buf)
+    fuse_ops.forget_multi = fuse_forget_multi
+    fuse_ops.write_buf = fuse_write_buf
 
 cdef make_fuse_args(args, fuse_args* f_args):
     cdef char* arg

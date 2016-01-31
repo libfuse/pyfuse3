@@ -47,12 +47,6 @@ the terms of the GNU LGPL.
  * FUSE version or platform.
  */
 
-#if FUSE_VERSION >= 29
-#define ASSIGN_FUSE29(x,y) ((x) = (y))
-#else
-#define ASSIGN_FUSE29(x,y)
-#endif
-
 #if PLATFORM == PLATFORM_LINUX || PLATFORM == PLATFORM_BSD
 #define ASSIGN_DARWIN(x,y)
 #define ASSIGN_NOT_DARWIN(x,y) ((x) = (y))

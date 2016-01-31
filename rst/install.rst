@@ -25,7 +25,7 @@ When using Linux, you also need:
 * Kernel 2.6.9 or newer. Starting with kernel
   2.6.26 you will get significantly better write performance, so under
   Linux you should actually use *2.6.26 or newer whenever possible*.
-* Version 2.8.0 or newer of the FUSE_ library, including development
+* Version 2.9.0 or newer of the FUSE_ library, including development
   headers (typically distributions provide them in a *libfuse-devel*
   or *libfuse-dev* package).
 

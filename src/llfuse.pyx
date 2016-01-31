@@ -59,7 +59,6 @@ cdef extern from "macros.c" nogil:
     void SET_CTIME_NS(struct_stat* buf, long val)
     void SET_MTIME_NS(struct_stat* buf, long val)
 
-    void ASSIGN_FUSE29(void*, void*)
     void ASSIGN_DARWIN(void*, void*)
     void ASSIGN_NOT_DARWIN(void*, void*)
 
