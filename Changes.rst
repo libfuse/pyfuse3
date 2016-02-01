@@ -4,6 +4,10 @@
 
 .. currentmodule:: llfuse
 
+Release 0.42.1 (2016-02-01)
+===========================
+
+* Include HTML documentation.
 
 Release 0.42 (2016-01-30)
 =========================
