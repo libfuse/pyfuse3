@@ -40,7 +40,11 @@ cdef extern from "pthread.h" nogil:
     int pthread_mutex_lock(pthread_mutex_t *mutex)
     int pthread_mutex_unlock(pthread_mutex_t *mutex)
 
-cdef extern from "semaphore.h" nogil:
+# The sem_* functions actually need the semaphone.h header file.  However, under
+# OS-X we use a compatibility layer that breaks if we include the native
+# semaphore.h file. Therefore, we pretend that no header file is required and
+# conditionally include semaphore.h in llfuse.h.
+cdef extern from * nogil:
     ctypedef struct sem_t:
         pass
 

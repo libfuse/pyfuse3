@@ -20,9 +20,15 @@ the terms of the GNU LGPL.
 #define PLATFORM PLATFORM_BSD
 #elif __APPLE__ && __MACH__
 #define PLATFORM PLATFORM_DARWIN
-#include "darwin_compat.h"
 #else
 #error "Unable to determine system (Linux/FreeBSD/NetBSD/Darwin)"
+#endif
+
+#if PLATFORM == PLATFORM_DARWIN
+#include "darwin_compat.h"
+#else
+/* See also: Include/pthreads.pxd */
+#include <semaphore.h>
 #endif
 
 #include <fuse.h>
