@@ -9,7 +9,7 @@ This file is part of Python-LLFUSE. This work may be distributed under
 the terms of the GNU LGPL.
 '''
 
-cdef extern from "sys/statvfs.h" nogil:
+cdef extern from "<sys/statvfs.h>" nogil:
     ctypedef int fsblkcnt_t
     ctypedef int fsfilcnt_t
 

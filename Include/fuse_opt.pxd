@@ -11,7 +11,7 @@ the terms of the GNU LGPL.
 
 
 # Based on fuse sources, revision tag fuse_2_8_3
-cdef extern from "fuse_opt.h" nogil:
+cdef extern from "<fuse_opt.h>" nogil:
     struct fuse_args:
         int argc
         char **argv

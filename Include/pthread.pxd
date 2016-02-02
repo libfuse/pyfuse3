@@ -11,7 +11,7 @@ the terms of the GNU LGPL.
 
 from posix.signal cimport sigset_t
 
-cdef extern from "pthread.h" nogil:
+cdef extern from "<pthread.h>" nogil:
     # POSIX says this might be a struct, but CPython (and llfuse)
     # rely on it being an integer.
     ctypedef int pthread_t

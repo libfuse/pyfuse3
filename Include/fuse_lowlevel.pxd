@@ -17,7 +17,7 @@ from libc.stdlib cimport const_char
 from libc.stdint cimport uint32_t
 
 # Based on fuse sources, revision tag fuse_2_9_4
-cdef extern from "fuse_lowlevel.h" nogil:
+cdef extern from "<fuse_lowlevel.h>" nogil:
     int FUSE_ROOT_ID
 
     ctypedef int fuse_ino_t
