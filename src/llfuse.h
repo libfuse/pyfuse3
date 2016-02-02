@@ -12,7 +12,9 @@ the terms of the GNU LGPL.
 #define PLATFORM_BSD 2
 #define PLATFORM_DARWIN 3
 
-#ifdef __gnu_linux__
+#ifdef __linux__
+#define PLATFORM PLATFORM_LINUX
+#elif __FreeBSD_kernel__&&__GLIBC__
 #define PLATFORM PLATFORM_LINUX
 #elif __FreeBSD__
 #define PLATFORM PLATFORM_BSD
