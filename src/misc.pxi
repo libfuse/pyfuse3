@@ -369,91 +369,126 @@ cdef class EntryAttributes:
         self.attr.st_blksize = 4096
         self.attr.st_nlink = 1
 
-    property st_ino:
-        def __get__(self): return self.fuse_param.ino
-        def __set__(self, val):
-            self.fuse_param.ino = val
-            self.attr.st_ino = val
+    @property
+    def st_ino(self):
+        return self.fuse_param.ino
+    @st_ino.setter
+    def st_ino(self, val):
+        self.fuse_param.ino = val
+        self.attr.st_ino = val
 
-    property generation:
+    @property
+    def generation(self):
         '''The inode generation number'''
-        def __get__(self): return self.fuse_param.generation
-        def __set__(self, val): self.fuse_param.generation = val
+        return self.fuse_param.generation
+    @generation.setter
+    def generation(self, val):
+        self.fuse_param.generation = val
 
-    property attr_timeout:
+    @property
+    def attr_timeout(self):
         '''Validity timeout for the name of the directory entry
 
         Floating point numbers may be used. Units are seconds.
         '''
-        def __get__(self): return self.fuse_param.attr_timeout
-        def __set__(self, val): self.fuse_param.attr_timeout = val
+        return self.fuse_param.attr_timeout
+    @attr_timeout.setter
+    def attr_timeout(self, val):
+        self.fuse_param.attr_timeout = val
 
-    property entry_timeout:
+    @property
+    def entry_timeout(self):
         '''Validity timeout for the attributes of the directory entry
 
         Floating point numbers may be used. Units are seconds.
         '''
-        def __get__(self): return self.fuse_param.entry_timeout
-        def __set__(self, val): self.fuse_param.entry_timeout = val
+        return self.fuse_param.entry_timeout
+    @entry_timeout.setter
+    def entry_timeout(self, val):
+        self.fuse_param.entry_timeout = val
 
-    property st_mode:
-        def __get__(self): return self.attr.st_mode
-        def __set__(self, val): self.attr.st_mode = val
+    @property
+    def st_mode(self):
+        return self.attr.st_mode
+    @st_mode.setter
+    def st_mode(self, val):
+        self.attr.st_mode = val
 
-    property st_nlink:
-        def __get__(self): return self.attr.st_nlink
-        def __set__(self, val): self.attr.st_nlink = val
+    @property
+    def st_nlink(self):
+        return self.attr.st_nlink
+    @st_nlink.setter
+    def st_nlink(self, val):
+        self.attr.st_nlink = val
 
-    property st_uid:
-        def __get__(self): return self.attr.st_uid
-        def __set__(self, val): self.attr.st_uid = val
+    @property
+    def st_uid(self):
+        return self.attr.st_uid
+    @st_uid.setter
+    def st_uid(self, val):
+        self.attr.st_uid = val
 
-    property st_gid:
-        def __get__(self): return self.attr.st_gid
-        def __set__(self, val): self.attr.st_gid = val
+    @property
+    def st_gid(self):
+        return self.attr.st_gid
+    @st_gid.setter
+    def st_gid(self, val):
+        self.attr.st_gid = val
 
-    property st_rdev:
-        def __get__(self): return self.attr.st_rdev
-        def __set__(self, val): self.attr.st_rdev = val
+    @property
+    def st_rdev(self):
+        return self.attr.st_rdev
+    @st_rdev.setter
+    def st_rdev(self, val):
+        self.attr.st_rdev = val
 
-    property st_size:
-        def __get__(self): return self.attr.st_size
-        def __set__(self, val): self.attr.st_size = val
+    @property
+    def st_size(self):
+        return self.attr.st_size
+    @st_size.setter
+    def st_size(self, val):
+        self.attr.st_size = val
 
-    property st_blocks:
-        def __get__(self): return self.attr.st_blocks
-        def __set__(self, val): self.attr.st_blocks = val
+    @property
+    def st_blocks(self):
+        return self.attr.st_blocks
+    @st_blocks.setter
+    def st_blocks(self, val):
+        self.attr.st_blocks = val
 
-    property st_blksize:
-        def __get__(self): return self.attr.st_blksize
-        def __set__(self, val): self.attr.st_blksize = val
+    @property
+    def st_blksize(self):
+        return self.attr.st_blksize
+    @st_blksize.setter
+    def st_blksize(self, val):
+        self.attr.st_blksize = val
 
-    property st_atime_ns:
+    @property
+    def st_atime_ns(self):
         '''Time of last access in (integer) nanoseconds'''
-        def __get__(self):
-            return (self.attr.st_atime * 10**9
-                    + GET_ATIME_NS(self.attr))
-        def __set__(self, val):
-            self.attr.st_atime = val / 10**9
-            SET_ATIME_NS(self.attr, val % 10**9)
+        return (self.attr.st_atime * 10**9 + GET_ATIME_NS(self.attr))
+    @st_atime_ns.setter
+    def st_atime_ns(self, val):
+        self.attr.st_atime = val / 10**9
+        SET_ATIME_NS(self.attr, val % 10**9)
 
-    property st_mtime_ns:
+    @property
+    def st_mtime_ns(self):
         '''Time of last modification in (integer) nanoseconds'''
-        def __get__(self):
-            return (self.attr.st_mtime * 10**9
-                    + GET_MTIME_NS(self.attr))
-        def __set__(self, val):
-            self.attr.st_mtime = val / 10**9
-            SET_MTIME_NS(self.attr, val % 10**9)
+        return (self.attr.st_mtime * 10**9 + GET_MTIME_NS(self.attr))
+    @st_mtime_ns.setter
+    def st_mtime_ns(self, val):
+        self.attr.st_mtime = val / 10**9
+        SET_MTIME_NS(self.attr, val % 10**9)
 
-    property st_ctime_ns:
+    @property
+    def st_ctime_ns(self):
         '''Time of last inode modification in (integer) nanoseconds'''
-        def __get__(self):
-            return (self.attr.st_ctime * 10**9
-                    + GET_CTIME_NS(self.attr))
-        def __set__(self, val):
-            self.attr.st_ctime = val / 10**9
-            SET_CTIME_NS(self.attr, val % 10**9)
+        return (self.attr.st_ctime * 10**9 + GET_CTIME_NS(self.attr))
+    @st_ctime_ns.setter
+    def st_ctime_ns(self, val):
+        self.attr.st_ctime = val / 10**9
+        SET_CTIME_NS(self.attr, val % 10**9)
 
 @cython.freelist(1)
 cdef class StatvfsData:
@@ -468,37 +503,61 @@ cdef class StatvfsData:
     def __cinit__(self):
         string.memset(&self.stat, 0, sizeof(statvfs))
 
-    property f_bsize:
-        def __get__(self): return self.stat.f_bsize
-        def __set__(self, val): self.stat.f_bsize = val
+    @property
+    def f_bsize(self):
+        return self.stat.f_bsize
+    @f_bsize.setter
+    def f_bsize(self, val):
+        self.stat.f_bsize = val
 
-    property f_frsize:
-        def __get__(self): return self.stat.f_frsize
-        def __set__(self, val): self.stat.f_frsize = val
+    @property
+    def f_frsize(self):
+        return self.stat.f_frsize
+    @f_frsize.setter
+    def f_frsize(self, val):
+        self.stat.f_frsize = val
 
-    property f_blocks:
-        def __get__(self): return self.stat.f_blocks
-        def __set__(self, val): self.stat.f_blocks = val
+    @property
+    def f_blocks(self):
+        return self.stat.f_blocks
+    @f_blocks.setter
+    def f_blocks(self, val):
+        self.stat.f_blocks = val
 
-    property f_bfree:
-        def __get__(self): return self.stat.f_bfree
-        def __set__(self, val): self.stat.f_bfree = val
+    @property
+    def f_bfree(self):
+        return self.stat.f_bfree
+    @f_bfree.setter
+    def f_bfree(self, val):
+        self.stat.f_bfree = val
 
-    property f_bavail:
-        def __get__(self): return self.stat.f_bavail
-        def __set__(self, val): self.stat.f_bavail = val
+    @property
+    def f_bavail(self):
+        return self.stat.f_bavail
+    @f_bavail.setter
+    def f_bavail(self, val):
+        self.stat.f_bavail = val
 
-    property f_files:
-        def __get__(self): return self.stat.f_files
-        def __set__(self, val): self.stat.f_files = val
+    @property
+    def f_files(self):
+        return self.stat.f_files
+    @f_files.setter
+    def f_files(self, val):
+        self.stat.f_files = val
 
-    property f_ffree:
-        def __get__(self): return self.stat.f_ffree
-        def __set__(self, val): self.stat.f_ffree = val
+    @property
+    def f_ffree(self):
+        return self.stat.f_ffree
+    @f_ffree.setter
+    def f_ffree(self, val):
+        self.stat.f_ffree = val
 
-    property f_favail:
-        def __get__(self): return self.stat.f_favail
-        def __set__(self, val): self.stat.f_favail = val
+    @property
+    def f_favail(self):
+        return self.stat.f_favail
+    @f_favail.setter
+    def f_favail(self, val):
+        self.stat.f_favail = val
 
 
 # As of Cython 0.23.1, @cython.freelist cannot be used for
@@ -516,12 +575,13 @@ cdef class FUSEError(Exception):
     # a macro?)
     cdef int errno_
 
-    property errno:
+    @property
+    def errno(self):
         '''Error code to return to client process'''
-        def __get__(self):
-            return self.errno_
-        def __set__(self, val):
-            self.errno_ = val
+        return self.errno_
+    @errno.setter
+    def errno(self, val):
+        self.errno_ = val
 
     def __cinit__(self, errno):
         self.errno_ = errno
