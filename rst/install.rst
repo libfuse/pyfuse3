@@ -35,7 +35,7 @@ In case of FreeBSD and NetBSD you will need:
 
 For OS-X, you need:
 
-* the FUSE4X_ package, version 0.9.1 or newer.
+* the OSXFUSE_ package.
 
 
 Stable releases
@@ -75,6 +75,6 @@ the necessary commands are::
 .. _attr: http://savannah.nongnu.org/projects/attr/
 .. _`pkg-config`: http://www.freedesktop.org/wiki/Software/pkg-config
 .. _FUSE4BSD: http://www.freshports.org/sysutils/fusefs-kmod/
-.. _FUSE4X: http://fuse4x.org/
+.. _OSXFUSE: http://osxfuse.github.io/
 .. _setuptools: https://pypi.python.org/pypi/setuptools
 .. _contextlib2: https://pypi.python.org/pypi/contextlib2/
