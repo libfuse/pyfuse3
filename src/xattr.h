@@ -50,6 +50,7 @@ static int setxattr_p (char *path, char *name, void *value, size_t size,
 #include <sys/types.h>
 #include <sys/extattr.h>
 #include <limits.h>
+#include <stddef.h>
 
 #define XATTR_NOFOLLOW 0
 #define XATTR_NODEFAULT 0
