@@ -56,6 +56,13 @@ static int setxattr_p (char *path, char *name, void *value, size_t size,
 #define XATTR_NODEFAULT 0
 #define XATTR_NOSECURITY 0
 
+/* FreeBSD doesn't have on operation to only set the attribute
+   if it already exists (XATTR_REPLACE), or only if it does not
+   yet exist (XATTR_CREATE). Setting these values to zero ensures
+   that we can never test positively for them */
+#define XATTR_CREATE 0
+#define XATTR_REPLACE 0
+
 static ssize_t getxattr_p (char *path, char *name, void *value, size_t size,
                            int namespace) {
     /* If size > SSIZE_MAX, we cannot determine if we got all the data
