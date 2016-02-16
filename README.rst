@@ -31,8 +31,14 @@ questions, please use the general `FUSE mailing list`_. A searchable
 Development Status
 ------------------
 
-The Python-LLFUSE API is not yet stable and may change from one release to
-the other.
+The Python-LLFUSE API is not yet stable and may change from one
+release to the other. Starting with version 0.42, Python-LLFUSE uses
+semantic versioning. This means changes in the API will be reflected
+in an increase of the major version number, i.e. the next
+backwards-incompatible version will be 1.0. Projects designed for
+e.g. version 0.42.1 of Python-LLFUSE are thus recommended to declare a
+dependency on ``llfuse >= 0.42.1, < 1.0``.
+
 
 Contributing
 ------------
