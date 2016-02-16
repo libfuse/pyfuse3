@@ -4,6 +4,11 @@
 
 .. currentmodule:: llfuse
 
+Unreleased Changes
+==================
+
+* Fixed build-failure under OS-X.
+
 Release 0.42.1 (2016-02-01)
 ===========================
 
