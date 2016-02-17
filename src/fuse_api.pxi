@@ -270,14 +270,13 @@ def init(ops, mountpoint, options=default_options):
 
     pthread_mutex_init(&exc_info_mutex, NULL)
 
-def main(workers=30):
+def main(workers=None):
     '''Run FUSE main loop
 
     *workers* specifies the number of threads that will process requests
-    concurrently. If *workers* is ``1``, all requests will be processed by the
-    thread calling `main`. Otherwise, requests will only be processed by
-    dedicated worker threads. However, this behavior may change in future
-    releases.
+    concurrently. If *workers* is `None`, llfuse will pick a reasonable
+    number bigger than one.  If *workers* is ``1`` all requests will be
+    processed by the thread calling `main`.
 
     This function will also start additional threads for internal purposes (even
     if *workers* is ``1``). These (and all worker threads) are guaranteed to
@@ -300,6 +299,13 @@ def main(workers=30):
 
     if session == NULL:
         raise RuntimeError('Need to call init() before main()')
+
+    if workers == 0:
+        raise ValueError('No workers is not a good idea')
+
+    if workers is None:
+        # We may add some smartness here later.
+        workers = 30
 
     # SIGKILL cannot be caught, so we can use it as a placeholder
     # for "regular exit".

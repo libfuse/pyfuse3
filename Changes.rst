@@ -8,6 +8,7 @@ Unreleased Changes
 ==================
 
 * Fixed build-failure under OS-X.
+* The *workers* parameter to `llfuse.main` may now be `None`.
 
 Release 0.42.1 (2016-02-01)
 ===========================
