@@ -4,8 +4,8 @@
 
 .. currentmodule:: llfuse
 
-Unreleased Changes
-==================
+Release 0.43 (2016-02-23)
+=========================
 
 * Fixed build-failure under OS-X.
 * Fixed some build failures under FreeBSD (hopefully all of them, but
