@@ -74,7 +74,7 @@ static ssize_t getxattr_p (char *path, char *name, void *value, size_t size,
 
     ssize_t ret;
     ret = extattr_get_file(path, namespace, name, value, size);
-    if (ret > 0 && <size_t> ret == size) {
+    if (ret > 0 && (size_t) ret == size) {
         errno = ERANGE;
         return -1;
     }
