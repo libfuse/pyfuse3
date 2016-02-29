@@ -21,8 +21,6 @@ cdef int handle_exc(fuse_req_t req):
         log.error('pthread_mutex_lock failed with %s',
                   strerror(res))
     if not exc_info:
-        # This is theoretically a race, but in practice unlikely
-        # enough that we don't care
         exc_info = sys.exc_info()
         log.debug('handler raised exception, aborting processing.')
         fuse_session_exit(session)
