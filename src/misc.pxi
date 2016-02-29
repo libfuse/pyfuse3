@@ -22,7 +22,8 @@ cdef int handle_exc(fuse_req_t req):
                   strerror(res))
     if not exc_info:
         exc_info = sys.exc_info()
-        log.debug('handler raised exception, aborting processing.')
+        log.info('handler raised %s exception (%s), terminating main loop.',
+                 exc_info[0], exc_info[1])
         fuse_session_exit(session)
     else:
         log.exception('Only one exception can be re-raised in `llfuse.main`, '
