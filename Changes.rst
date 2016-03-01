@@ -4,6 +4,16 @@
 
 .. currentmodule:: llfuse
 
+
+Unreleased Changes
+==================
+
+
+BACKWARDS INCOMPATIBLE CHANGES:
+
+* The `~Operations.destroy` handler is now called with the global lock
+  acquired.
+
 Release 0.43 (2016-02-23)
 =========================
 

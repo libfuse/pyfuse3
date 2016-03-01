@@ -41,10 +41,6 @@ class Operations(object):
         This method will be called when `llfuse.close` has been called and the
         file system is about to be unmounted.
 
-        Since this handler is thus *not* run as part of the main loop, it is
-        also *not* called with the global lock acquired (unless the caller of
-        `llfuse.close` already holds the lock).
-
         This method must not raise any exceptions (not even `FUSEError`), since
         it is not handling a particular client request.
         '''
