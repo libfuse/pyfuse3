@@ -20,6 +20,10 @@ In order to build and run Python-LLFUSE you need the following software:
 * the `attr`_ library
 * A C compiler (only for building)
 
+To run the unit tests, you will need
+
+* The `py.test`_ module.
+
 When using Linux, you also need:
 
 * Kernel 2.6.9 or newer. Starting with kernel
@@ -41,17 +45,16 @@ For OS-X, you need:
 Stable releases
 ===============
 
-Python-LLFUSE can be installed like any other Python extension. Make sure
-that you have all necessary dependencies installed (when installing
-packages from a distribution, make sure to also install the
-corresponding *-dev* or *-devel* development packages), then download
-and extract the Python-LLFUSE tarball and run ::
+To install a stable Python-LLFUSE release:
 
-  sudo python setup.py install
-
-or ::
-
-  python setup.py install --user
+1. Download and unpack the release tarball from https://pypi.python.org/pypi/llfuse/
+2. Run ``python setup.py build_ext --inplace`` to build the C extension
+3. Run ``python -m pytest test/`` to run a self-test. If this fails, ask
+   for help on the `FUSE mailing list`_  or report a bug in the
+   `issue tracker <https://bitbucket.org/nikratio/python-llfuse/issues>`_.
+4. To install system-wide for all users, run ``sudo python setup.py
+   install``. To install into :file:`~/.local`, run ``python
+   setup.py install --user``.
 
 
 Development Version
@@ -64,6 +67,7 @@ the necessary commands are::
 
   python setup.py build_cython
   python setup.py build_ext --inplace
+  python -m pytest test/
   python setup.py build_sphinx
   python setup.py install
 
@@ -71,6 +75,8 @@ the necessary commands are::
 .. _Cython: http://www.cython.org/
 .. _Sphinx: http://sphinx.pocoo.org/
 .. _Python: http://www.python.org/
+.. _FUSE mailing list: https://lists.sourceforge.net/lists/listinfo/fuse-devel
+.. _`py.test`: https://pypi.python.org/pypi/pytest/
 .. _FUSE: http://github.com/libfuse/libfuse
 .. _attr: http://savannah.nongnu.org/projects/attr/
 .. _`pkg-config`: http://www.freedesktop.org/wiki/Software/pkg-config
