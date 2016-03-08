@@ -465,7 +465,7 @@ cdef class EntryAttributes:
     @property
     def st_atime_ns(self):
         '''Time of last access in (integer) nanoseconds'''
-        return (self.attr.st_atime * 10**9 + GET_ATIME_NS(self.attr))
+        return (int(self.attr.st_atime) * 10**9 + GET_ATIME_NS(self.attr))
     @st_atime_ns.setter
     def st_atime_ns(self, val):
         self.attr.st_atime = val / 10**9
@@ -474,7 +474,7 @@ cdef class EntryAttributes:
     @property
     def st_mtime_ns(self):
         '''Time of last modification in (integer) nanoseconds'''
-        return (self.attr.st_mtime * 10**9 + GET_MTIME_NS(self.attr))
+        return (int(self.attr.st_mtime) * 10**9 + GET_MTIME_NS(self.attr))
     @st_mtime_ns.setter
     def st_mtime_ns(self, val):
         self.attr.st_mtime = val / 10**9
@@ -483,7 +483,7 @@ cdef class EntryAttributes:
     @property
     def st_ctime_ns(self):
         '''Time of last inode modification in (integer) nanoseconds'''
-        return (self.attr.st_ctime * 10**9 + GET_CTIME_NS(self.attr))
+        return (int(self.attr.st_ctime) * 10**9 + GET_CTIME_NS(self.attr))
     @st_ctime_ns.setter
     def st_ctime_ns(self, val):
         self.attr.st_ctime = val / 10**9

@@ -9,6 +9,9 @@ Unreleased Changes
 ==================
 
 
+* Fixed an overflow when accessing the ``*st_xtime_ns`` attributes of
+  the `~llfuse.EntryAttributes` class from Python on 32-bit systems.
+
 BACKWARDS INCOMPATIBLE CHANGES:
 
 * The `~Operations.destroy` handler is now called with the global lock

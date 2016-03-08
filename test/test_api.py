@@ -58,6 +58,11 @@ def _getxattr_helper(path, name):
 
     return value
 
+def test_entry_res():
+    a = llfuse.EntryAttributes()
+    val = 1000.2735
+    a.st_atime_ns = val*1e9
+    assert a.st_atime_ns / 1e9 == val
 
 def test_xattr():
     with tempfile.NamedTemporaryFile() as fh:
