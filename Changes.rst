@@ -5,17 +5,19 @@
 .. currentmodule:: llfuse
 
 
-Unreleased Changes
-==================
+Release 1.0 (2016-03-08)
+========================
 
+**Note:** The 1.0 version number does not imply any special
+stability or an API freeze. It's a consequence of switching to
+semantic versioning, where backwards incompatible changes will
+always result in increased major version.
 
 * Fixed an overflow when accessing the ``*st_xtime_ns`` attributes of
   the `~llfuse.EntryAttributes` class from Python on 32-bit systems.
 
-BACKWARDS INCOMPATIBLE CHANGES:
-
-* The `~Operations.destroy` handler is now called with the global lock
-  acquired.
+* POTENTIAL COMPATIBILITY BREAK: The `~Operations.destroy` handler is now
+  called with the global lock acquired.
 
 Release 0.43 (2016-02-23)
 =========================
