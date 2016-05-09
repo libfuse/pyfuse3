@@ -83,7 +83,26 @@ static ssize_t getxattr_p (char *path, char *name, void *value, size_t size,
 
 static int setxattr_p (char *path, char *name, void *value, size_t size,
                        int namespace) {
-    return extattr_set_file(path, namespace, name, value, size);
+    if (size >= SSIZE_MAX) {
+        errno = EINVAL;
+        return -1;
+    }
+
+    ssize_t ret;
+    ret = extattr_set_file(path, namespace, name, value, size);
+    if (ret < 0) {
+        /* Errno values really ought to fit into int, but better safe
+           than sorry */
+        if (ret < INT_MIN)
+            return -EOVERFLOW;
+        else
+            return (int) ret;
+    }
+    if ((size_t)ret != size) {
+        errno = ENOSPC;
+        return -1;
+    }
+    return 0;
 }
 
 
