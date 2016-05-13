@@ -23,6 +23,7 @@ import os
 import errno
 import stat
 import time
+import logging
 import threading
 from util import skip_if_no_fuse, wait_for_mount, umount, cleanup, wait_for
 
@@ -32,8 +33,9 @@ skip_if_no_fuse()
 @pytest.yield_fixture()
 def testfs(tmpdir):
 
-    # We can't use forkserver or spawn because of
-    # https://github.com/pytest-dev/pytest/issues/958.
+    # We can't use forkserver because we have to make sure
+    # that the server inherits the per-test stdout/stderr file
+    # descriptors.
     if hasattr(multiprocessing, 'get_context'):
         mp = multiprocessing.get_context('fork')
     else:
@@ -231,6 +233,18 @@ class Fs(llfuse.Operations):
             raise FUSEError(errno.EINVAL)
 
 def run_fs(mountpoint, cross_process):
+    # Logging (note that we run in a new process, so we can't
+    # rely on direct log capture and instead print to stdout)
+    root_logger = logging.getLogger()
+    formatter = logging.Formatter('%(asctime)s.%(msecs)03d %(levelname)s '
+                                  '%(funcName)s(%(threadName)s): %(message)s',
+                                   datefmt="%M:%S")
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setLevel(logging.DEBUG)
+    handler.setFormatter(formatter)
+    root_logger.addHandler(handler)
+    root_logger.setLevel(logging.DEBUG)
+
     testfs = Fs(cross_process)
     fuse_options = set(llfuse.default_options)
     fuse_options.add('fsname=llfuse_testfs')
