@@ -1,6 +1,8 @@
 import sys
 import os.path
 import logging
+import pytest
+import time
 import gc
 
 # Enable output checks
@@ -16,6 +18,19 @@ def pytest_addoption(parser):
                      help="Activate debugging output from <module> for tests. Use `all` "
                           "to get debug messages from all modules. This option can be "
                           "specified multiple times.")
+
+# If a test fails, wait a moment before retrieving the captured
+# stdout/stderr. When using a server process, this makes sure that we capture
+# any potential output of the server that comes *after* a test has failed. For
+# example, if a request handler raises an exception, the server first signals an
+# error to FUSE (causing the test to fail), and then logs the exception. Without
+# the extra delay, the exception will go into nowhere.
+@pytest.mark.hookwrapper
+def pytest_pyfunc_call(pyfuncitem):
+    outcome = yield
+    failed = outcome.excinfo is not None
+    if failed:
+        time.sleep(1)
 
 def pytest_configure(config):
     # If we are running from the source directory, make sure that we load
