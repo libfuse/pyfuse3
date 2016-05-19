@@ -51,7 +51,7 @@ def assert_logs(pattern, level=logging.WARNING, count=None):
     def filter(record):
         if (record.levelno == level and
             re.search(pattern, record.msg)):
-            record.caplog_ignore = True
+            record.checklogs_ignore = True
             return True
         return False
 
@@ -79,7 +79,7 @@ def check_test_output(capfd, item):
 
     # Strip out false positives
     try:
-        false_pos = item.capfd_false_pos
+        false_pos = item.checklogs_fp
     except AttributeError:
         false_pos = ()
     for (pattern, flags, count) in false_pos:
@@ -105,12 +105,12 @@ def register_output(item, pattern, count=1, flags=re.MULTILINE):
     appears suspicious.
     '''
 
-    item.capfd_false_pos.append((pattern, flags, count))
+    item.checklogs_fp.append((pattern, flags, count))
 
 @pytest.fixture()
 def reg_output(request):
-    assert not hasattr(request.node, 'capfd_false_pos')
-    request.node.capfd_false_pos = []
+    assert not hasattr(request.node, 'checklogs_fp')
+    request.node.checklogs_fp = []
     return functools.partial(register_output, request.node)
 
 def check_output(item):
