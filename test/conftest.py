@@ -8,6 +8,19 @@ import gc
 # Enable output checks
 pytest_plugins = ('pytest_checklogs')
 
+# Register false positives
+@pytest.fixture(autouse=True)
+def register_false_checklog_pos(reg_output):
+
+    # DeprecationWarnings are unfortunately quite often a result of indirect
+    # imports via third party modules, so we can't actually fix them.
+    reg_output(r'(Pending)?DeprecationWarning', count=0)
+
+    # Valgrind output
+    reg_output(r'^==\d+== Memcheck, a memory error detector$')
+    reg_output(r'^==\d+== For counts of detected and suppressed errors, rerun with: -v')
+    reg_output(r'^==\d+== ERROR SUMMARY: 0 errors from 0 contexts')
+
 def pytest_addoption(parser):
     group = parser.getgroup("general")
     group._addoption("--installed", action="store_true", default=False,
