@@ -4,11 +4,11 @@
 
 .. currentmodule:: llfuse
 
-Unreleased Changes
-==================
+Release 1.1 (2016-05-23)
+========================
 
 * Added support for nanosecond resolution time-stamps in GNU/kFreeBSD.
-
+* Fixed another set of build issues on FreeBSD.
 
 Release 1.0 (2016-03-08)
 ========================
