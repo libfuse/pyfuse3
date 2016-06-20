@@ -4,6 +4,15 @@
 
 .. currentmodule:: llfuse
 
+Unreleased Changes
+==================
+
+* Fixed the description of the `~Operations.lookup` handler (should
+  return zero if there is no such entry, not a negative value).
+* Fixed the description of the `EntryAttributes` structure
+  (descriptions of `~EntryAttributes.attr_timeout` and
+  `~EntryAttributes.entry_timeout` were switched).
+
 Release 1.1 (2016-05-23)
 ========================
 

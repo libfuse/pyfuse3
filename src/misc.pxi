@@ -386,7 +386,7 @@ cdef class EntryAttributes:
 
     @property
     def attr_timeout(self):
-        '''Validity timeout for the name of the directory entry
+        '''Validity timeout for the attributes of the directory entry
 
         Floating point numbers may be used. Units are seconds.
         '''
@@ -397,7 +397,7 @@ cdef class EntryAttributes:
 
     @property
     def entry_timeout(self):
-        '''Validity timeout for the attributes of the directory entry
+        '''Validity timeout for the name/existence of the directory entry
 
         Floating point numbers may be used. Units are seconds.
         '''

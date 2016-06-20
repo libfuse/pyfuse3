@@ -54,7 +54,7 @@ class Operations(object):
         directory entry *name* in the directory with inode *parent_inode*.
 
         If there is no such entry, the method should either return an
-        `EntryAttributes` instance with negative ``st_ino`` value (in which case
+        `EntryAttributes` instance with zero ``st_ino`` value (in which case
         the negative lookup will be cached as specified by ``entry_timeout``),
         or it should raise `FUSEError` with an errno of `errno.ENOENT` (in this
         case the negative result will not be cached).
