@@ -4,8 +4,8 @@
 
 .. currentmodule:: llfuse
 
-Unreleased Changes
-==================
+Release 1.1.1 (2016-07-27)
+==========================
 
 * Fixed the description of the `~Operations.lookup` handler (should
   return zero if there is no such entry, not a negative value).
