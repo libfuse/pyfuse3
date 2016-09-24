@@ -25,12 +25,12 @@ import shutil
 import filecmp
 import errno
 from tempfile import NamedTemporaryFile
-from util import skip_if_no_fuse, wait_for_mount, umount, cleanup
+from util import fuse_test_marker, wait_for_mount, umount, cleanup
 
 basename = os.path.join(os.path.dirname(__file__), '..')
 TEST_FILE = __file__
 
-skip_if_no_fuse()
+pytestmark = fuse_test_marker()
 
 with open(TEST_FILE, 'rb') as fh:
     TEST_DATA = fh.read()

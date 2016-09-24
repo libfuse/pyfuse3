@@ -25,10 +25,9 @@ import stat
 import time
 import logging
 import threading
-from util import skip_if_no_fuse, wait_for_mount, umount, cleanup, wait_for
+from util import fuse_test_marker, wait_for_mount, umount, cleanup, wait_for
 
-skip_if_no_fuse()
-
+pytestmark = fuse_test_marker()
 
 @pytest.yield_fixture()
 def testfs(tmpdir):

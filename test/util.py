@@ -23,12 +23,18 @@ import sys
 if sys.version_info[0] == 2:
     subprocess.DEVNULL = open('/dev/null', 'w')
 
-def skip_if_no_fuse():
-    '''Skip test if system/user/environment does not support FUSE'''
+def fuse_test_marker():
+    '''Return a pytest.marker that indicates FUSE availability
+
+    If system/user/environment does not support FUSE, return
+    a `pytest.mark.skip` object with more details. If FUSE is
+    supported, return `pytest.mark.uses_fuse()`.
+    '''
 
     if platform.system() == 'Darwin':
         # No working autodetection, just assume it will work.
         return
+    skip = lambda x: pytest.mark.skip(reason=x)
 
     # Python 2.x: Popen is not a context manager...
     which = subprocess.Popen(['which', 'fusermount'], stdout=subprocess.PIPE,
@@ -39,24 +45,26 @@ def skip_if_no_fuse():
         which.wait()
 
     if not fusermount_path or which.returncode != 0:
-        pytest.skip("Can't find fusermount executable")
+        return skip("Can't find fusermount executable")
 
     if not os.path.exists('/dev/fuse'):
-        pytest.skip("FUSE kernel module does not seem to be loaded")
+        return skip("FUSE kernel module does not seem to be loaded")
 
     if os.getuid() == 0:
         return
 
     mode = os.stat(fusermount_path).st_mode
     if mode & stat.S_ISUID == 0:
-        pytest.skip('fusermount executable not setuid, and we are not root.')
+        return skip('fusermount executable not setuid, and we are not root.')
 
     try:
         fd = os.open('/dev/fuse', os.O_RDWR)
     except OSError as exc:
-        pytest.skip('Unable to open /dev/fuse: %s' % exc.strerror)
+        return skip('Unable to open /dev/fuse: %s' % exc.strerror)
     else:
         os.close(fd)
+
+    return pytest.mark.uses_fuse()
 
 def exitcode(process):
     if isinstance(process, subprocess.Popen):
