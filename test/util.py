@@ -51,7 +51,7 @@ def fuse_test_marker():
         return skip("FUSE kernel module does not seem to be loaded")
 
     if os.getuid() == 0:
-        return
+        return pytest.mark.uses_fuse()
 
     mode = os.stat(fusermount_path).st_mode
     if mode & stat.S_ISUID == 0:
