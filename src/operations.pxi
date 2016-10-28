@@ -111,8 +111,12 @@ class Operations(object):
 
         *fields* will be an `SetattrFields` instance that specifies which
         attributes are to be updated. *attr* will be an `EntryAttributes`
-        instance for *inode* that contains the new values for changed attributes
-        and the original (unchanged) values for all other attributes.
+        instance for *inode* that contains the new values for changed
+        attributes, and undefined values for all other attributes.
+
+        Most file systems will additionally set the
+        `~EntryAttributes.st_ctime_ns` attribute to the current time (to
+        indicate that the inode metadata was changed).
 
         If the syscall that is being processed received a file descriptor
         argument (like e.g. :manpage:`ftruncate(2)` or :manpage:`fchmod(2)`),
@@ -123,12 +127,8 @@ class Operations(object):
 
         *ctx* will be a `RequestContext` instance.
 
-        The method should return an `EntryAttributes` instance with the updated
-        attributes. If all (and only) the requested changes were applied the
-        method may simply return the provided *attr* instance after updating the
-        `~EntryAttributes.attr_timeout` attribute. However, in most file systems
-        will additionally set the `~EntryAttributes.st_ctime_ns` attribute to
-        the current time (to indicate that the inode metadata was changed).
+        The method should return an `EntryAttributes` instance (containing both
+        the changed and unchanged values).
         '''
 
         raise FUSEError(errno.ENOSYS)
