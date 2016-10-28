@@ -287,8 +287,11 @@ class Operations(llfuse.Operations):
                 truncate(path_or_fh, attr.st_size)
 
             if fields.update_mode:
-                chmod(path_or_fh, ~stat_m.S_IFMT & attr.st_mode,
-                      follow_symlinks=False)
+                # Under Linux, chmod always resolves symlinks so we should
+                # actually never get a setattr() request for a symbolic
+                # link.
+                assert not stat_m.S_ISLNK(attr.st_mode)
+                chmod(path_or_fh, stat_m.S_IMODE(attr.st_mode))
 
             if fields.update_uid or fields.update_gid:
                 chown(path_or_fh, attr.st_uid, attr.st_gid,

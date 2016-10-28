@@ -78,6 +78,7 @@ def test_tmpfs(tmpdir):
         tst_symlink(mnt_dir)
         tst_mknod(mnt_dir)
         tst_chown(mnt_dir)
+        tst_chmod(mnt_dir)
         tst_utimens(mnt_dir)
         tst_link(mnt_dir)
         tst_readdir(mnt_dir)
@@ -109,6 +110,7 @@ def test_passthroughfs(tmpdir):
         tst_mknod(mnt_dir)
         if os.getuid() == 0:
             tst_chown(mnt_dir)
+        tst_chmod(mnt_dir)
         # Underlying fs may not have full nanosecond resolution
         tst_utimens(mnt_dir, ns_tol=1000)
         tst_link(mnt_dir)
@@ -185,6 +187,20 @@ def tst_chown(mnt_dir):
     fstat = os.lstat(filename)
     assert fstat.st_uid == uid_new
     assert fstat.st_gid == gid_new
+
+    checked_unlink(filename, mnt_dir, isdir=True)
+
+def tst_chmod(mnt_dir):
+    filename = os.path.join(mnt_dir, name_generator())
+    os.mkdir(filename)
+    fstat = os.lstat(filename)
+    mode = stat.S_IMODE(fstat.st_mode)
+
+    mode_new = 0o640
+    assert mode != mode_new
+    os.chmod(filename, mode_new)
+    fstat = os.lstat(filename)
+    assert stat.S_IMODE(fstat.st_mode) == mode_new
 
     checked_unlink(filename, mnt_dir, isdir=True)
 
