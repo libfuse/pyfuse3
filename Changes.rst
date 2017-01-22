@@ -4,8 +4,8 @@
 
 .. currentmodule:: llfuse
 
-Unreleased Changes
-==================
+Release 1.2 (2017-01-22)
+========================
 
 * The *attr* argument of the `~Operations.setattr` handler now
   contains valid values only for the attributes that are to be set.
