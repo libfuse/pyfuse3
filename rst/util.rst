@@ -2,7 +2,7 @@
  Utility Functions
 ====================
 
-The following functions do not neccesarily translate to calls to the
+The following functions do not necessarily translate to calls to the
 FUSE library. They are provided because they're potentially useful
 when implementing file systems in Python.
 

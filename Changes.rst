@@ -90,7 +90,7 @@ BACKWARDS INCOMPATIBLE CHANGES:
 
 * Ducktyping the `EntryAttributes` class is no longer allowed,
   `Operations` methods must return instances of this class (rather
-  than any object that provides the neccessary attributes).
+  than any object that provides the necessary attributes).
 
 * The `!st_Xtime` attributes of the `EntryAttributes` have been
   dropped in favor of the `!st_Xtime_ns` attributes.
@@ -119,7 +119,7 @@ Release 0.41.1 (2015-08-22)
 * Python-LLFUSE can now also be built on NetBSD.
 
 * Added support for FUSE_SET_ATTR_ATIME_NOW and
-  FUSE_SET_ATTR_MTIME_NOW setattr flags. Previosly, these would be
+  FUSE_SET_ATTR_MTIME_NOW setattr flags. Previously, these would be
   silently ignored.
 
 * Fixed an AssertionError in :file:`examples/passthroughfs.py`
