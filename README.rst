@@ -53,4 +53,4 @@ The Python-LLFUSE source code is available both on GitHub_ and BitBucket_.
 .. _Gmane: http://www.gmane.org/
 .. _PyPi: https://pypi.python.org/pypi/llfuse/
 .. _BitBucket: https://bitbucket.org/nikratio/python-llfuse/
-.. _GitHub: https://github.com/python-llfuse/main
+.. _GitHub: https://github.com/python-llfuse/python-llfuse
