@@ -471,7 +471,6 @@ cdef session_loop_mt(workers):
     finally:
         for i in range(workers):
             if wd[i].started:
-                pthread_cancel(wd[i].thread_id)
                 with nogil:
                     res = pthread_join(wd[i].thread_id, NULL)
                 if res != 0:
