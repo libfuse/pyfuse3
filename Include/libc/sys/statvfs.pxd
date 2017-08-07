@@ -22,3 +22,4 @@ cdef extern from "<sys/statvfs.h>" nogil:
         fsfilcnt_t     f_files
         fsfilcnt_t     f_ffree
         fsfilcnt_t     f_favail
+        unsigned long  f_namemax

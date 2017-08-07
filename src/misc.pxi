@@ -558,6 +558,12 @@ cdef class StatvfsData:
     def f_favail(self, val):
         self.stat.f_favail = val
 
+    @property
+    def f_namemax(self):
+        return self.stat.f_namemax
+    @f_namemax.setter
+    def f_namemax(self, val):
+        self.stat.f_namemax = val
 
 # As of Cython 0.23.1, @cython.freelist cannot be used for
 # classes that derive from a builtin type.
