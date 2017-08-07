@@ -85,11 +85,6 @@ cdef extern from "xattr.h" nogil:
 cdef extern from "gettime.h" nogil:
     int gettime_realtime(timespec *tp)
 
-cdef extern from "Python.h" nogil:
-    void PyEval_InitThreads()
-    ctypedef class __builtin__.Exception [object PyBaseExceptionObject]:
-        pass
-
 cdef extern from *:
     # Missing in the Cython provided libc/errno.pxd:
     enum:
