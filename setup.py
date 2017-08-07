@@ -1,11 +1,11 @@
 #!/usr/bin/env python
-#-*- coding: utf-8 -*-
+#-*- coding: us-ascii -*-
 '''
 setup.py
 
 Installation script for Python-LLFUSE.
 
-Copyright © 2010 Nikolaus Rath <Nikolaus.org>
+Copyright (c) 2010 Nikolaus Rath <Nikolaus.org>
 
 This file is part of Python-LLFUSE. This work may be distributed under
 the terms of the GNU LGPL.
