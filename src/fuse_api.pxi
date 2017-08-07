@@ -28,9 +28,7 @@ def listdir(path):
         raise TypeError('*path* argument must be of type str')
 
     cdef dirent.DIR* dirp
-    cdef dirent.dirent ent
     cdef dirent.dirent* res
-    cdef int ret
     cdef char* buf
 
     path_b = str2bytes(path)
@@ -46,16 +44,18 @@ def listdir(path):
     while True:
         errno.errno = 0
         with nogil:
-            ret = dirent.readdir_r(dirp, &ent, &res)
+            res = dirent.readdir(dirp)
 
-        if ret != 0:
-            raise OSError(errno.errno, strerror(errno.errno), path)
         if res is NULL:
-            break
-        if string.strcmp(ent.d_name, b'.') == 0 or string.strcmp(ent.d_name, b'..') == 0:
+           if errno.errno != 0:
+               raise OSError(errno.errno, strerror(errno.errno), path)
+           else:
+               break
+        if string.strcmp(res.d_name, b'.') == 0 or \
+           string.strcmp(res.d_name, b'..') == 0:
             continue
 
-        names.append(bytes2str(PyBytes_FromString(ent.d_name)))
+        names.append(bytes2str(PyBytes_FromString(res.d_name)))
 
     with nogil:
         dirent.closedir(dirp)
