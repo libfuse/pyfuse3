@@ -76,4 +76,4 @@ file systems automatically take advantage of. Specifically:
 * Unless writeback caching is enabled (which Python-LLFUSE does not
   yet allow), calls to `~Operations.write` for the same inode are
   automatically serialized (i.e., there are never concurrent calls for
-  the same inode even when multithreading is enabled).m
+  the same inode even when multithreading is enabled).
