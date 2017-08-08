@@ -2,7 +2,7 @@
 # sed -i -e 's|FROM buildpack-deps:jessie|FROM buildpack-deps:stretch|' -e 's|tcl |tcl gpg dirmngr |' Dockerfile
 # docker build -t szepeviktor/python:3.5.2-stretch python
 # docker run -t -i --rm --cap-add SYS_ADMIN --device /dev/fuse --entrypoint=/bin/bash szepeviktor/python:3.5.2-stretch
-image: szepeviktor/python:3.5.2-stretch
+image: debian/latest
 
 pipelines:
   default:
