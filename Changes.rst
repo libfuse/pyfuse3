@@ -4,12 +4,15 @@
 
 .. currentmodule:: llfuse
 
- Unreleased Changes
-===================
+Unreleased Changes
+==================
 
 * The `StatvfsData` class now has an `!~StatvfsData.f_namemax`
   attribute.
 
+* `EntryAttributes` and `StatvfsData` instances can now be pickled and
+  copied. Other llfuse classes now raise an exception when the do not
+  support pickling/copying.
 
 Release 1.2 (2017-01-22)
 ========================

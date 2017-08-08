@@ -112,6 +112,7 @@ import logging
 import sys
 import os.path
 import threading
+from pickle import PicklingError
 
 if PY_MAJOR_VERSION < 3:
     from Queue import Queue
