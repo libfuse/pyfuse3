@@ -55,6 +55,7 @@
 
    .. attribute:: f_favail
 
+   .. attribute:: f_namemax
 
 .. autoclass:: EntryAttributes
 
