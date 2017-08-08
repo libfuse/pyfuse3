@@ -1,0 +1,20 @@
+# wget https://github.com/docker-library/python/raw/master/3.5/Dockerfile
+# sed -i -e 's|FROM buildpack-deps:jessie|FROM buildpack-deps:stretch|' -e 's|tcl |tcl gpg dirmngr |' Dockerfile
+# docker build -t szepeviktor/python:3.5.2-stretch python
+# docker run -t -i --rm --cap-add SYS_ADMIN --device /dev/fuse --entrypoint=/bin/bash szepeviktor/python:3.5.2-stretch
+image: szepeviktor/python:3.5.2-stretch
+
+pipelines:
+  default:
+    - step:
+        script:
+          - apt-get update -qq
+          - apt-get install -q -y fuse pkg-config libattr1-dev libfuse-dev
+#          - apt-get install -q -y mercurial
+#          - hg clone https://szepeviktor@bitbucket.org/szepeviktor/python-llfuse && cd python-llfuse/
+          - pip install -U cython sphinx pytest pytest-catchlogs
+          - python setup.py build_cython
+          - python setup.py build_ext --inplace
+          - whoami && python -m pytest test/
+          - python setup.py build_sphinx
+          - python setup.py install
