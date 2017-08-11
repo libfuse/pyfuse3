@@ -13,8 +13,7 @@ the terms of the GNU LGPL.
  * platform independent way. Stolen from fuse_misc.h.
  */
 
-/* Linux */
-#ifdef HAVE_STRUCT_STAT_ST_ATIM
+#if PLATFORM == PLATFORM_LINUX
 #define GET_ATIME_NS(stbuf) ((stbuf)->st_atim.tv_nsec)
 #define GET_CTIME_NS(stbuf) ((stbuf)->st_ctim.tv_nsec)
 #define GET_MTIME_NS(stbuf) ((stbuf)->st_mtim.tv_nsec)
@@ -22,30 +21,26 @@ the terms of the GNU LGPL.
 #define SET_CTIME_NS(stbuf, val) (stbuf)->st_ctim.tv_nsec = (val)
 #define SET_MTIME_NS(stbuf, val) (stbuf)->st_mtim.tv_nsec = (val)
 
-/* FreeBSD */
-#elif defined(HAVE_STRUCT_STAT_ST_ATIMESPEC)
+#define GET_BIRTHTIME_NS(stbuf) (0)
+#define GET_BIRTHTIME(stbuf) (0)
+#define SET_BIRTHTIME_NS(stbuf, val) do {} while (0)
+#define SET_BIRTHTIME(stbuf, val) do {} while (0)
+
+/* BSD and OS-X */
+#else
+#define GET_BIRTHTIME(stbuf) ((stbuf)->st_birthtime)
+#define SET_BIRTHTIME(stbuf, val) ((stbuf)->st_birthtime = (val))
+
 #define GET_ATIME_NS(stbuf) ((stbuf)->st_atimespec.tv_nsec)
 #define GET_CTIME_NS(stbuf) ((stbuf)->st_ctimespec.tv_nsec)
 #define GET_MTIME_NS(stbuf) ((stbuf)->st_mtimespec.tv_nsec)
-#define SET_ATIME_NS(stbuf, val) (stbuf)->st_atimespec.tv_nsec = (val)
-#define SET_CTIME_NS(stbuf, val) (stbuf)->st_ctimespec.tv_nsec = (val)
-#define SET_MTIME_NS(stbuf, val) (stbuf)->st_mtimespec.tv_nsec = (val)
-
-/* No nanosecond resolution */
-#else
-#define GET_ATIME_NS(stbuf) 0
-#define GET_CTIME_NS(stbuf) 0
-#define GET_MTIME_NS(stbuf) 0
-#define SET_ATIME_NS(stbuf, val) do { } while (0)
-#define SET_CTIME_NS(stbuf, val) do { } while (0)
-#define SET_MTIME_NS(stbuf, val) do { } while (0)
+#define GET_BIRTHTIME_NS(stbuf) ((stbuf)->st_birthtimespec.tv_nsec)
+#define SET_ATIME_NS(stbuf, val) ((stbuf)->st_atimespec.tv_nsec = (val))
+#define SET_CTIME_NS(stbuf, val) ((stbuf)->st_ctimespec.tv_nsec = (val))
+#define SET_MTIME_NS(stbuf, val) ((stbuf)->st_mtimespec.tv_nsec = (val))
+#define SET_BIRTHTIME_NS(stbuf, val) ((stbuf)->st_birthtimespec.tv_nsec = (val))
 #endif
 
-
-/*
- * Macros for conditional assignments that depend on the installed
- * FUSE version or platform.
- */
 
 #if PLATFORM == PLATFORM_LINUX || PLATFORM == PLATFORM_BSD
 #define ASSIGN_DARWIN(x,y)

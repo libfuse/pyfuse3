@@ -80,6 +80,9 @@ def main():
     # We may have unused functions if we compile for older FUSE versions
     compile_args.append('-Wno-unused-function')
 
+    # Due to platform specific conditions, these are unavoidable
+    compile_args.append('-Wno-unused-parameter')
+
     # Value-changing conversions should always be explicit.
     compile_args.append('-Werror=conversion')
 
@@ -113,16 +116,8 @@ def main():
 
     if os.uname()[0] in ('Linux', 'GNU/kFreeBSD'):
         link_args.append('-lrt')
-        compile_args.append('-DHAVE_STRUCT_STAT_ST_ATIM')
     elif os.uname()[0] == 'Darwin':
-        compile_args.append('-DHAVE_STRUCT_STAT_ST_ATIMESPEC')
         c_sources.append('src/darwin_compat.c')
-    elif os.uname()[0] in ('FreeBSD', 'NetBSD'):
-        compile_args.append('-DHAVE_STRUCT_STAT_ST_ATIMESPEC')
-    else:
-        print("NOTE: unknown system (%s), nanosecond resolution file times "
-              "will not be available" % os.uname()[0])
-
 
     install_requires = []
     if sys.version_info[0] == 2:

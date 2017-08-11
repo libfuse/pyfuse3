@@ -489,6 +489,25 @@ cdef class EntryAttributes:
         self.attr.st_ctime = val / 10**9
         SET_CTIME_NS(self.attr, val % 10**9)
 
+    @property
+    def st_birthtime_ns(self):
+        '''Time of inode creation in (integer) nanoseconds.
+
+        Only available under BSD and OS X. Will be zero on Linux.
+        '''
+
+        # Use C macro to prevent compiler error on Linux
+        # (where st_birthtime does not exist)
+        return int(GET_BIRTHTIME(self.attr) * 10**9
+                    + GET_BIRTHTIME_NS(self.attr))
+
+    @st_birthtime_ns.setter
+    def st_birthtime_ns(self, val):
+        # Use C macro to prevent compiler error on Linux
+        # (where st_birthtime does not exist)
+        SET_BIRTHTIME(self.attr, val / 10**9)
+        SET_BIRTHTIME_NS(self.attr, val % 10**9)
+
 @cython.freelist(1)
 cdef class StatvfsData:
     '''
