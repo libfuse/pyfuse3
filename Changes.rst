@@ -4,8 +4,8 @@
 
 .. currentmodule:: llfuse
 
-Unreleased Changes
-==================
+Release 1.3 (2017-09-15)
+========================
 
 * The `StatvfsData` class now has an `!~StatvfsData.f_namemax`
   attribute.
