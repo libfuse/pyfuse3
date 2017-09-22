@@ -80,6 +80,10 @@ def main():
     # We may have unused functions if we compile for older FUSE versions
     compile_args.append('-Wno-unused-function')
 
+    # Nothing wrong with that if you know what you are doing
+    # (which Cython does)
+    compile_args.append('-Wno-implicit-fallthrough')
+
     # Due to platform specific conditions, these are unavoidable
     compile_args.append('-Wno-unused-parameter')
 
