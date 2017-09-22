@@ -4,6 +4,12 @@
 
 .. currentmodule:: llfuse
 
+Release 1.3.1 (2017-09-22)
+==========================
+
+* The main loop now terminates properly again when terminated
+  by a signal.
+
 Release 1.3 (2017-09-15)
 ========================
 
