@@ -27,12 +27,12 @@ from __future__ import division, print_function, absolute_import
 import os
 import sys
 
-# We are running from the Python-LLFUSE source directory, put it
-# into the Python path.
+# If we are running from the Python-LLFUSE source directory, try
+# to load the module from there first.
 basedir = os.path.abspath(os.path.join(os.path.dirname(sys.argv[0]), '..'))
 if (os.path.exists(os.path.join(basedir, 'setup.py')) and
-    os.path.exists(os.path.join(basedir, 'src', 'llfuse'))):
-    sys.path.append(os.path.join(basedir, 'src'))
+    os.path.exists(os.path.join(basedir, 'src', 'llfuse.pyx'))):
+    sys.path.insert(0, os.path.join(basedir, 'src'))
 
 import llfuse
 import errno
