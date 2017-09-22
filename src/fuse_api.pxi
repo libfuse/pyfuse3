@@ -490,12 +490,22 @@ cdef session_loop_mt(workers):
 
 
 def close(unmount=True):
-    '''Unmount file system and clean up
+    '''Clean up and ensure filesystem is unmounted
 
-    If *unmount* is False, only clean up operations are peformed, but
-    the file system is not unmounted. As long as the file system
-    process is still running, all requests will hang. Once the process
-    has terminated, these (and all future) requests fail with ESHUTDOWN.
+    If *unmount* is False, only clean up operations are peformed, but the file
+    system is not explicitly unmounted.
+
+    Normally, the filesystem is unmounted by the user calling umount(8) or
+    fusermount(1), which then terminates the FUSE main loop. However, the loop
+    may also terminate as a result of an exception or a signal. In this case the
+    filesystem remains mounted, but any attempt to access it will block (while
+    the filesystem process is still running) or (after the filesystem process
+    has terminated) return an error. If *unmount* is True, this function will
+    ensure that the filesystem is properly unmounted.
+
+    Note: if the connection to the kernel is terminated via the
+    ``/sys/fs/fuse/connections/`` interface, this function will *not* unmount
+    the filesystem even if *unmount* is True.
     '''
 
     global mountpoint_b
