@@ -459,8 +459,7 @@ cdef session_loop_mt(workers):
             wd[i].bufsize = bufsize
             wd[i].buf = calloc_or_raise(1, bufsize)
 
-            # Disable signal reception in new thread
-            # (FUSE does the same, probably for a good reason)
+            # Ensure that signals get delivered to main thread
             pthread_sigmask(SIG_BLOCK, &newset, &oldset)
             res = pthread_create(&wd[i].thread_id, NULL, &worker_start, wd+i)
             pthread_sigmask(SIG_SETMASK, &oldset, NULL)
@@ -476,6 +475,9 @@ cdef session_loop_mt(workers):
     finally:
         for i in range(workers):
             if wd[i].started:
+                res = pthread_kill(wd[i].thread_id, signal.SIGUSR1)
+                if res != 0:
+                    log.error('pthread_kill failed with: %s', strerror(res))
                 with nogil:
                     res = pthread_join(wd[i].thread_id, NULL)
                 if res != 0:

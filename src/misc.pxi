@@ -699,6 +699,9 @@ cdef void signal_handler(int sig, siginfo_t *si, void* ctx) nogil:
         fuse_session_exit(session)
     exit_reason = sig
 
+cdef void do_nothing(int sig, siginfo_t *si, void* ctx) nogil:
+    pass
+
 cdef int sigaction_p(int sig, sigaction_t *sa,
                      sigaction_t *old_sa) except -1:
     cdef int res
@@ -708,7 +711,7 @@ cdef int sigaction_p(int sig, sigaction_t *sa,
                       + strerror(errno.errno))
     return 0
 
-cdef sigaction_t sa_backup[4]
+cdef sigaction_t sa_backup[5]
 cdef set_signal_handlers():
     cdef sigaction_t sa
 
@@ -719,15 +722,22 @@ cdef set_signal_handlers():
     sigaction_p(signal.SIGINT, &sa, &sa_backup[1])
     sigaction_p(signal.SIGHUP, &sa, &sa_backup[2])
 
+    # This is used to interrupt system calls without
+    # doing anything else.
+    sa.sa_sigaction = &do_nothing
+    sa.sa_flags = SA_SIGINFO
+    sigaction_p(signal.SIGUSR1, &sa, &sa_backup[3])
+
     sa.sa_handler = signal.SIG_IGN
     sa.sa_flags = 0
-    sigaction_p(signal.SIGPIPE, &sa, &sa_backup[3])
+    sigaction_p(signal.SIGPIPE, &sa, &sa_backup[4])
 
 cdef restore_signal_handlers():
     sigaction_p(signal.SIGTERM, &sa_backup[0], NULL)
     sigaction_p(signal.SIGINT, &sa_backup[1], NULL)
     sigaction_p(signal.SIGHUP, &sa_backup[2], NULL)
-    sigaction_p(signal.SIGPIPE, &sa_backup[3], NULL)
+    sigaction_p(signal.SIGUSR1, &sa_backup[3], NULL)
+    sigaction_p(signal.SIGPIPE, &sa_backup[4], NULL)
 
 cdef void* calloc_or_raise(size_t nmemb, size_t size) except NULL:
     cdef void* mem

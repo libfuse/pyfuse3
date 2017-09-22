@@ -35,6 +35,7 @@ cdef extern from "<pthread.h>" nogil:
     int pthread_create(pthread_t *thread, pthread_attr_t *attr,
                        void *(*start_routine) (void *), void *arg)
     int pthread_join(pthread_t thread, void **retval)
+    int pthread_kill(pthread_t thread, int sig)
 
     int pthread_mutex_init(pthread_mutex_t *mutex, pthread_mutexattr_t *mutexattr)
     int pthread_mutex_lock(pthread_mutex_t *mutex)
