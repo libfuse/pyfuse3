@@ -213,8 +213,13 @@ def getxattr(path, name, size_t size_guess=128, namespace='user'):
 #   active, it's expected to improve performance because we move pages from the
 #   page instead of copying them.
 #
-default_options = frozenset(('big_writes', 'nonempty', 'default_permissions',
-                             'no_splice_read', 'splice_write', 'splice_move'))
+if os.uname()[0] == 'Darwin':
+    default_options = frozenset(('big_writes', 'default_permissions',
+                                 'no_splice_read', 'splice_write', 'splice_move'))
+else:
+    default_options = frozenset(('big_writes', 'nonempty', 'default_permissions',
+                                 'no_splice_read', 'splice_write', 'splice_move'))
+
 def init(ops, mountpoint, options=default_options):
     '''Initialize and mount FUSE file system
 
