@@ -474,7 +474,8 @@ cdef session_loop_mt(workers):
         for i in range(workers):
             if wd[i].started:
                 res = pthread_kill(wd[i].thread_id, signal.SIGUSR1)
-                if res != 0:
+                # Thread may have terminated already
+                if res != 0 and res != errno.ESRCH:
                     log.error('pthread_kill failed with: %s', strerror(res))
                 with nogil:
                     res = pthread_join(wd[i].thread_id, NULL)
