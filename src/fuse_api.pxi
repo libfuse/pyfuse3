@@ -377,9 +377,7 @@ cdef session_loop(void* mem, size_t size):
         buf.pos = 0
         buf.flags = 0
         with nogil:
-            pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
             res = fuse_session_receive_buf(session, &buf, &ch)
-            pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
 
         if res == -errno.EINTR:
             continue
