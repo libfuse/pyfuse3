@@ -288,11 +288,11 @@ def main(workers=None):
     have terminated when `main` returns.
 
     While this function is running, special signal handlers will be installed
-    for the *SIGTERM*, *SIGINT* (Ctrl-C), *SIGHUP* and *SIGPIPE*
+    for the *SIGTERM*, *SIGINT* (Ctrl-C), *SIGHUP*, *SIGUSR1* and *SIGPIPE*
     signals. *SIGPIPE* will be ignored, while the other three signals will cause
     request processing to stop and the function to return.  *SIGINT* (Ctrl-C)
     will thus *not* result in a `KeyboardInterrupt` exception while this
-    function is runnnig.
+    function is runnning.
 
     When the function returns because the file system has received an unmount
     request it will return `None`. If it returns because it has received a
