@@ -41,16 +41,17 @@ e.g. version 0.42.1 of Python-LLFUSE are thus recommended to declare a
 dependency on ``llfuse >= 0.42.1, < 1.0``.
 
 
-Professional Support
---------------------
-
-Professional support is available. Please contact Nikolaus Rath
-<Nikolaus@rath.org> for details.
-
 Contributing
 ------------
 
 The Python-LLFUSE source code is available both on GitHub_ and BitBucket_.
+
+
+Professional Support
+--------------------
+
+Professional support is offered via `Rath Consulting`_.
+
 
 .. __: http://www.rath.org/llfuse-docs/
 .. _FUSE: http://github.com/libfuse/libfuse
@@ -61,3 +62,4 @@ The Python-LLFUSE source code is available both on GitHub_ and BitBucket_.
 .. _PyPi: https://pypi.python.org/pypi/llfuse/
 .. _BitBucket: https://bitbucket.org/nikratio/python-llfuse/
 .. _GitHub: https://github.com/python-llfuse/python-llfuse
+.. _`Rath Consulting`: http://www.rath-consulting.biz/
