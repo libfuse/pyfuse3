@@ -233,7 +233,7 @@ def init(ops, mountpoint, options=default_options):
         my_opts = set(llfuse.default_options)
         my_opts.add('allow_other')
         my_opts.discard('default_permissions')
-        llfuse.init(ops, mountpoint, my_apts)
+        llfuse.init(ops, mountpoint, my_opts)
 
     Valid options are listed under ``struct
     fuse_opt fuse_mount_opts[]``
