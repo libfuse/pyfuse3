@@ -73,9 +73,8 @@ def setxattr(path, name, bytes value, namespace='user'):
     select the namespace for the extended attribute. For other platforms, this
     parameter is ignored.
 
-    In contrast the `os.setxattr` function from the standard library,
-    the method provided by Python-LLFUSE is also available for non-Linux
-    systems.
+    In contrast to the `os.setxattr` function from the standard library, the
+    method provided by Python-LLFUSE is also available for non-Linux systems.
     '''
 
     if not isinstance(path, str_t):
@@ -130,9 +129,8 @@ def getxattr(path, name, size_t size_guess=128, namespace='user'):
     select the namespace for the extended attribute. For other platforms, this
     parameter is ignored.
 
-    In contrast the `os.setxattr` function from the standard library,
-    the method provided by Python-LLFUSE is also available for non-Linux
-    systems.
+    In contrast to the `os.getxattr` function from the standard library, the
+    method provided by Python-LLFUSE is also available for non-Linux systems.
     '''
 
     if not isinstance(path, str_t):

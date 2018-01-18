@@ -312,8 +312,8 @@ class Operations(object):
         *fh* will by an integer filehandle returned by a prior `open` or
         `create` call.
 
-        This method must returns the number of bytes written. However, uuless
-        the file system has been mounted with the ``direct_io`` option, the file
+        This method must return the number of bytes written. However, unless the
+        file system has been mounted with the ``direct_io`` option, the file
         system *must* always write *all* the provided data (i.e., return
         ``len(buf)``).
         '''
