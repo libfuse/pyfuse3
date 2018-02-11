@@ -1,0 +1,17 @@
+sudo: required
+dist: trusty
+
+language:
+    - c
+    - python
+python:
+    - "3.6"
+addons:
+  apt:
+    packages:
+    - libattr1-dev
+    - pkg-config
+before_install:
+   - sudo -H pip install pip==8.1.1
+install: test/travis-install.sh
+script: test/travis-test.sh
