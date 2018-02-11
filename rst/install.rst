@@ -22,9 +22,7 @@ In order to build and run Python-LLFUSE you need the following software:
 
 To run the unit tests, you will need
 
-* The `py.test`_ module, version 2.8.0 or newer
-* The `pytest-catchlog
-  <https://github.com/eisensheng/pytest-catchlog>`_ module
+* The `py.test`_ module, version 3.3.0 or newer
 
 When using Linux, you also need:
 
