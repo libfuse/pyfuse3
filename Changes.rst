@@ -4,6 +4,12 @@
 
 .. currentmodule:: llfuse
 
+Release 1.3.3 (2018-03-31)
+==========================
+
+* Dropped pytest-catchlog dependency and add support for Pytest 3.3.0.
+* Minor bugfixes.
+
 Release 1.3.2 (2017-11-13)
 ==========================
 
