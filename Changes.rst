@@ -4,6 +4,11 @@
 
 .. currentmodule:: llfuse
 
+Release 1.3.4 (2018-04-29)
+==========================
+
+* No-change rebuild with Cython 0.28.2.
+
 Release 1.3.3 (2018-03-31)
 ==========================
 
