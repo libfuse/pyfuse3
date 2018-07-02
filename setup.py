@@ -87,14 +87,6 @@ def main():
     # Due to platform specific conditions, these are unavoidable
     compile_args.append('-Wno-unused-parameter')
 
-    # Value-changing conversions should always be explicit.
-    compile_args.append('-Werror=conversion')
-
-    # Note that (i > -1) is false if i is unsigned (-1 will be converted to
-    # a large positive value). We certainly don't want to do this by
-    # accident.
-    compile_args.append('-Werror=sign-compare')
-
     # Enable all fatal warnings only when compiling from Mercurial tip.
     # (otherwise we break forward compatibility because compilation with newer
     # compiler may fail if additional warnings are added)
@@ -105,6 +97,14 @@ def main():
         # Unreachable code is expected because we need to support multiple
         # platforms and architectures.
         compile_args.append('-Wno-error=unreachable-code')
+
+        # Value-changing conversions should always be explicit.
+        compile_args.append('-Werror=conversion')
+
+        # Note that (i > -1) is false if i is unsigned (-1 will be converted to
+        # a large positive value). We certainly don't want to do this by
+        # accident.
+        compile_args.append('-Werror=sign-compare')
 
     # http://bugs.python.org/issue7576
     if sys.version_info[0] == 3 and sys.version_info[1] < 2:
