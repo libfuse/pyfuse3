@@ -446,7 +446,6 @@ def main():
     log.debug('Mounting...')
     fuse_options = set(llfuse.default_options)
     fuse_options.add('fsname=passthroughfs')
-    fuse_options.add('default_permissions')
     if options.debug_fuse:
         fuse_options.add('debug')
     llfuse.init(operations, options.mountpoint, fuse_options)
