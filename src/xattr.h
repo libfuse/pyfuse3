@@ -25,7 +25,15 @@
  * Linux
  */
 #if PLATFORM == PLATFORM_LINUX
-#include <attr/xattr.h>
+#include <sys/xattr.h>
+/*
+ * Newer versions of attr deprecate attr/xattr.h which defines ENOATTR as a
+ * synonym for ENODATA. To keep compatibility with the old style and the new,
+ * define this ourselves.
+ */
+#ifndef ENOATTR
+#define ENOATTR ENODATA
+#endif
 
 #define EXTATTR_NAMESPACE_USER 0
 #define EXTATTR_NAMESPACE_SYSTEM 0
