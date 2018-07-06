@@ -25,7 +25,7 @@ from posix.types cimport mode_t, dev_t, off_t
 from libc.stdint cimport uint32_t
 from libc.stdlib cimport const_char
 from libc cimport stdlib, string, errno, dirent
-from libc.errno cimport ETIMEDOUT, EPROTO, EINVAL, EPERM, ENOMSG
+from libc.errno cimport ETIMEDOUT, EPROTO, EINVAL, EPERM, ENOMSG, ENOATTR
 from posix.unistd cimport getpid
 from posix.time cimport timespec
 from posix.signal cimport (sigemptyset, sigaddset, SIG_BLOCK, SIG_SETMASK,
@@ -93,7 +93,6 @@ cdef extern from *:
     # Missing in the Cython provided libc/errno.pxd:
     enum:
         EDEADLK
-        ENOATTR
 
 cdef extern from "Python.h" nogil:
     void PyEval_InitThreads()
