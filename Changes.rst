@@ -4,6 +4,10 @@
 
 .. currentmodule:: llfuse
 
+dev (not released yet)
+======================
+* Add `handle_signals` option to `llfuse.main`
+
 Release 1.3.4 (2018-04-29)
 ==========================
 

@@ -254,7 +254,7 @@ def init(ops, mountpoint, options=default_options):
 
     pthread_mutex_init(&exc_info_mutex, NULL)
 
-def main(workers=None):
+def main(workers=None, handle_signals=True):
     '''Run FUSE main loop
 
     *workers* specifies the number of threads that will process requests
@@ -266,12 +266,14 @@ def main(workers=None):
     if *workers* is ``1``). These (and all worker threads) are guaranteed to
     have terminated when `main` returns.
 
-    While this function is running, special signal handlers will be installed
-    for the *SIGTERM*, *SIGINT* (Ctrl-C), *SIGHUP*, *SIGUSR1* and *SIGPIPE*
-    signals. *SIGPIPE* will be ignored, while the other three signals will cause
-    request processing to stop and the function to return.  *SIGINT* (Ctrl-C)
-    will thus *not* result in a `KeyboardInterrupt` exception while this
-    function is runnning.
+    Unless *handle_signals* is `False`, while this function is running, special
+    signal handlers will be installed for the *SIGTERM*, *SIGINT* (Ctrl-C),
+    *SIGHUP*, *SIGUSR1* and *SIGPIPE* signals. *SIGPIPE* will be ignored,
+    while the other three signals will cause request processing to stop
+    and the function to return.  *SIGINT* (Ctrl-C) will thus *not* result in
+    a `KeyboardInterrupt` exception while this function is runnning.
+    Note setting *handle_signals* to `False` means you must handle the signals
+    by yourself and call `stop` to make the `main` returns.
 
     When the function returns because the file system has received an unmount
     request it will return `None`. If it returns because it has received a
@@ -295,8 +297,9 @@ def main(workers=None):
     # for "regular exit".
     exit_reason = signal.SIGKILL
     with contextlib.ExitStack() as on_exit:
-        set_signal_handlers()
-        on_exit.callback(lambda: restore_signal_handlers())
+        if handle_signals:
+            set_signal_handlers()
+            on_exit.callback(lambda: restore_signal_handlers())
 
         # Start notification handling thread
         t = threading.Thread(target=_notify_loop)
