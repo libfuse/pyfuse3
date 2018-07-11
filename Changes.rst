@@ -6,7 +6,9 @@
 
 dev (not released yet)
 ======================
+
 * Add `handle_signals` option to `llfuse.main`
+* Several fixes to `examples/passthroughfs.py`
 
 Release 1.3.4 (2018-04-29)
 ==========================

@@ -345,14 +345,16 @@ class Operations(llfuse.Operations):
         return attr
 
     def statfs(self, ctx):
+        root = self._inode_path_map[llfuse.ROOT_INODE]
         stat_ = llfuse.StatvfsData()
         try:
-            statfs = os.statvfs(self._inode_path_map[llfuse.ROOT_INODE])
+            statfs = os.statvfs(root)
         except OSError as exc:
             raise FUSEError(exc.errno)
         for attr in ('f_bsize', 'f_frsize', 'f_blocks', 'f_bfree', 'f_bavail',
                      'f_files', 'f_ffree', 'f_favail'):
             setattr(stat_, attr, getattr(statfs, attr))
+        stat_.f_namemax = statfs.f_namemax - (len(root)+1)
         return stat_
 
     def open(self, inode, flags, ctx):
