@@ -226,6 +226,7 @@ class Operations(llfuse.Operations):
         path = os.path.join(parent, name)
         try:
             os.symlink(target, path)
+            os.chown(path, ctx.uid, ctx.gid, follow_symlinks=False)
         except OSError as exc:
             raise FUSEError(exc.errno)
         stat = os.lstat(path)
