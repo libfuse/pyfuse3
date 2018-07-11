@@ -251,8 +251,8 @@ class Operations(llfuse.Operations):
         val = self._inode_path_map[inode]
         if isinstance(val, set):
             assert len(val) > 1
-            set.add(path_new)
-            set.remove(path_old)
+            val.add(path_new)
+            val.remove(path_old)
         else:
             assert val == path_old
             self._inode_path_map[inode] = path_new
