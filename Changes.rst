@@ -4,11 +4,12 @@
 
 .. currentmodule:: llfuse
 
-dev (not released yet)
-======================
+Release 1.3.5 (2018-08-30)
+==========================
 
 * Add `handle_signals` option to `llfuse.main`
 * Several fixes to `examples/passthroughfs.py`
+* Now compatible with Python 3.7
 
 Release 1.3.4 (2018-04-29)
 ==========================
