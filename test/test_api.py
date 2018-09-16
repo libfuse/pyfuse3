@@ -9,8 +9,6 @@ This file is part of pyfuse3. This work may be distributed under
 the terms of the GNU LGPL.
 '''
 
-from __future__ import division, print_function, absolute_import
-
 if __name__ == '__main__':
     import pytest
     import sys

@@ -3,8 +3,7 @@
 '''
 lltest.py - Example file system for pyfuse3.
 
-This program presents a static file system containing a single file. It is
-compatible with both Python 2.x and 3.x. Based on an example from Gerion Entrup.
+This program presents a static file system containing a single file.
 
 Copyright © 2015 Nikolaus Rath <Nikolaus.org>
 Copyright © 2015 Gerion Entrup.
@@ -22,8 +21,6 @@ COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
 IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 '''
-
-from __future__ import division, print_function, absolute_import
 
 import os
 import sys

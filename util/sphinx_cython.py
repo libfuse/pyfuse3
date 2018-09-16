@@ -11,8 +11,6 @@ This file is part of pyfuse3. This work may be distributed under
 the terms of the GNU LGPL.
 '''
 
-from __future__ import division, print_function, absolute_import
-
 import re
 
 TYPE_RE = re.compile(r'(int|char|unicode|str|bytes)(?:\s+\*?\s*|\s*\*?\s+)([a-zA-Z_].*)')

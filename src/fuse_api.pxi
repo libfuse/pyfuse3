@@ -14,17 +14,14 @@ the terms of the GNU LGPL.
 def listdir(path):
     '''Like `os.listdir`, but releases the GIL.
 
-    This function returns an iterator over the directory entries in
-    *path*. The returned values are of type :ref:`str
-    <python:textseq>` in both Python 2.x and 3.x.
+    This function returns an iterator over the directory entries in *path*.
 
-    In Python 2.x :class:`str` is equivalent to `bytes` so all names
-    can be represented. In Python 3.x, surrogate escape coding (cf.
-    `PEP 383 <http://www.python.org/dev/peps/pep-0383/>`_) is used for
-    directory names that do not have a string representation.
+    The returned values are of type :ref:`str <python:textseq>`. Surrogate
+    escape coding (cf.  `PEP 383 <http://www.python.org/dev/peps/pep-0383/>`_)
+    is used for directory names that do not have a string representation.
     '''
 
-    if not isinstance(path, str_t):
+    if not isinstance(path, str):
         raise TypeError('*path* argument must be of type str')
 
     cdef dirent.DIR* dirp
@@ -77,10 +74,10 @@ def setxattr(path, name, bytes value, namespace='user'):
     method provided by pyfuse3 is also available for non-Linux systems.
     '''
 
-    if not isinstance(path, str_t):
+    if not isinstance(path, str):
         raise TypeError('*path* argument must be of type str')
 
-    if not isinstance(name, str_t):
+    if not isinstance(name, str):
         raise TypeError('*name* argument must be of type str')
 
     if namespace not in ('system', 'user'):
@@ -133,10 +130,10 @@ def getxattr(path, name, size_t size_guess=128, namespace='user'):
     method provided by pyfuse3 is also available for non-Linux systems.
     '''
 
-    if not isinstance(path, str_t):
+    if not isinstance(path, str):
         raise TypeError('*path* argument must be of type str')
 
-    if not isinstance(name, str_t):
+    if not isinstance(name, str):
         raise TypeError('*name* argument must be of type str')
 
     if namespace not in ('system', 'user'):
@@ -224,7 +221,7 @@ def init(ops, mountpoint, options=default_options):
     log.debug('Initializing pyfuse3')
     cdef fuse_args f_args
 
-    if not isinstance(mountpoint, str_t):
+    if not isinstance(mountpoint, str):
         raise TypeError('*mountpoint_* argument must be of type str')
 
     global operations

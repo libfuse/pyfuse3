@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #-*- coding: us-ascii -*-
 '''
 setup.py
@@ -10,8 +10,6 @@ Copyright (c) 2010 Nikolaus Rath <Nikolaus.org>
 This file is part of pyfuse3. This work may be distributed under
 the terms of the GNU LGPL.
 '''
-
-from __future__ import division, print_function, absolute_import
 
 import sys
 import os
@@ -107,14 +105,6 @@ def main():
         # accident.
         compile_args.append('-Werror=sign-compare')
 
-    # http://bugs.python.org/issue7576
-    if sys.version_info[0] == 3 and sys.version_info[1] < 2:
-        compile_args.append('-Wno-error=missing-field-initializers')
-
-    # http://bugs.python.org/issue969718
-    if sys.version_info[0] == 2:
-        compile_args.append('-fno-strict-aliasing')
-
     link_args = pkg_config('fuse', cflags=False, ldflags=True, min_ver='2.8.0')
     link_args.append('-lpthread')
     c_sources = ['src/pyfuse3.c', 'src/lock.c']
@@ -123,10 +113,6 @@ def main():
         link_args.append('-lrt')
     elif os.uname()[0] == 'Darwin':
         c_sources.append('src/darwin_compat.c')
-
-    install_requires = []
-    if sys.version_info[0] == 2:
-        install_requires.append('contextlib2')
 
     setuptools.setup(
           name='pyfuse3',
@@ -162,7 +148,6 @@ def main():
                 'version': ('setup.py', PYFUSE3_VERSION),
                 'release': ('setup.py', PYFUSE3_VERSION),
             }},
-          install_requires=install_requires,
           )
 
 

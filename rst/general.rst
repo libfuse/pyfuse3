@@ -23,8 +23,7 @@ be unmounted again, which is done by calling `pyfuse3.close`.
 
 All character data (directory entry names, extended attribute names
 and values, symbolic link targets etc) are passed as `bytes` and must
-be returned as `bytes`. This applies to both running under Python 2.x
-and 3.x
+be returned as `bytes`.
 
 For easier debugging, it is strongly recommended that applications
 using pyfuse3 also make use of the faulthandler_ module.

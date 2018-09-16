@@ -9,19 +9,12 @@ This file is part of pyfuse3. This work may be distributed under
 the terms of the GNU LGPL.
 '''
 
-from __future__ import division, print_function, absolute_import
-
 import platform
 import subprocess
 import pytest
 import os
 import stat
 import time
-import sys
-
-# For Python 2 + 3 compatibility
-if sys.version_info[0] == 2:
-    subprocess.DEVNULL = open('/dev/null', 'w')
 
 def fuse_test_marker():
     '''Return a pytest.marker that indicates FUSE availability
@@ -36,13 +29,9 @@ def fuse_test_marker():
         return
     skip = lambda x: pytest.mark.skip(reason=x)
 
-    # Python 2.x: Popen is not a context manager...
-    which = subprocess.Popen(['which', 'fusermount'], stdout=subprocess.PIPE,
-                             universal_newlines=True)
-    try:
+    with subprocess.Popen(['which', 'fusermount'], stdout=subprocess.PIPE,
+                           universal_newlines=True) as which:
         fusermount_path = which.communicate()[0].strip()
-    finally:
-        which.wait()
 
     if not fusermount_path or which.returncode != 0:
         return skip("Can't find fusermount executable")

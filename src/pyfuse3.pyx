@@ -106,21 +106,14 @@ cdef extern from *:
 # PYTHON IMPORTS
 ################
 
-import os
-import logging
-import sys
-import os.path
-import threading
 from pickle import PicklingError
-
-if PY_MAJOR_VERSION < 3:
-    from Queue import Queue
-    import contextlib2 as contextlib
-    str_t = bytes
-else:
-    from queue import Queue
-    str_t = str
-    import contextlib
+from queue import Queue
+import contextlib
+import logging
+import os
+import os.path
+import sys
+import threading
 
 ##################
 # GLOBAL VARIABLES

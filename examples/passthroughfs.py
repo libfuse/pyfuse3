@@ -2,9 +2,7 @@
 '''
 passthroughfs.py - Example file system for pyfuse3
 
-This file system mirrors the contents of a specified directory tree. It requires
-Python 3.3 (since Python 2.x does not support the follow_symlinks parameters for
-os.* functions).
+This file system mirrors the contents of a specified directory tree.
 
 Caveats:
 
