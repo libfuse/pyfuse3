@@ -2,11 +2,11 @@
 handlers.pxi
 
 This file defines the FUSE request handlers. It is included
-by llfuse.pyx.
+by pyfuse3.pyx.
 
 Copyright © 2013 Nikolaus Rath <Nikolaus.org>
 
-This file is part of Python-LLFUSE. This work may be distributed under
+This file is part of pyfuse3. This work may be distributed under
 the terms of the GNU LGPL.
 '''
 

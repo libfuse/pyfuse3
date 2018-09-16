@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 '''
-test_api.py - Unit tests for Python-LLFUSE.
+test_api.py - Unit tests for pyfuse3.
 
 Copyright © 2015 Nikolaus Rath <Nikolaus.org>
 
-This file is part of Python-LLFUSE. This work may be distributed under
+This file is part of pyfuse3. This work may be distributed under
 the terms of the GNU LGPL.
 '''
 
@@ -16,7 +16,7 @@ if __name__ == '__main__':
     import sys
     sys.exit(pytest.main([__file__] + sys.argv[1:]))
 
-import llfuse
+import pyfuse3
 import tempfile
 import os
 import errno
@@ -25,24 +25,24 @@ from copy import copy
 from pickle import PicklingError
 
 def test_inquire_bits():
-    assert 0 < llfuse.get_ino_t_bits() < 256
-    assert 0 < llfuse.get_off_t_bits() < 256
+    assert 0 < pyfuse3.get_ino_t_bits() < 256
+    assert 0 < pyfuse3.get_off_t_bits() < 256
 
 def test_listdir():
     # There is a race-condition here if /usr/bin is modified while the test
     # runs - but hopefully this is sufficiently rare.
     list1 = set(os.listdir('/usr/bin'))
-    list2 = set(llfuse.listdir('/usr/bin'))
+    list2 = set(pyfuse3.listdir('/usr/bin'))
     assert list1 == list2
 
 def test_sup_groups():
-    gids = llfuse.get_sup_groups(os.getpid())
+    gids = pyfuse3.get_sup_groups(os.getpid())
     gids2 = set(os.getgroups())
     assert gids == gids2
 
 def _getxattr_helper(path, name):
     try:
-        value = llfuse.getxattr(path, name)
+        value = pyfuse3.getxattr(path, name)
     except OSError as exc:
         errno = exc.errno
         value = None
@@ -61,7 +61,7 @@ def _getxattr_helper(path, name):
     return value
 
 def test_entry_res():
-    a = llfuse.EntryAttributes()
+    a = pyfuse3.EntryAttributes()
     val = 1000.2735
     a.st_atime_ns = val*1e9
     assert a.st_atime_ns / 1e9 == val
@@ -73,7 +73,7 @@ def test_xattr():
         value = b'a nice little bytestring'
 
         try:
-            llfuse.setxattr(fh.name, key, value)
+            pyfuse3.setxattr(fh.name, key, value)
         except OSError as exc:
             if exc.errno == errno.ENOTSUP:
                 pytest.skip('ACLs not supported for %s' % fh.name)
@@ -91,17 +91,17 @@ def test_xattr():
 
 def test_copy():
 
-    for obj in (llfuse.SetattrFields(),
-                llfuse.RequestContext(),
-                llfuse.lock,
-                llfuse.lock_released):
+    for obj in (pyfuse3.SetattrFields(),
+                pyfuse3.RequestContext(),
+                pyfuse3.lock,
+                pyfuse3.lock_released):
         pytest.raises(PicklingError, copy, obj)
 
-    for (inst, attr) in ((llfuse.EntryAttributes(), 'st_mode'),
-                         (llfuse.StatvfsData(), 'f_files')):
+    for (inst, attr) in ((pyfuse3.EntryAttributes(), 'st_mode'),
+                         (pyfuse3.StatvfsData(), 'f_files')):
         setattr(inst, attr, 42)
         inst_copy = copy(inst)
         assert getattr(inst, attr) == getattr(inst_copy, attr)
 
-    inst = llfuse.FUSEError(10)
+    inst = pyfuse3.FUSEError(10)
     assert inst.errno == copy(inst).errno

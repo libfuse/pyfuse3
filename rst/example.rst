@@ -4,7 +4,7 @@
  Example File Systems
 ======================
 
-Python-LLFUSE comes with several example file systems in the
+pyfuse3 comes with several example file systems in the
 :file:`examples` directory of the release tarball. For completeness,
 these examples are also included here.
 

@@ -1,0 +1,9 @@
+build/
+dist/
+doc/html/
+doc/doctrees/
+src/pyfuse3.c
+src/pyfuse3*.so
+test/.cache/
+__pycache__
+test/.pytest_cache/

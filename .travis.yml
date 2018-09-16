@@ -11,6 +11,6 @@ addons:
     - libattr1-dev
     - pkg-config
     - gcc
-    - libfuse-dev
+    - libfuse3-dev
 install: test/travis-install.sh
 script: test/travis-test.sh

@@ -2,11 +2,11 @@
 misc.pxi
 
 This file defines various functions that are used internally by
-LLFUSE. It is included by llfuse.pyx.
+PYFUSE3. It is included by pyfuse3.pyx.
 
 Copyright © 2013 Nikolaus Rath <Nikolaus.org>
 
-This file is part of Python-LLFUSE. This work may be distributed under
+This file is part of pyfuse3. This work may be distributed under
 the terms of the GNU LGPL.
 '''
 
@@ -26,7 +26,7 @@ cdef int handle_exc(fuse_req_t req):
                  exc_info[0], exc_info[1])
         fuse_session_exit(session)
     else:
-        log.exception('Only one exception can be re-raised in `llfuse.main`, '
+        log.exception('Only one exception can be re-raised in `pyfuse3.main`, '
                       'the following exception will be lost')
 
     pthread_mutex_unlock(&exc_info_mutex)
@@ -101,7 +101,7 @@ cdef make_fuse_args(args, fuse_args* f_args):
     cdef ssize_t size_s
     cdef size_t size
 
-    args_new = [ b'Python-LLFUSE' ]
+    args_new = [ b'pyfuse3' ]
     for el in args:
         args_new.append(b'-o')
         args_new.append(el.encode('us-ascii'))

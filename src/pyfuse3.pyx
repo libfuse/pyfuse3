@@ -1,13 +1,13 @@
 '''
-llfuse.pxy
+pyfuse3.pxy
 
 Copyright © 2013 Nikolaus Rath <Nikolaus.org>
 
-This file is part of Python-LLFUSE. This work may be distributed under
+This file is part of pyfuse3. This work may be distributed under
 the terms of the GNU LGPL.
 '''
 
-cdef extern from "llfuse.h":
+cdef extern from "pyfuse3.h":
     int PLATFORM
     enum:
         PLATFORM_LINUX
@@ -100,7 +100,7 @@ cdef extern from "Python.h" nogil:
 
 # Actually passed as -D to cc (and defined in setup.py)
 cdef extern from *:
-    char* LLFUSE_VERSION
+    char* PYFUSE3_VERSION
 
 ################
 # PYTHON IMPORTS
@@ -126,7 +126,7 @@ else:
 # GLOBAL VARIABLES
 ##################
 
-log = logging.getLogger("llfuse")
+log = logging.getLogger("pyfuse3")
 fse = sys.getfilesystemencoding()
 
 cdef object operations
@@ -149,7 +149,7 @@ _notify_queue = Queue(maxsize=1000)
 # (in the Cython source, we want ENOATTR to refer
 #  to the C constant, not a Python object)
 ROOT_INODE = FUSE_ROOT_ID
-__version__ = LLFUSE_VERSION.decode('utf-8')
+__version__ = PYFUSE3_VERSION.decode('utf-8')
 globals()['ENOATTR'] = ENOATTR
 
 #######################

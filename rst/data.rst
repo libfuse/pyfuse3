@@ -2,12 +2,12 @@
  Data Structures
 =================
 
-.. currentmodule:: llfuse
+.. currentmodule:: pyfuse3
 
 .. py:data:: ENOATTR
 
    This errorcode is unfortunately missing in the `errno` module,
-   so it is provided by Python-LLFUSE instead.
+   so it is provided by pyfuse3 instead.
 
 .. py:data:: ROOT_INODE
 
@@ -17,8 +17,8 @@
 .. py:data:: default_options
 
    This is a recommended set of options that should be passed to
-   `llfuse.init` to get reasonable behavior and
-   performance. Python-LLFUSE is compatible with any other combination
+   `pyfuse3.init` to get reasonable behavior and
+   performance. pyfuse3 is compatible with any other combination
    of options as well, but you should only deviate from the defaults
    with good reason.
 

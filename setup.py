@@ -3,11 +3,11 @@
 '''
 setup.py
 
-Installation script for Python-LLFUSE.
+Installation script for pyfuse3.
 
 Copyright (c) 2010 Nikolaus Rath <Nikolaus.org>
 
-This file is part of Python-LLFUSE. This work may be distributed under
+This file is part of pyfuse3. This work may be distributed under
 the terms of the GNU LGPL.
 '''
 
@@ -46,7 +46,7 @@ from distutils.version import LooseVersion
 basedir = os.path.abspath(os.path.dirname(sys.argv[0]))
 sys.path.insert(0, os.path.join(basedir, 'util'))
 
-# When running from HG repo, enable all warnings
+# When running from Git repo, enable all warnings
 DEVELOPER_MODE = os.path.exists(os.path.join(basedir, 'MANIFEST.in'))
 if DEVELOPER_MODE:
     print('found MANIFEST.in, running in developer mode')
@@ -59,7 +59,7 @@ if DEVELOPER_MODE:
 # to work properly
 sys.path.insert(0, os.path.join(basedir, 'src'))
 
-LLFUSE_VERSION = '1.3.5'
+PYFUSE3_VERSION = '0.1'
 
 def main():
 
@@ -75,7 +75,7 @@ def main():
 
     compile_args = pkg_config('fuse', cflags=True, ldflags=False, min_ver='2.8.0')
     compile_args += ['-DFUSE_USE_VERSION=29', '-Wall', '-Wextra', '-Wconversion',
-                     '-Wsign-compare', '-DLLFUSE_VERSION="%s"' % LLFUSE_VERSION]
+                     '-Wsign-compare', '-DPYFUSE3_VERSION="%s"' % PYFUSE3_VERSION]
 
     # We may have unused functions if we compile for older FUSE versions
     compile_args.append('-Wno-unused-function')
@@ -85,9 +85,10 @@ def main():
     compile_args.append('-Wno-implicit-fallthrough')
 
     # Due to platform specific conditions, these are unavoidable
+    compile_args.append('-Wno-unused-function')
     compile_args.append('-Wno-unused-parameter')
 
-    # Enable all fatal warnings only when compiling from Mercurial tip.
+    # Enable all fatal warnings only in developer mode.
     # (otherwise we break forward compatibility because compilation with newer
     # compiler may fail if additional warnings are added)
     if DEVELOPER_MODE:
@@ -116,7 +117,7 @@ def main():
 
     link_args = pkg_config('fuse', cflags=False, ldflags=True, min_ver='2.8.0')
     link_args.append('-lpthread')
-    c_sources = ['src/llfuse.c', 'src/lock.c']
+    c_sources = ['src/pyfuse3.c', 'src/lock.c']
 
     if os.uname()[0] in ('Linux', 'GNU/kFreeBSD'):
         link_args.append('-lrt')
@@ -128,15 +129,14 @@ def main():
         install_requires.append('contextlib2')
 
     setuptools.setup(
-          name='llfuse',
+          name='pyfuse3',
           zip_safe=True,
-          version=LLFUSE_VERSION,
-          description='Python bindings for the low-level FUSE API',
+          version=PYFUSE3_VERSION,
+          description='Python 3 bindings for libfuse 3',
           long_description=long_desc,
           author='Nikolaus Rath',
           author_email='Nikolaus@rath.org',
-          url='https://bitbucket.org/nikratio/python-llfuse/',
-          download_url='https://bitbucket.org/nikratio/python-llfuse/downloads',
+          url='https://github.com/libfuse/pyfuse3',
           license='LGPL',
           classifiers=['Development Status :: 4 - Beta',
                        'Intended Audience :: Developers',
@@ -151,16 +151,16 @@ def main():
           keywords=['FUSE', 'python' ],
           package_dir={'': 'src'},
           packages=setuptools.find_packages('src'),
-          provides=['llfuse'],
-          ext_modules=[Extension('llfuse', c_sources,
+          provides=['pyfuse3'],
+          ext_modules=[Extension('pyfuse3', c_sources,
                                   extra_compile_args=compile_args,
                                   extra_link_args=link_args)],
         cmdclass={'upload_docs': upload_docs,
                   'build_cython': build_cython },
           command_options={
             'build_sphinx': {
-                'version': ('setup.py', LLFUSE_VERSION),
-                'release': ('setup.py', LLFUSE_VERSION),
+                'version': ('setup.py', PYFUSE3_VERSION),
+                'release': ('setup.py', PYFUSE3_VERSION),
             }},
           install_requires=install_requires,
           )
@@ -210,7 +210,7 @@ class upload_docs(setuptools.Command):
 
     def run(self):
         subprocess.check_call(['rsync', '-aHv', '--del', os.path.join(basedir, 'doc', 'html') + '/',
-                               'ebox.rath.org:/srv/www.rath.org/llfuse-docs/'])
+                               'ebox.rath.org:/srv/www.rath.org/pyfuse3-docs/'])
 
 class build_cython(setuptools.Command):
     user_options = []

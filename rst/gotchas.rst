@@ -2,7 +2,7 @@
  Common Gotchas
 ================
 
-.. currentmodule:: llfuse
+.. currentmodule:: pyfuse3
 
 This chapter lists some common gotchas that should be avoided.
 

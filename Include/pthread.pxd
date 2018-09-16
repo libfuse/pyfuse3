@@ -5,14 +5,14 @@ This file contains Cython definitions for pthread.h
 
 Copyright © 2015 Nikolaus Rath <Nikolaus.org>
 
-This file is part of Python-LLFUSE. This work may be distributed under
+This file is part of pyfuse3. This work may be distributed under
 the terms of the GNU LGPL.
 '''
 
 from posix.signal cimport sigset_t
 
 cdef extern from "<pthread.h>" nogil:
-    # POSIX says this might be a struct, but CPython (and llfuse)
+    # POSIX says this might be a struct, but CPython (and pyfuse3)
     # rely on it being an integer.
     ctypedef int pthread_t
 
@@ -44,7 +44,7 @@ cdef extern from "<pthread.h>" nogil:
 # The sem_* functions actually need the semaphone.h header file.  However, under
 # OS-X we use a compatibility layer that breaks if we include the native
 # semaphore.h file. Therefore, we pretend that no header file is required and
-# conditionally include semaphore.h in llfuse.h.
+# conditionally include semaphore.h in pyfuse3.h.
 cdef extern from * nogil:
     ctypedef struct sem_t:
         pass

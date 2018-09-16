@@ -1,8 +1,8 @@
 ===========================================
- Move Lookup Count Management into LLFUSE?
+ Move Lookup Count Management into PYFUSE3?
 ===========================================
 
-It would be nice if LLFUSE could keep track of the lookup count
+It would be nice if PYFUSE3 could keep track of the lookup count
 management. That way its users wouldn't need to worry about which
 handlers increase the lookup count, and `forget` would only be called
 when the lookup count reaches zero.
@@ -16,7 +16,7 @@ inodes it generally wants to establish some internal lstate that
 survives as long as the corresponding inode is active. However, in
 order to maintain that state, it has to be protected by the same lock
 as the lookup count. This makes it impossible to update the lookup
-count in LLFUSE after the python handler method has returned.
+count in PYFUSE3 after the python handler method has returned.
 
 Example::
 
@@ -112,7 +112,7 @@ removal until `forget`. In this case, one correct implementation is::
 
 
 Here, the operations that modify lookup_count as well as the complete
-forget() function could be moved into llfuse. The price of this is
+forget() function could be moved into pyfuse3. The price of this is
 that the application can no longer tell for sure if an inode is known
 to the kernel. This is a problem if e.g. inode numbers are generated
 dynamically - without forget(), how does the file system know when it

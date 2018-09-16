@@ -2,7 +2,7 @@
  FUSE API Functions
 ====================
 
-.. currentmodule:: llfuse
+.. currentmodule:: pyfuse3
 
 .. autofunction:: init
 .. autofunction:: main

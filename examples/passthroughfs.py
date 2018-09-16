@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 '''
-passthroughfs.py - Example file system for Python-LLFUSE
+passthroughfs.py - Example file system for pyfuse3
 
 This file system mirrors the contents of a specified directory tree. It requires
 Python 3.3 (since Python 2.x does not support the follow_symlinks parameters for
@@ -44,19 +44,19 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 import os
 import sys
 
-# If we are running from the Python-LLFUSE source directory, try
+# If we are running from the pyfuse3 source directory, try
 # to load the module from there first.
 basedir = os.path.abspath(os.path.join(os.path.dirname(sys.argv[0]), '..'))
 if (os.path.exists(os.path.join(basedir, 'setup.py')) and
-    os.path.exists(os.path.join(basedir, 'src', 'llfuse.pyx'))):
+    os.path.exists(os.path.join(basedir, 'src', 'pyfuse3.pyx'))):
     sys.path.insert(0, os.path.join(basedir, 'src'))
 
-import llfuse
+import pyfuse3
 from argparse import ArgumentParser
 import errno
 import logging
 import stat as stat_m
-from llfuse import FUSEError
+from pyfuse3 import FUSEError
 from os import fsencode, fsdecode
 from collections import defaultdict
 
@@ -65,11 +65,11 @@ faulthandler.enable()
 
 log = logging.getLogger(__name__)
 
-class Operations(llfuse.Operations):
+class Operations(pyfuse3.Operations):
 
     def __init__(self, source):
         super().__init__()
-        self._inode_path_map = { llfuse.ROOT_INODE: source }
+        self._inode_path_map = { pyfuse3.ROOT_INODE: source }
         self._lookup_cnt = defaultdict(lambda : 0)
         self._fd_inode_map = dict()
         self._inode_fd_map = dict()
@@ -140,7 +140,7 @@ class Operations(llfuse.Operations):
         except OSError as exc:
             raise FUSEError(exc.errno)
 
-        entry = llfuse.EntryAttributes()
+        entry = pyfuse3.EntryAttributes()
         for attr in ('st_ino', 'st_mode', 'st_nlink', 'st_uid', 'st_gid',
                      'st_rdev', 'st_size', 'st_atime_ns', 'st_mtime_ns',
                      'st_ctime_ns'):
@@ -345,8 +345,8 @@ class Operations(llfuse.Operations):
         return attr
 
     def statfs(self, ctx):
-        root = self._inode_path_map[llfuse.ROOT_INODE]
-        stat_ = llfuse.StatvfsData()
+        root = self._inode_path_map[pyfuse3.ROOT_INODE]
+        stat_ = pyfuse3.StatvfsData()
         try:
             statfs = os.statvfs(root)
         except OSError as exc:
@@ -447,24 +447,24 @@ def main():
     operations = Operations(options.source)
 
     log.debug('Mounting...')
-    fuse_options = set(llfuse.default_options)
+    fuse_options = set(pyfuse3.default_options)
     fuse_options.add('fsname=passthroughfs')
     if options.debug_fuse:
         fuse_options.add('debug')
-    llfuse.init(operations, options.mountpoint, fuse_options)
+    pyfuse3.init(operations, options.mountpoint, fuse_options)
 
     try:
         log.debug('Entering main loop..')
         if options.single:
-            llfuse.main(workers=1)
+            pyfuse3.main(workers=1)
         else:
-            llfuse.main()
+            pyfuse3.main()
     except:
-        llfuse.close(unmount=False)
+        pyfuse3.close(unmount=False)
         raise
 
     log.debug('Unmounting..')
-    llfuse.close()
+    pyfuse3.close()
 
 if __name__ == '__main__':
     main()

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 '''
-tmpfs.py - Example file system for Python-LLFUSE.
+tmpfs.py - Example file system for pyfuse3.
 
 This file system stores all data in memory. It is compatible with both Python
 2.x and 3.x.
@@ -27,21 +27,21 @@ from __future__ import division, print_function, absolute_import
 import os
 import sys
 
-# If we are running from the Python-LLFUSE source directory, try
+# If we are running from the pyfuse3 source directory, try
 # to load the module from there first.
 basedir = os.path.abspath(os.path.join(os.path.dirname(sys.argv[0]), '..'))
 if (os.path.exists(os.path.join(basedir, 'setup.py')) and
-    os.path.exists(os.path.join(basedir, 'src', 'llfuse.pyx'))):
+    os.path.exists(os.path.join(basedir, 'src', 'pyfuse3.pyx'))):
     sys.path.insert(0, os.path.join(basedir, 'src'))
 
-import llfuse
+import pyfuse3
 import errno
 import stat
 from time import time
 import sqlite3
 import logging
 from collections import defaultdict
-from llfuse import FUSEError
+from pyfuse3 import FUSEError
 from argparse import ArgumentParser
 
 try:
@@ -60,7 +60,7 @@ if sys.version_info[0] == 2:
 else:
     buffer = memoryview
 
-class Operations(llfuse.Operations):
+class Operations(pyfuse3.Operations):
     '''An example filesystem that stores all data in memory
 
     This is a very simple implementation with terrible performance.
@@ -115,11 +115,11 @@ class Operations(llfuse.Operations):
         now_ns = int(time() * 1e9)
         self.cursor.execute("INSERT INTO inodes (id,mode,uid,gid,mtime_ns,atime_ns,ctime_ns) "
                             "VALUES (?,?,?,?,?,?,?)",
-                            (llfuse.ROOT_INODE, stat.S_IFDIR | stat.S_IRUSR | stat.S_IWUSR
+                            (pyfuse3.ROOT_INODE, stat.S_IFDIR | stat.S_IRUSR | stat.S_IWUSR
                               | stat.S_IXUSR | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH
                               | stat.S_IXOTH, os.getuid(), os.getgid(), now_ns, now_ns, now_ns))
         self.cursor.execute("INSERT INTO contents (name, parent_inode, inode) VALUES (?,?,?)",
-                            (b'..', llfuse.ROOT_INODE, llfuse.ROOT_INODE))
+                            (b'..', pyfuse3.ROOT_INODE, pyfuse3.ROOT_INODE))
 
 
     def get_row(self, *a, **kw):
@@ -148,7 +148,7 @@ class Operations(llfuse.Operations):
                 inode = self.get_row("SELECT * FROM contents WHERE name=? AND parent_inode=?",
                                      (name, inode_p))['inode']
             except NoSuchRowError:
-                raise(llfuse.FUSEError(errno.ENOENT))
+                raise(pyfuse3.FUSEError(errno.ENOENT))
 
         return self.getattr(inode, ctx)
 
@@ -156,7 +156,7 @@ class Operations(llfuse.Operations):
     def getattr(self, inode, ctx=None):
         row = self.get_row('SELECT * FROM inodes WHERE id=?', (inode,))
 
-        entry = llfuse.EntryAttributes()
+        entry = pyfuse3.EntryAttributes()
         entry.st_ino = inode
         entry.generation = 0
         entry.entry_timeout = 300
@@ -198,7 +198,7 @@ class Operations(llfuse.Operations):
         entry = self.lookup(inode_p, name)
 
         if stat.S_ISDIR(entry.st_mode):
-            raise llfuse.FUSEError(errno.EISDIR)
+            raise pyfuse3.FUSEError(errno.EISDIR)
 
         self._remove(inode_p, name, entry)
 
@@ -206,14 +206,14 @@ class Operations(llfuse.Operations):
         entry = self.lookup(inode_p, name)
 
         if not stat.S_ISDIR(entry.st_mode):
-            raise llfuse.FUSEError(errno.ENOTDIR)
+            raise pyfuse3.FUSEError(errno.ENOTDIR)
 
         self._remove(inode_p, name, entry)
 
     def _remove(self, inode_p, name, entry):
         if self.get_row("SELECT COUNT(inode) FROM contents WHERE parent_inode=?",
                         (entry.st_ino,))[0] > 0:
-            raise llfuse.FUSEError(errno.ENOTEMPTY)
+            raise pyfuse3.FUSEError(errno.ENOTEMPTY)
 
         self.cursor.execute("DELETE FROM contents WHERE name=? AND parent_inode=?",
                         (name, inode_p))
@@ -232,7 +232,7 @@ class Operations(llfuse.Operations):
 
         try:
             entry_new = self.lookup(inode_p_new, name_new)
-        except llfuse.FUSEError as exc:
+        except pyfuse3.FUSEError as exc:
             if exc.errno != errno.ENOENT:
                 raise
             target_exists = False
@@ -252,7 +252,7 @@ class Operations(llfuse.Operations):
 
         if self.get_row("SELECT COUNT(inode) FROM contents WHERE parent_inode=?",
                         (entry_new.st_ino,))[0] > 0:
-            raise llfuse.FUSEError(errno.ENOTEMPTY)
+            raise pyfuse3.FUSEError(errno.ENOTEMPTY)
 
         self.cursor.execute("UPDATE contents SET inode=? WHERE name=? AND parent_inode=?",
                             (entry_old.st_ino, name_new, inode_p_new))
@@ -316,7 +316,7 @@ class Operations(llfuse.Operations):
         return self._create(inode_p, name, mode, ctx)
 
     def statfs(self, ctx):
-        stat_ = llfuse.StatvfsData()
+        stat_ = pyfuse3.StatvfsData()
 
         stat_.f_bsize = 512
         stat_.f_frsize = 512
@@ -436,18 +436,18 @@ if __name__ == '__main__':
     init_logging(options.debug)
     operations = Operations()
 
-    fuse_options = set(llfuse.default_options)
+    fuse_options = set(pyfuse3.default_options)
     fuse_options.add('fsname=tmpfs')
     fuse_options.discard('default_permissions')
     if options.debug_fuse:
         fuse_options.add('debug')
-    llfuse.init(operations, options.mountpoint, fuse_options)
+    pyfuse3.init(operations, options.mountpoint, fuse_options)
 
     # sqlite3 does not support multithreading
     try:
-        llfuse.main(workers=1)
+        pyfuse3.main(workers=1)
     except:
-        llfuse.close(unmount=False)
+        pyfuse3.close(unmount=False)
         raise
 
-    llfuse.close()
+    pyfuse3.close()

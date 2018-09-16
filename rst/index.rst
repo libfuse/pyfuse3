@@ -1,11 +1,11 @@
 =============================
- Python-LLFUSE Documentation
+ pyfuse3 Documentation
 =============================
 
 Table of Contents
 -----------------
 
-.. module:: llfuse
+.. module:: pyfuse3
 
 .. toctree::
    :maxdepth: 1

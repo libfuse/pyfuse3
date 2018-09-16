@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 '''
-test_fs.py - Unit tests for Python-LLFUSE.
+test_fs.py - Unit tests for pyfuse3.
 
 Copyright © 2015 Nikolaus Rath <Nikolaus.org>
 
-This file is part of Python-LLFUSE. This work may be distributed under
+This file is part of pyfuse3. This work may be distributed under
 the terms of the GNU LGPL.
 '''
 
@@ -16,8 +16,8 @@ import sys
 if __name__ == '__main__':
     sys.exit(pytest.main([__file__] + sys.argv[1:]))
 
-import llfuse
-from llfuse import FUSEError
+import pyfuse3
+from pyfuse3 import FUSEError
 import multiprocessing
 import os
 import errno
@@ -72,7 +72,7 @@ def test_invalidate_entry(testfs):
     # kernel has processed the forget() request, so we
     # wait longer and longer until it works.
     def check(_wait_time=[0.01]):
-        llfuse.setxattr(mnt_dir, 'command', b'forget_entry')
+        pyfuse3.setxattr(mnt_dir, 'command', b'forget_entry')
         time.sleep(_wait_time[0])
         fs_state.lookup_called = False
         os.stat(path)
@@ -94,7 +94,7 @@ def test_invalidate_inode(testfs):
         # kernel has processed the forget() request, so we
         # wait longer and longer until it works.
         def check(_wait_time=[0.01]):
-            llfuse.setxattr(mnt_dir, 'command', b'forget_inode')
+            pyfuse3.setxattr(mnt_dir, 'command', b'forget_inode')
             time.sleep(_wait_time[0])
             fs_state.read_called = False
             fh.seek(0)
@@ -106,7 +106,7 @@ def test_invalidate_inode(testfs):
 def test_notify_store(testfs):
     (mnt_dir, fs_state) = testfs
     with open(os.path.join(mnt_dir, 'message'), 'r') as fh:
-        llfuse.setxattr(mnt_dir, 'command', b'store')
+        pyfuse3.setxattr(mnt_dir, 'command', b'store')
         fs_state.read_called = False
         assert fh.read() == 'hello world\n'
         assert not fs_state.read_called
@@ -142,11 +142,11 @@ def test_attr_timeout(testfs):
         os.fstat(fh.fileno())
         assert fs_state.getattr_called
 
-class Fs(llfuse.Operations):
+class Fs(pyfuse3.Operations):
     def __init__(self, cross_process):
         super(Fs, self).__init__()
         self.hello_name = b"message"
-        self.hello_inode = llfuse.ROOT_INODE+1
+        self.hello_inode = pyfuse3.ROOT_INODE+1
         self.hello_data = b"hello world\n"
         self.status = cross_process
         self.lookup_cnt = 0
@@ -157,15 +157,15 @@ class Fs(llfuse.Operations):
         self.status.attr_timeout = 2
 
     def getattr(self, inode, ctx=None):
-        entry = llfuse.EntryAttributes()
-        if inode == llfuse.ROOT_INODE:
+        entry = pyfuse3.EntryAttributes()
+        if inode == pyfuse3.ROOT_INODE:
             entry.st_mode = (stat.S_IFDIR | 0o755)
             entry.st_size = 0
         elif inode == self.hello_inode:
             entry.st_mode = (stat.S_IFREG | 0o644)
             entry.st_size = len(self.hello_data)
         else:
-            raise llfuse.FUSEError(errno.ENOENT)
+            raise pyfuse3.FUSEError(errno.ENOENT)
 
         stamp = int(1438467123.985654*1e9)
         entry.st_atime_ns = stamp
@@ -186,30 +186,30 @@ class Fs(llfuse.Operations):
                 self.lookup_cnt -= 1
                 assert self.lookup_cnt >= 0
             else:
-                assert inode == llfuse.ROOT_INODE
+                assert inode == pyfuse3.ROOT_INODE
 
     def lookup(self, parent_inode, name, ctx=None):
-        if parent_inode != llfuse.ROOT_INODE or name != self.hello_name:
-            raise llfuse.FUSEError(errno.ENOENT)
+        if parent_inode != pyfuse3.ROOT_INODE or name != self.hello_name:
+            raise pyfuse3.FUSEError(errno.ENOENT)
         self.lookup_cnt += 1
         self.status.lookup_called = True
         return self.getattr(self.hello_inode)
 
     def opendir(self, inode, ctx):
-        if inode != llfuse.ROOT_INODE:
-            raise llfuse.FUSEError(errno.ENOENT)
+        if inode != pyfuse3.ROOT_INODE:
+            raise pyfuse3.FUSEError(errno.ENOENT)
         return inode
 
     def readdir(self, fh, off):
-        assert fh == llfuse.ROOT_INODE
+        assert fh == pyfuse3.ROOT_INODE
         if off == 0:
             yield (self.hello_name, self.getattr(self.hello_inode), 1)
 
     def open(self, inode, flags, ctx):
         if inode != self.hello_inode:
-            raise llfuse.FUSEError(errno.ENOENT)
+            raise pyfuse3.FUSEError(errno.ENOENT)
         if flags & os.O_RDWR or flags & os.O_WRONLY:
-            raise llfuse.FUSEError(errno.EPERM)
+            raise pyfuse3.FUSEError(errno.EPERM)
         return inode
 
     def read(self, fh, off, size):
@@ -218,15 +218,15 @@ class Fs(llfuse.Operations):
         return self.hello_data[off:off+size]
 
     def setxattr(self, inode, name, value, ctx):
-        if inode != llfuse.ROOT_INODE or name != b'command':
+        if inode != pyfuse3.ROOT_INODE or name != b'command':
             raise FUSEError(errno.ENOTSUP)
 
         if value == b'forget_entry':
-            llfuse.invalidate_entry(llfuse.ROOT_INODE, self.hello_name)
+            pyfuse3.invalidate_entry(pyfuse3.ROOT_INODE, self.hello_name)
         elif value == b'forget_inode':
-            llfuse.invalidate_inode(self.hello_inode)
+            pyfuse3.invalidate_inode(self.hello_inode)
         elif value == b'store':
-            llfuse.notify_store(self.hello_inode, offset=0,
+            pyfuse3.notify_store(self.hello_inode, offset=0,
                                 data=self.hello_data)
         else:
             raise FUSEError(errno.EINVAL)
@@ -245,10 +245,10 @@ def run_fs(mountpoint, cross_process):
     root_logger.setLevel(logging.DEBUG)
 
     testfs = Fs(cross_process)
-    fuse_options = set(llfuse.default_options)
-    fuse_options.add('fsname=llfuse_testfs')
-    llfuse.init(testfs, mountpoint, fuse_options)
+    fuse_options = set(pyfuse3.default_options)
+    fuse_options.add('fsname=pyfuse3_testfs')
+    pyfuse3.init(testfs, mountpoint, fuse_options)
     try:
-        llfuse.main(workers=1)
+        pyfuse3.main(workers=1)
     finally:
-        llfuse.close()
+        pyfuse3.close()

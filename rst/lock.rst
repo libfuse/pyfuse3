@@ -2,9 +2,9 @@
  The global lock
 =================
 
-.. currentmodule:: llfuse
+.. currentmodule:: pyfuse3
 
-Python-LLFUSE uses a global lock to synchronize concurrent requests. Since
+pyfuse3 uses a global lock to synchronize concurrent requests. Since
 the GIL already enforces that Python threads do not run concurrently,
 this does not result in any additional performance penalties. However,
 the use of an explicit lock allows direct control over which Python
@@ -28,7 +28,7 @@ indirectly releases the lock is explicitly marked as such.
 
 
 The global lock is controlled with the `lock` and `lock_released`
-attributes of the `llfuse` module:
+attributes of the `pyfuse3` module:
 
 .. py:attribute:: lock_released
 
@@ -43,16 +43,15 @@ attributes of the `llfuse` module:
    with the global lock acquired.
 
    Note that this object resembles a ``threading.Lock`` instance but
-   is an instance of the `llfuse.Lock` class which is quite different from
+   is an instance of the `pyfuse3.Lock` class which is quite different from
    ``threading.Lock``.
 
 The `lock` object has the following methods:
 
-.. class:: llfuse.Lock
+.. class:: pyfuse3.Lock
 
   .. automethod:: Lock.acquire()
 
   .. automethod:: Lock.release
 
   .. automethod:: Lock.yield_
-

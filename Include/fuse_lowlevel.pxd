@@ -5,7 +5,7 @@ This file contains Cython definitions for fuse_lowlevel.h
 
 Copyright © 2010 Nikolaus Rath <Nikolaus.org>
 
-This file is part of Python-LLFUSE. This work may be distributed under
+This file is part of pyfuse3. This work may be distributed under
 the terms of the GNU LGPL.
 '''
 

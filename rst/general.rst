@@ -2,24 +2,24 @@
  General Information
 =====================
 
-.. currentmodule:: llfuse
+.. currentmodule:: pyfuse3
 
 .. _getting_started:
 
 Getting started
 ===============
 
-A file system is implemented by subclassing the `llfuse.Operations`
+A file system is implemented by subclassing the `pyfuse3.Operations`
 class and implementing the various request handlers.  The handlers
 respond to requests received from the FUSE kernel module and perform
 functions like looking up the inode given a file name, looking up
 attributes of an inode, opening a (file) inode for reading or writing
 or listing the contents of a (directory) inode.
 
-An instance of the operations class is passed to `llfuse.init` to
+An instance of the operations class is passed to `pyfuse3.init` to
 mount the file system. To enter the request handling loop, run
-`llfuse.main`. This function will return when the file system should
-be unmounted again, which is done by calling `llfuse.close`.
+`pyfuse3.main`. This function will return when the file system should
+be unmounted again, which is done by calling `pyfuse3.close`.
 
 All character data (directory entry names, extended attribute names
 and values, symbolic link targets etc) are passed as `bytes` and must
@@ -27,7 +27,7 @@ be returned as `bytes`. This applies to both running under Python 2.x
 and 3.x
 
 For easier debugging, it is strongly recommended that applications
-using Python-LLFUSE also make use of the faulthandler_ module.
+using pyfuse3 also make use of the faulthandler_ module.
 
 .. _faulthandler: http://docs.python.org/3/library/faulthandler.html
 
@@ -73,7 +73,7 @@ file systems automatically take advantage of. Specifically:
   concurrently, but never at the same time as e.g. a rename or mkdir
   operation).
 
-* Unless writeback caching is enabled (which Python-LLFUSE does not
+* Unless writeback caching is enabled (which pyfuse3 does not
   yet allow), calls to `~Operations.write` for the same inode are
   automatically serialized (i.e., there are never concurrent calls for
   the same inode even when multithreading is enabled).

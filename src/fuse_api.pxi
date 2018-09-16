@@ -2,11 +2,11 @@
 fuse_api.pxi
 
 This file defines the Python bindings to common FUSE API functions.
-It is included by llfuse.pyx.
+It is included by pyfuse3.pyx.
 
 Copyright © 2013 Nikolaus Rath <Nikolaus.org>
 
-This file is part of Python-LLFUSE. This work may be distributed under
+This file is part of pyfuse3. This work may be distributed under
 the terms of the GNU LGPL.
 
 '''
@@ -74,7 +74,7 @@ def setxattr(path, name, bytes value, namespace='user'):
     parameter is ignored.
 
     In contrast to the `os.setxattr` function from the standard library, the
-    method provided by Python-LLFUSE is also available for non-Linux systems.
+    method provided by pyfuse3 is also available for non-Linux systems.
     '''
 
     if not isinstance(path, str_t):
@@ -130,7 +130,7 @@ def getxattr(path, name, size_t size_guess=128, namespace='user'):
     parameter is ignored.
 
     In contrast to the `os.getxattr` function from the standard library, the
-    method provided by Python-LLFUSE is also available for non-Linux systems.
+    method provided by pyfuse3 is also available for non-Linux systems.
     '''
 
     if not isinstance(path, str_t):
@@ -209,10 +209,10 @@ def init(ops, mountpoint, options=default_options):
     reasonable defaults. It is recommended to use these options as a basis and
     add or remove options as necessary. For example::
 
-        my_opts = set(llfuse.default_options)
+        my_opts = set(pyfuse3.default_options)
         my_opts.add('allow_other')
         my_opts.discard('default_permissions')
-        llfuse.init(ops, mountpoint, my_opts)
+        pyfuse3.init(ops, mountpoint, my_opts)
 
     Valid options are listed under ``struct
     fuse_opt fuse_mount_opts[]``
@@ -221,7 +221,7 @@ def init(ops, mountpoint, options=default_options):
     (`fuse_lowlevel_c:2626 <https://github.com/libfuse/libfuse/blob/master/lib/fuse_lowlevel.c#L2626>`_).
     '''
 
-    log.debug('Initializing llfuse')
+    log.debug('Initializing pyfuse3')
     cdef fuse_args f_args
 
     if not isinstance(mountpoint, str_t):
@@ -258,7 +258,7 @@ def main(workers=None, handle_signals=True):
     '''Run FUSE main loop
 
     *workers* specifies the number of threads that will process requests
-    concurrently. If *workers* is `None`, llfuse will pick a reasonable
+    concurrently. If *workers* is `None`, pyfuse3 will pick a reasonable
     number bigger than one.  If *workers* is ``1`` all requests will be
     processed by the thread calling `main`.
 

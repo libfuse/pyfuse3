@@ -4,14 +4,14 @@ operations.pxi
 
 Copyright © 2013 Nikolaus Rath <Nikolaus.org>
 
-This file is part of Python-LLFUSE. This work may be distributed under
+This file is part of pyfuse3. This work may be distributed under
 the terms of the GNU LGPL.
 '''
 
 class Operations(object):
     '''
     This class defines the general and request handler methods that an
-    Python-LLFUSE file system may implement. If a particular request handler has
+    pyfuse3 file system may implement. If a particular request handler has
     not been implemented, it must raise `FUSEError` with an errorcode of
     `errno.ENOSYS`. Further requests of this type will then be handled directly
     by the FUSE kernel module without calling the handler again.
@@ -38,7 +38,7 @@ class Operations(object):
     def destroy(self):
         '''Clean up operations.
 
-        This method will be called when `llfuse.close` has been called and the
+        This method will be called when `pyfuse3.close` has been called and the
         file system is about to be unmounted.
 
         This method must not raise any exceptions (not even `FUSEError`), since

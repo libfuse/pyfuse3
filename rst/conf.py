@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Python-LLFUSE documentation build configuration file, created by
+# pyfuse3 documentation build configuration file, created by
 # sphinx-quickstart on Sat Oct 16 14:14:40 2010.
 #
 # This file is execfile()d with the current directory set to its containing dir.
@@ -47,7 +47,7 @@ master_doc = 'index'
 nitpicky = True
 
 # General information about the project.
-project = u'Python-LLFUSE'
+project = u'pyfuse3'
 copyright = u'2010-2015, Nikolaus Rath'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -171,7 +171,7 @@ html_show_sourcelink = False
 #html_file_suffix = ''
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'llfusedoc'
+htmlhelp_basename = 'pyfuse3doc'
 
 
 # -- Options for LaTeX output --------------------------------------------------
@@ -185,7 +185,7 @@ htmlhelp_basename = 'llfusedoc'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'llfuse.tex', u'Python-LLFUSE Documentation',
+  ('index', 'pyfuse3.tex', u'pyfuse3 Documentation',
    u'Nikolaus Rath', 'manual'),
 ]
 
