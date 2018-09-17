@@ -27,7 +27,7 @@ extensions = ['sphinx.ext.autodoc', 'sphinx.ext.intersphinx',
               'sphinx_cython' ]
 
 # Link to Python standard library
-intersphinx_mapping = {'python': ('http://docs.python.org/3/', None) }
+intersphinx_mapping = {'python': ('https://docs.python.org/3/', None) }
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
