@@ -49,7 +49,7 @@ cdef void fuse_lookup (fuse_req_t req, fuse_ino_t parent,
 
 
 cdef void fuse_forget (fuse_req_t req, fuse_ino_t ino,
-                       ulong_t nlookup) with gil:
+                       uint64_t nlookup) with gil:
     try:
         with lock:
             operations.forget([(ino, nlookup)])
@@ -255,14 +255,15 @@ cdef void fuse_symlink (fuse_req_t req, const_char *link, fuse_ino_t parent,
         log.error('fuse_symlink(): fuse_reply_* failed with %s', strerror(-ret))
 
 cdef void fuse_rename (fuse_req_t req, fuse_ino_t parent, const_char *name,
-                       fuse_ino_t newparent, const_char *newname) with gil:
+                       fuse_ino_t newparent, const_char *newname, unsigned flags) with gil:
     cdef int ret
 
     try:
         ctx = get_request_context(req)
         with lock:
             operations.rename(parent, PyBytes_FromString(name),
-                              newparent, PyBytes_FromString(newname), ctx)
+                              newparent, PyBytes_FromString(newname),
+                              flags, ctx)
         ret = fuse_reply_err(req, 0)
     except FUSEError as e:
         ret = fuse_reply_err(req, e.errno)

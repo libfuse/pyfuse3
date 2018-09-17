@@ -25,7 +25,16 @@ cdef extern from * nogil: # fuse_common.h should not be included
         uint64_t lock_owner
 
     struct fuse_conn_info:
-        pass
+        unsigned proto_major
+        unsigned proto_minor
+        unsigned max_write
+        unsigned max_read
+        unsigned max_readahead
+        unsigned capable
+        unsigned want
+        unsigned max_background
+        unsigned congestion_threshold
+        unsigned time_gran
 
     struct fuse_session:
         pass
@@ -33,8 +42,32 @@ cdef extern from * nogil: # fuse_common.h should not be included
     struct fuse_chan:
         pass
 
-    fuse_chan *fuse_mount(char *mountpoint, fuse_args *args)
-    void fuse_unmount(char *mountpoint, fuse_chan *ch)
+    struct fuse_loop_config:
+       int clone_fd
+       unsigned max_idle_threads
+
+    # Capability bits for fuse_conn_info.{capable,want}
+    enum:
+      FUSE_CAP_ASYNC_READ
+      FUSE_CAP_POSIX_LOCKS
+      FUSE_CAP_ATOMIC_O_TRUNC
+      FUSE_CAP_EXPORT_SUPPORT
+      FUSE_CAP_DONT_MASK
+      FUSE_CAP_SPLICE_WRITE
+      FUSE_CAP_SPLICE_MOVE
+      FUSE_CAP_SPLICE_READ
+      FUSE_CAP_FLOCK_LOCKS
+      FUSE_CAP_IOCTL_DIR
+      FUSE_CAP_AUTO_INVAL_DATA
+      FUSE_CAP_READDIRPLUS
+      FUSE_CAP_READDIRPLUS_AUTO
+      FUSE_CAP_ASYNC_DIO
+      FUSE_CAP_WRITEBACK_CACHE
+      FUSE_CAP_NO_OPEN_SUPPORT
+      FUSE_CAP_PARALLEL_DIROPS
+      FUSE_CAP_POSIX_ACL
+      FUSE_CAP_HANDLE_KILLPRIV
+
     int fuse_set_signal_handlers(fuse_session *se)
     void fuse_remove_signal_handlers(fuse_session *se)
 

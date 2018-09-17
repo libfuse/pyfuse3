@@ -8,7 +8,6 @@ Copyright © 2013 Nikolaus Rath <Nikolaus.org>
 
 This file is part of pyfuse3. This work may be distributed under
 the terms of the GNU LGPL.
-
 '''
 
 def listdir(path):
@@ -189,12 +188,8 @@ def getxattr(path, name, size_t size_guess=128, namespace='user'):
     finally:
         stdlib.free(buf)
 
-if os.uname()[0] == 'Darwin':
-    default_options = frozenset(('big_writes', 'default_permissions',
-                                 'no_splice_read', 'splice_write', 'splice_move'))
-else:
-    default_options = frozenset(('big_writes', 'nonempty', 'default_permissions',
-                                 'no_splice_read', 'splice_write', 'splice_move'))
+
+default_options = frozenset(('default_permissions',))
 
 def init(ops, mountpoint, options=default_options):
     '''Initialize and mount FUSE file system
@@ -213,13 +208,14 @@ def init(ops, mountpoint, options=default_options):
 
     Valid options are listed under ``struct
     fuse_opt fuse_mount_opts[]``
-    (`mount.c:82 <https://github.com/libfuse/libfuse/blob/master/lib/mount.c#L82>`_)
+    (in `mount.c <https://github.com/libfuse/libfuse/blob/fuse-3.2.6/lib/mount.c#L80>`_)
     and ``struct fuse_opt fuse_ll_opts[]``
-    (`fuse_lowlevel_c:2626 <https://github.com/libfuse/libfuse/blob/master/lib/fuse_lowlevel.c#L2626>`_).
+    (in `fuse_lowlevel_c <https://github.com/libfuse/libfuse/blob/fuse-3.2.6/lib/fuse_lowlevel.c#L2572>`_).
     '''
 
     log.debug('Initializing pyfuse3')
     cdef fuse_args f_args
+    cdef int res
 
     if not isinstance(mountpoint, str):
         raise TypeError('*mountpoint_* argument must be of type str')
@@ -228,26 +224,22 @@ def init(ops, mountpoint, options=default_options):
     global fuse_ops
     global mountpoint_b
     global session
-    global channel
 
     mountpoint_b = str2bytes(os.path.abspath(mountpoint))
     operations = ops
 
     make_fuse_args(options, &f_args)
-    log.debug('Calling fuse_mount')
-    channel = fuse_mount(<char*>mountpoint_b, &f_args)
-    if not channel:
-        raise RuntimeError('fuse_mount failed')
 
-    log.debug('Calling fuse_lowlevel_new')
+    log.debug('Calling fuse_session_new')
     init_fuse_ops()
-    session = fuse_lowlevel_new(&f_args, &fuse_ops, sizeof(fuse_ops), NULL)
+    session = fuse_session_new(&f_args, &fuse_ops, sizeof(fuse_ops), NULL)
     if not session:
-        fuse_unmount(<char*>mountpoint_b, channel)
-        raise RuntimeError("fuse_lowlevel_new() failed")
+        raise RuntimeError("fuse_session_new() failed")
 
-    log.debug('Calling fuse_session_add_chan')
-    fuse_session_add_chan(session, channel)
+    log.debug('Calling fuse_session_mount')
+    res = fuse_session_mount(session, <char*>mountpoint_b)
+    if res != 0:
+        raise RuntimeError('fuse_session_mount failed')
 
     pthread_mutex_init(&exc_info_mutex, NULL)
 
@@ -269,8 +261,6 @@ def main(workers=None, handle_signals=True):
     while the other three signals will cause request processing to stop
     and the function to return.  *SIGINT* (Ctrl-C) will thus *not* result in
     a `KeyboardInterrupt` exception while this function is runnning.
-    Note setting *handle_signals* to `False` means you must handle the signals
-    by yourself and call `stop` to make the `main` returns.
 
     When the function returns because the file system has received an unmount
     request it will return `None`. If it returns because it has received a
@@ -332,31 +322,18 @@ def main(workers=None, handle_signals=True):
         return exit_reason
 
 cdef session_loop_single():
-    cdef void* mem
-    cdef size_t size
-
-    size = fuse_chan_bufsize(channel)
-    mem = calloc_or_raise(1, size)
-    try:
-        session_loop(mem, size)
-    finally:
-        stdlib.free(mem)
-
-cdef session_loop(void* mem, size_t size):
     '''Process requests'''
 
     cdef int res
-    cdef fuse_chan *ch
     cdef fuse_buf buf
 
+    buf.mem = NULL
+    buf.size = 0
+    buf.pos = 0
+    buf.flags = 0
     while not fuse_session_exited(session):
-        ch = channel
-        buf.mem = mem
-        buf.size = size
-        buf.pos = 0
-        buf.flags = 0
         with nogil:
-            res = fuse_session_receive_buf(session, &buf, &ch)
+            res = fuse_session_receive_buf(session, &buf)
 
         if res == -errno.EINTR:
             continue
@@ -366,15 +343,14 @@ cdef session_loop(void* mem, size_t size):
         elif res == 0:
             break
 
-        fuse_session_process_buf(session, &buf, ch)
+        fuse_session_process_buf(session, &buf)
+    stdlib.free(buf.mem)
 
 ctypedef struct worker_data_t:
     sem_t* sem
     int thread_no
     int started
     pthread_t thread_id
-    void* buf
-    size_t bufsize
 
 cdef void* worker_start(void* data) with gil:
     cdef worker_data_t *wd
@@ -387,7 +363,7 @@ cdef void* worker_start(void* data) with gil:
     t.name = 'fuse-worker-%d' % (wd.thread_no+1,)
 
     try:
-        session_loop(wd.buf, wd.bufsize)
+        session_loop_single()
     except:
         fuse_session_exit(session)
         log.error('FUSE worker thread %d terminated with exception, '
@@ -413,7 +389,6 @@ cdef session_loop_mt(workers):
     cdef worker_data_t *wd
     cdef sigset_t newset, oldset
     cdef int res, i
-    cdef size_t bufsize
     cdef sem_t sem
 
     if sem_init(&sem, 0, 0) != 0:
@@ -427,14 +402,11 @@ cdef session_loop_mt(workers):
     sigaddset(&newset, signal.SIGQUIT);
 
     PyEval_InitThreads()
-    bufsize = fuse_chan_bufsize(channel)
     wd = <worker_data_t*> calloc_or_raise(workers, sizeof(worker_data_t))
     try:
         for i in range(workers):
             wd[i].sem = &sem
             wd[i].thread_no = i
-            wd[i].bufsize = bufsize
-            wd[i].buf = calloc_or_raise(1, bufsize)
 
             # Ensure that signals get delivered to main thread
             pthread_sigmask(SIG_BLOCK, &newset, &oldset)
@@ -461,9 +433,6 @@ cdef session_loop_mt(workers):
                 if res != 0:
                     log.error('pthread_join failed with: %s', strerror(res))
 
-            if wd[i].buf != NULL:
-                stdlib.free(wd[i].buf)
-
         stdlib.free(wd)
 
 
@@ -488,23 +457,17 @@ def close(unmount=True):
 
     global mountpoint_b
     global session
-    global channel
     global exc_info
 
-    log.debug('Calling fuse_session_remove_chan')
-    fuse_session_remove_chan(channel)
+    if unmount:
+        log.debug('Calling fuse_session_unmount')
+        fuse_session_unmount(session)
+
     log.debug('Calling fuse_session_destroy')
     fuse_session_destroy(session)
 
-    if unmount:
-        log.debug('Calling fuse_unmount')
-        fuse_unmount(<char*>mountpoint_b, channel)
-    else:
-        fuse_chan_destroy(channel)
-
     mountpoint_b = None
     session = NULL
-    channel = NULL
 
     # destroy handler may have given us an exception
     if exc_info:
@@ -551,22 +514,6 @@ def invalidate_entry(fuse_ino_t inode_p, bytes name):
     req.name = name
     _notify_queue.put(req)
 
-def get_ino_t_bits():
-    '''Return number of bits available for inode numbers
-
-    Attempts to use inode values that need more bytes will result in
-    `OverflowError`.
-    '''
-    return min(sizeof(ino_t), sizeof(fuse_ino_t)) * 8
-
-def get_off_t_bits():
-    '''Return number of bytes available for file offsets
-
-    Attempts to use values whose representation needs more bytes will
-    result in `OverflowError`.
-    '''
-    return sizeof(off_t) * 8
-
 def notify_store(inode, offset, data):
     '''Store data in kernel page cache
 
@@ -598,7 +545,7 @@ def notify_store(inode, offset, data):
     ino = inode
     off = offset
     with nogil:
-        ret = fuse_lowlevel_notify_store(channel, ino, off, &bufvec, 0)
+        ret = fuse_lowlevel_notify_store(session, ino, off, &bufvec, 0)
 
     PyBuffer_Release(&pybuf)
     if ret != 0:

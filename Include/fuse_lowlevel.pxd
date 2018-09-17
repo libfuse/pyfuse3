@@ -16,20 +16,19 @@ from libc.sys.statvfs cimport *
 from libc.stdlib cimport const_char
 from libc.stdint cimport uint32_t
 
-# Based on fuse sources, revision tag fuse_2_9_4
+# Based on fuse sources, revision tag fuse-3.2.6
 cdef extern from "<fuse_lowlevel.h>" nogil:
-    int FUSE_ROOT_ID
+    enum:
+      FUSE_ROOT_ID
 
-    ctypedef int fuse_ino_t
+    ctypedef unsigned fuse_ino_t
     ctypedef struct fuse_req:
         pass
     ctypedef fuse_req* fuse_req_t
 
-    ctypedef int ulong_t "unsigned long"
-
     struct fuse_entry_param:
         fuse_ino_t ino
-        unsigned long generation
+        uint64_t generation
         struct_stat attr
         double attr_timeout
         double entry_timeout
@@ -41,7 +40,7 @@ cdef extern from "<fuse_lowlevel.h>" nogil:
         mode_t umask
 
     struct fuse_forget_data:
-        uint64_t ino
+        fuse_ino_t ino
         uint64_t nlookup
 
     ctypedef fuse_ctx const_fuse_ctx "const struct fuse_ctx"
@@ -53,12 +52,14 @@ cdef extern from "<fuse_lowlevel.h>" nogil:
     int FUSE_SET_ATTR_MTIME
     int FUSE_SET_ATTR_ATIME_NOW
     int FUSE_SET_ATTR_MTIME_NOW
+    int FUSE_SET_ATTR_CTIME
 
+    # Request handlers
     struct fuse_lowlevel_ops:
         void (*init) (void *userdata, fuse_conn_info *conn)
         void (*destroy) (void *userdata)
         void (*lookup) (fuse_req_t req, fuse_ino_t parent, const_char *name)
-        void (*forget) (fuse_req_t req, fuse_ino_t ino, ulong_t nlookup)
+        void (*forget) (fuse_req_t req, fuse_ino_t ino, uint64_t nlookup)
         void (*getattr) (fuse_req_t req, fuse_ino_t ino,
                          fuse_file_info *fi)
         void (*setattr) (fuse_req_t req, fuse_ino_t ino, struct_stat *attr,
@@ -73,7 +74,7 @@ cdef extern from "<fuse_lowlevel.h>" nogil:
         void (*symlink) (fuse_req_t req, const_char *link, fuse_ino_t parent,
                          const_char *name)
         void (*rename) (fuse_req_t req, fuse_ino_t parent, const_char *name,
-                        fuse_ino_t newparent, const_char *newname)
+                        fuse_ino_t newparent, const_char *newname, unsigned flags)
         void (*link) (fuse_req_t req, fuse_ino_t ino, fuse_ino_t newparent,
                       const_char *newname)
         void (*open) (fuse_req_t req, fuse_ino_t ino,
@@ -114,7 +115,11 @@ cdef extern from "<fuse_lowlevel.h>" nogil:
                               fuse_forget_data *forgets)
         void (*fallocate) (fuse_req_t req, fuse_ino_t ino, int mode,
                            off_t offset, off_t length, fuse_file_info *fi)
+        void (*readdirplus) (fuse_req_t req, fuse_ino_t ino, size_t size, off_t off,
+                             fuse_file_info *fi)
 
+
+    # Reply functions
     int fuse_reply_err(fuse_req_t req, int err)
     void fuse_reply_none(fuse_req_t req)
     int fuse_reply_entry(fuse_req_t req, fuse_entry_param *e)
@@ -134,43 +139,46 @@ cdef extern from "<fuse_lowlevel.h>" nogil:
     size_t fuse_add_direntry(fuse_req_t req, const_char *buf, size_t bufsize,
                              const_char *name, struct_stat *stbuf,
                              off_t off)
+    size_t fuse_add_direntry_plus(fuse_req_t req, char *buf, size_t bufsize,
+                              char *name, fuse_entry_param *e, off_t off)
 
-    int fuse_lowlevel_notify_inval_inode(fuse_chan *ch, fuse_ino_t ino,
+    # Notification
+    int fuse_lowlevel_notify_inval_inode(fuse_session *se, fuse_ino_t ino,
                                          off_t off, off_t len)
-    int fuse_lowlevel_notify_inval_entry(fuse_chan *ch, fuse_ino_t parent,
+    int fuse_lowlevel_notify_inval_entry(fuse_session *se, fuse_ino_t parent,
                                          const_char *name, size_t namelen)
-    int fuse_lowlevel_notify_delete(fuse_chan *ch, fuse_ino_t parent,
+    int fuse_lowlevel_notify_delete(fuse_session *se, fuse_ino_t parent,
                                     fuse_ino_t child, const_char *name,
                                     size_t namelen)
-    int fuse_lowlevel_notify_store(fuse_chan *ch, fuse_ino_t ino,
+    int fuse_lowlevel_notify_store(fuse_session *se, fuse_ino_t ino,
                                    off_t offset, fuse_bufvec *bufv,
                                    fuse_buf_copy_flags flags)
-    int fuse_lowlevel_notify_retrieve(fuse_chan *ch, fuse_ino_t ino,
-                                      size_t size, off_t offset, void *cookie);
+    int fuse_lowlevel_notify_retrieve(fuse_session *se, fuse_ino_t ino,
+                                      size_t size, off_t offset, void *cookie)
 
+    # Utility functions
     void *fuse_req_userdata(fuse_req_t req)
     fuse_ctx *fuse_req_ctx(fuse_req_t req)
     int fuse_req_getgroups(fuse_req_t req, size_t size, gid_t list[])
-    fuse_session *fuse_lowlevel_new(fuse_args *args,
-                                    fuse_lowlevel_ops *op,
-                                    size_t op_size, void *userdata)
 
 
-    struct fuse_session_ops:
-        pass
+    # Inquiry functions
+    void fuse_lowlevel_version()
+    void fuse_lowlevel_help()
 
-    fuse_session *fuse_session_new(fuse_session_ops *op, void *data)
-    void fuse_session_add_chan(fuse_session *se, fuse_chan *ch)
-    int fuse_session_receive_buf(fuse_session *se, fuse_buf *buf,
-                                 fuse_chan **chp)
-    void fuse_session_process_buf(fuse_session *se,
-                                  fuse_buf *buf, fuse_chan *ch)
-    void fuse_session_remove_chan(fuse_chan *ch)
-    void fuse_session_reset(fuse_session *se)
-    void fuse_session_exit(fuse_session *se)
-    void fuse_session_destroy(fuse_session *se)
+    # Filesystem setup & teardown
+    fuse_session *fuse_session_new(fuse_args *args, fuse_lowlevel_ops *op,
+                                   size_t op_size, void *userdata)
+    int fuse_session_mount(fuse_session *se, char *mountpoint)
     int fuse_session_loop(fuse_session *se)
-    int fuse_session_loop_mt(fuse_session *se)
-    void fuse_chan_destroy(fuse_chan *ch)
-    size_t fuse_chan_bufsize(fuse_chan *ch)
-    int fuse_session_exited(fuse_session *se)
+    int fuse_session_loop_mt(fuse_session *se, fuse_loop_config *config);
+    void fuse_session_exit(fuse_session *se)
+    void fuse_session_reset(fuse_session *se)
+    bint fuse_session_exited(fuse_session *se)
+    void fuse_session_unmount(fuse_session *se)
+    void fuse_session_destroy(fuse_session *se)
+
+    # Custom event loop support
+    int fuse_session_fd(fuse_session *se)
+    int fuse_session_receive_buf(fuse_session *se, fuse_buf *buf)
+    void fuse_session_process_buf(fuse_session *se, fuse_buf *buf)

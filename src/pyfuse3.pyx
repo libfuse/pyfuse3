@@ -125,7 +125,6 @@ fse = sys.getfilesystemencoding()
 cdef object operations
 cdef object mountpoint_b
 cdef fuse_session* session = NULL
-cdef fuse_chan* channel = NULL
 cdef fuse_lowlevel_ops fuse_ops
 cdef object exc_info
 cdef int exit_reason
@@ -138,12 +137,7 @@ lock_released = NoLockManager.__new__(NoLockManager)
 cdef object _notify_queue
 _notify_queue = Queue(maxsize=1000)
 
-# Exported for access from Python code
-# (in the Cython source, we want ENOATTR to refer
-#  to the C constant, not a Python object)
-ROOT_INODE = FUSE_ROOT_ID
-__version__ = PYFUSE3_VERSION.decode('utf-8')
-globals()['ENOATTR'] = ENOATTR
+include "constants.pxi"
 
 #######################
 # FUSE REQUEST HANDLERS

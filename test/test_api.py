@@ -22,10 +22,6 @@ import pytest
 from copy import copy
 from pickle import PicklingError
 
-def test_inquire_bits():
-    assert 0 < pyfuse3.get_ino_t_bits() < 256
-    assert 0 < pyfuse3.get_off_t_bits() < 256
-
 def test_listdir():
     # There is a race-condition here if /usr/bin is modified while the test
     # runs - but hopefully this is sufficiently rare.

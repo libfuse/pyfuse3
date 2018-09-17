@@ -239,13 +239,21 @@ class Operations(object):
         raise FUSEError(errno.ENOSYS)
 
     def rename(self, parent_inode_old, name_old, parent_inode_new,
-               name_new, ctx):
+               name_new, flags, ctx):
         '''Rename a directory entry.
 
         This method must rename *name_old* in the directory with inode
         *parent_inode_old* to *name_new* in the directory with inode
         *parent_inode_new*.  If *name_new* already exists, it should be
-        overwritten.  *ctx* will be a `RequestContext` instance.
+        overwritten.
+
+        *flags* may be `RENAME_EXCHANGE` or `RENAME_NOREPLACE`. If
+        `RENAME_NOREPLACE` is specified, the filesystem must not overwrite
+        *name_new* if it exists and return an error instead. If
+        `RENAME_EXCHANGE` is specified, the filesystem must atomically exchange
+        the two files, i.e. both must exist and neither may be deleted.
+
+        *ctx* will be a `RequestContext` instance.
 
         Let the inode associated with *name_old* in *parent_inode_old* be
         *inode_moved*, and the inode associated with *name_new* in

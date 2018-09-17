@@ -14,6 +14,17 @@
    The inode of the root directory, i.e. the mount point of the file
    system.
 
+.. py:data:: RENAME_EXCHANGE
+
+   A flag that may be passed to the `~Operations.rename` handler. When
+   passed, the handler must atomically exchange the two paths (which
+   must both exist).
+
+.. py:data:: RENAME_NOREPLACE
+
+   A flag that may be passed to the `~Operations.rename` handler. When
+   passed, the handler must replace an existing target.
+
 .. py:data:: default_options
 
    This is a recommended set of options that should be passed to
@@ -29,30 +40,6 @@
 
    * ``default_permissions`` enables permission checking by kernel.
      Without this any umask (or uid/gid) would not have an effect.
-
-   * ``splice_write`` just means to use splice if possible (i.e., if data is
-     passed in a fd), and can be overriden using FUSE_BUF_NO_SPLICE. So it's a
-     good idea to always activate it.
-
-   * ``splice_read`` means that requests are spliced from the fuse fd to a
-     (thread-specific) intermediate pipe (this is presumably done to prevent
-     the write handler from reading part of the next request). If splice_read
-     is not set, fuse instead reads the whole request into memory and passes
-     this buffer along.  If we eventually read the request into a buffer anyway
-     (as we have to if we want to create a Python object), using splice_read()
-     is thus expected to *decrease* performance because of the intermediate
-     pipe.
-
-   * ``splice_move`` is a no-op as of Linux 2.6.21. However, it will become
-     active as soon as some problems with the initial implementation have been
-     solved.  If active, it's expected to improve performance because we move
-     pages from the page instead of copying them.
-
-   * ``nonempty`` allows mounts over non-empty file/dir.
-
-   * ``big_writes`` enables larger than 4kB writes.
-
-   .. versionadded:: 0.42
 
 .. autoexception:: FUSEError
 

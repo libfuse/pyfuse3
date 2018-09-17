@@ -9,12 +9,8 @@ The pyfuse3 Module
 
 .. start-intro
 
-pyfuse3 is a set of Python bindings for libfuse_. It requires at least
-libfuse 3 and Python 3. Like libfuse, pyfuse3 is developed for Linux
-systems and we try to maintain compatibility with OS-X, FreeBSD and
-NetBSD as well. However, due to lack of pre-release testers we can't
-guarantee that every pyfuse3 release will run on these platforms -
-please report any bugs and we will try to fix them.
+pyfuse3 is a set of Python 3 bindings for `libfuse 3`_ and enables you
+to easily write a full-featured Linux filesystem in Python.
 
 pyfuse3 releases can be downloaded from PyPi_. The documentation
 can be `read online`__ and is also included in the ``doc/html``
@@ -52,7 +48,7 @@ Professional support is offered from `Rath Consulting`_.
 
 
 .. __: http://www.rath.org/pyfuse3-docs/
-.. _libfuse: http://github.com/libfuse/libfuse
+.. _libfuse 3: http://github.com/libfuse/libfuse
 .. _FUSE mailing list: https://lists.sourceforge.net/lists/listinfo/fuse-devel
 .. _issue tracker: https://github.com/libfuse/pyfuse3/issues
 .. _mailing list archive: http://dir.gmane.org/gmane.comp.file-systems.fuse.devel
