@@ -65,6 +65,8 @@ log = logging.getLogger(__name__)
 
 class Operations(pyfuse3.Operations):
 
+    enable_writeback_cache = True
+
     def __init__(self, source):
         super().__init__()
         self._inode_path_map = { pyfuse3.ROOT_INODE: source }

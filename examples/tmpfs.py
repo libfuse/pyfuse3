@@ -63,6 +63,7 @@ class Operations(pyfuse3.Operations):
     * lookup counts are not maintained
     '''
 
+    enable_writeback_cache = True
 
     def __init__(self):
         super(Operations, self).__init__()
