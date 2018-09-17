@@ -26,6 +26,10 @@ cdef class Operations:
     this class all just raise ``FUSEError(ENOSYS)`` or do nothing).
     '''
 
+    supports_dot_lookup = True
+    enable_writeback_cache = False
+    enable_acl = False
+
     def init(self):
         '''Initialize operations
 

@@ -15,6 +15,17 @@ cdef void fuse_init (void *userdata, fuse_conn_info *conn) with gil:
         if not conn.capable & FUSE_CAP_READDIRPLUS:
             raise RuntimeError('Kernel too old, pyfuse3 requires kernel 3.9 or newer!')
         conn.want &= ~(<unsigned> FUSE_CAP_READDIRPLUS_AUTO)
+
+        if (operations.supports_dot_lookup and
+            conn.capable & FUSE_CAP_EXPORT_SUPPORT):
+            conn.want |= FUSE_CAP_EXPORT_SUPPORT
+        if (operations.enable_writeback_cache and
+            conn.capable & FUSE_CAP_WRITEBACK_CACHE):
+            conn.want |= FUSE_CAP_WRITEBACK_CACHE
+        if (operations.enable_acl and
+            conn.capable & FUSE_CAP_POSIX_ACL):
+            conn.want |= FUSE_CAP_POSIX_ACL
+
         operations.init()
     except:
         handle_exc(NULL)

@@ -10,7 +10,7 @@ Getting started
 ===============
 
 A file system is implemented by subclassing the `pyfuse3.Operations`
-class and implementing the various request handlers.  The handlers
+class and implementing the various request handlers. The handlers
 respond to requests received from the FUSE kernel module and perform
 functions like looking up the inode given a file name, looking up
 attributes of an inode, opening a (file) inode for reading or writing
