@@ -86,9 +86,7 @@ def test_xattr():
 def test_copy():
 
     for obj in (pyfuse3.SetattrFields(),
-                pyfuse3.RequestContext(),
-                pyfuse3.lock,
-                pyfuse3.lock_released):
+                pyfuse3.RequestContext()):
         pytest.raises(PicklingError, copy, obj)
 
     for (inst, attr) in ((pyfuse3.EntryAttributes(), 'st_mode'),

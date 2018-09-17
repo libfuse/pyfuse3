@@ -15,7 +15,6 @@ Table of Contents
    general.rst
    fuse_api.rst
    data.rst
-   lock.rst
    operations.rst
    util.rst
    gotchas.rst

@@ -107,7 +107,7 @@ def main():
 
     link_args = pkg_config('fuse3', cflags=False, ldflags=True, min_ver='3.2.0')
     link_args.append('-lpthread')
-    c_sources = ['src/pyfuse3.c', 'src/lock.c']
+    c_sources = ['src/pyfuse3.c']
 
     if os.uname()[0] in ('Linux', 'GNU/kFreeBSD'):
         link_args.append('-lrt')

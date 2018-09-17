@@ -442,10 +442,9 @@ cdef class Operations:
         '''Asynchronous debugging
 
         This method will be called when the ``fuse_stacktrace`` extended
-        attribute is set on the mountpoint. It will be called without holding
-        the global lock. The default implementation logs the current stack trace
-        of every running Python thread. This can be quite useful to debug file
-        system deadlocks.
+        attribute is set on the mountpoint. The default implementation logs the
+        current stack trace of every running Python thread. This can be quite
+        useful to debug file system deadlocks.
         '''
 
         import sys

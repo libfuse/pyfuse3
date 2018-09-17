@@ -44,12 +44,6 @@ from libc cimport signal
 # EXTERNAL DEFINITIONS
 ######################
 
-cdef extern from "lock.h" nogil:
-    int acquire(double timeout) nogil
-    int release() nogil
-    int c_yield(int count) nogil
-    int init_lock() nogil
-
 cdef extern from "macros.c" nogil:
     long GET_BIRTHTIME(struct_stat* buf)
     long GET_ATIME_NS(struct_stat* buf)
@@ -129,10 +123,6 @@ cdef fuse_lowlevel_ops fuse_ops
 cdef object exc_info
 cdef int exit_reason
 cdef pthread_mutex_t exc_info_mutex
-
-init_lock()
-lock = Lock.__new__(Lock)
-lock_released = NoLockManager.__new__(NoLockManager)
 
 cdef object _notify_queue
 _notify_queue = Queue(maxsize=1000)

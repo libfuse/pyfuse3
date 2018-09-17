@@ -433,7 +433,8 @@ if __name__ == '__main__':
         fuse_options.add('debug')
     pyfuse3.init(operations, options.mountpoint, fuse_options)
 
-    # sqlite3 does not support multithreading
+    # sqlite3 does not support multithreading, and our handlers
+    # are probably not threadsafe either.
     try:
         pyfuse3.main(workers=1)
     except:

@@ -429,8 +429,6 @@ def parse_args(args):
                         help='Directory tree to mirror')
     parser.add_argument('mountpoint', type=str,
                         help='Where to mount the file system')
-    parser.add_argument('--single', action='store_true', default=False,
-                        help='Run single threaded')
     parser.add_argument('--debug', action='store_true', default=False,
                         help='Enable debugging output')
     parser.add_argument('--debug-fuse', action='store_true', default=False,
@@ -453,10 +451,9 @@ def main():
 
     try:
         log.debug('Entering main loop..')
-        if options.single:
-            pyfuse3.main(workers=1)
-        else:
-            pyfuse3.main()
+        # Use a single worker because handlers are not written
+        # to be threadsafe.
+        pyfuse3.main(workers=1)
     except:
         pyfuse3.close(unmount=False)
         raise
