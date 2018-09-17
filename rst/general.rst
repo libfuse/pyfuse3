@@ -48,11 +48,13 @@ that if there are no directory entries referring to such an inode it
 can be safely removed, or (if a file system implements dynamic inode
 numbers), the inode number can be safely recycled.
 
-The lookup count of an inode is increased by one for each call to the
-`~Operations.lookup`, `~Operations.create`, `~Operations.symlink`,
-`~Operations.mknod`, `~Operations.link` and `~Operations.mkdir`
-handlers. The lookup count is decreased by calls to the
-`~Operations.forget` handler.
+The lookup count of an inode is increased by every operation that
+could make the inode "known" to the kernel. This includes e.g.
+`~Operations.lookup`, `~Operations.create` and `~Operations.readdir`
+(to determine if a given request handler affects the lookup count,
+please refer to its description in the `Operations` class).  The
+lookup count is decreased by calls to the `~Operations.forget`
+handler.
 
 
 FUSE and VFS Locking

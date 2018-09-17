@@ -12,6 +12,9 @@ the terms of the GNU LGPL.
 
 cdef void fuse_init (void *userdata, fuse_conn_info *conn) with gil:
     try:
+        if not conn.capable & FUSE_CAP_READDIRPLUS:
+            raise RuntimeError('Kernel too old, pyfuse3 requires kernel 3.9 or newer!')
+        conn.want &= ~(<unsigned> FUSE_CAP_READDIRPLUS_AUTO)
         operations.init()
     except:
         handle_exc(NULL)
@@ -411,7 +414,6 @@ cdef void fuse_opendir (fuse_req_t req, fuse_ino_t ino, fuse_file_info *fi) with
     try:
         ctx = get_request_context(req)
         fi.fh = operations.opendir(ino, ctx)
-
         ret = fuse_reply_open(req, fi)
     except FUSEError as e:
         ret = fuse_reply_err(req, e.errno)
@@ -421,8 +423,8 @@ cdef void fuse_opendir (fuse_req_t req, fuse_ino_t ino, fuse_file_info *fi) with
     if ret != 0:
         log.error('fuse_opendir(): fuse_reply_* failed with %s', strerror(-ret))
 
-cdef void fuse_readdir (fuse_req_t req, fuse_ino_t ino, size_t size, off_t off,
-                        fuse_file_info *fi) with gil:
+cdef void fuse_readdirplus (fuse_req_t req, fuse_ino_t ino, size_t size, off_t off,
+                            fuse_file_info *fi) with gil:
     cdef int ret
     cdef char *cname
     cdef char *buf
@@ -437,8 +439,8 @@ cdef void fuse_readdir (fuse_req_t req, fuse_ino_t ino, size_t size, off_t off,
             if buf == NULL:
                 buf = <char*> calloc_or_raise(size, sizeof(char))
             cname = PyBytes_AsString(name)
-            len_ = fuse_add_direntry(req, buf + acc_size, size - acc_size,
-                                     cname, entry.attr, next_)
+            len_ = fuse_add_direntry_plus(req, buf + acc_size, size - acc_size,
+                                          cname, &entry.fuse_param, next_)
             if len_ > (size - acc_size):
                 break
             acc_size += len_
@@ -452,7 +454,7 @@ cdef void fuse_readdir (fuse_req_t req, fuse_ino_t ino, size_t size, off_t off,
             stdlib.free(buf)
 
     if ret != 0:
-        log.error('fuse_readdir(): fuse_reply_* failed with %s', strerror(-ret))
+        log.error('fuse_readdirplus(): fuse_reply_* failed with %s', strerror(-ret))
 
 cdef void fuse_releasedir (fuse_req_t req, fuse_ino_t ino, fuse_file_info *fi) with gil:
     cdef int ret

@@ -60,6 +60,7 @@ class Operations(pyfuse3.Operations):
 
     * atime, mtime and ctime are not updated
     * generation numbers are not supported
+    * lookup counts are not maintained
     '''
 
 

@@ -405,6 +405,9 @@ cdef class Operations:
         skipped or returned more than once.
 
         :file:`.` and :file:`..` entries may be included but are not required.
+
+        The lookup count for each returned directory entry - except for
+        :file:`.` and :file:`..`  - implicitly increases by one.
         '''
 
         raise FUSEError(errno.ENOSYS)

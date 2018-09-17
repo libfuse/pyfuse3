@@ -10,7 +10,7 @@ Dependencies
 
 In order to build and run pyfuse3 you need the following software:
 
-* Linux kernel 2.6.26 or newer.
+* Linux kernel 3.9 or newer.
 * Version 3.3.0 or newer of the libfuse_ library, including development
   headers (typically distributions provide them in a *libfuse3-devel*
   or *libfuse3-dev* package).

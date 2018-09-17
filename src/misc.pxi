@@ -80,7 +80,7 @@ cdef void init_fuse_ops():
     fuse_ops.release = fuse_release
     fuse_ops.fsync = fuse_fsync
     fuse_ops.opendir = fuse_opendir
-    fuse_ops.readdir = fuse_readdir
+    fuse_ops.readdirplus = fuse_readdirplus
     fuse_ops.releasedir = fuse_releasedir
     fuse_ops.fsyncdir = fuse_fsyncdir
     fuse_ops.statfs = fuse_statfs

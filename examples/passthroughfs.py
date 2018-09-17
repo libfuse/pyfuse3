@@ -181,6 +181,7 @@ class Operations(pyfuse3.Operations):
         for (ino, name, attr) in sorted(entries):
             if ino <= off:
                 continue
+            self._lookup_cnt[inode] += 1
             yield (fsencode(name), attr, ino)
 
     def unlink(self, inode_p, name, ctx):
