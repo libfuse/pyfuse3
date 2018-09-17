@@ -131,6 +131,7 @@ cdef void fuse_setattr (fuse_req_t req, fuse_ino_t ino, struct_stat *stat,
             attr.st_mtime = now.tv_sec
             SET_MTIME_NS(attr, now.tv_nsec)
 
+        fields.update_ctime = bool(to_set & FUSE_SET_ATTR_CTIME)
         fields.update_mode = bool(to_set & FUSE_SET_ATTR_MODE)
         fields.update_uid = bool(to_set & FUSE_SET_ATTR_UID)
         fields.update_gid = bool(to_set & FUSE_SET_ATTR_GID)

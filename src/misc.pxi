@@ -205,6 +205,7 @@ cdef class SetattrFields:
 
     cdef readonly object update_atime
     cdef readonly object update_mtime
+    cdef readonly object update_ctime
     cdef readonly object update_mode
     cdef readonly object update_uid
     cdef readonly object update_gid
@@ -213,6 +214,7 @@ cdef class SetattrFields:
     def __cinit__(self):
         self.update_atime = False
         self.update_mtime = False
+        self.update_ctime = False
         self.update_mode = False
         self.update_uid = False
         self.update_gid = False

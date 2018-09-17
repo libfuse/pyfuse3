@@ -299,6 +299,13 @@ class Operations(pyfuse3.Operations):
             self.cursor.execute('UPDATE inodes SET mtime_ns=? WHERE id=?',
                                 (attr.st_mtime_ns, inode))
 
+        if fields.update_ctime:
+            self.cursor.execute('UPDATE inodes SET ctime_ns=? WHERE id=?',
+                                (attr.st_ctime_ns, inode))
+        else:
+            self.cursor.execute('UPDATE inodes SET ctime_ns=? WHERE id=?',
+                                (int(time()*1e9), inode))
+
         return self.getattr(inode)
 
     def mknod(self, inode_p, name, mode, rdev, ctx):
