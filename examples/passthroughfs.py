@@ -302,9 +302,12 @@ class Operations(pyfuse3.Operations):
                 chown(path_or_fh, -1, attr.st_gid, follow_symlinks=False)
 
             if fields.update_atime and fields.update_mtime:
-                # utime accepts both paths and file descriptiors
-                os.utime(path_or_fh, None, follow_symlinks=False,
-                         ns=(attr.st_atime_ns, attr.st_mtime_ns))
+                if fh is None:
+                    os.utime(path_or_fh, None, follow_symlinks=False,
+                             ns=(attr.st_atime_ns, attr.st_mtime_ns))
+                else:
+                    os.utime(path_or_fh, None,
+                             ns=(attr.st_atime_ns, attr.st_mtime_ns))
             elif fields.update_atime or fields.update_mtime:
                 # We can only set both values, so we first need to retrieve the
                 # one that we shouldn't be changing.
@@ -313,8 +316,12 @@ class Operations(pyfuse3.Operations):
                     attr.st_atime_ns = oldstat.st_atime_ns
                 else:
                     attr.st_mtime_ns = oldstat.st_mtime_ns
-                os.utime(path_or_fh, None, follow_symlinks=False,
-                         ns=(attr.st_atime_ns, attr.st_mtime_ns))
+                if fh is None:
+                    os.utime(path_or_fh, None, follow_symlinks=False,
+                             ns=(attr.st_atime_ns, attr.st_mtime_ns))
+                else:
+                    os.utime(path_or_fh, None,
+                             ns=(attr.st_atime_ns, attr.st_mtime_ns))
 
         except OSError as exc:
             raise FUSEError(exc.errno)
