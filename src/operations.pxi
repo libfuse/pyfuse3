@@ -8,13 +8,14 @@ This file is part of pyfuse3. This work may be distributed under
 the terms of the GNU LGPL.
 '''
 
-class Operations(object):
+cdef class Operations:
     '''
-    This class defines the general and request handler methods that an
-    pyfuse3 file system may implement. If a particular request handler has
-    not been implemented, it must raise `FUSEError` with an errorcode of
-    `errno.ENOSYS`. Further requests of this type will then be handled directly
-    by the FUSE kernel module without calling the handler again.
+
+    This class defines the request handler methods that an pyfuse3 file system
+    may implement. If a particular request handler has not been implemented, it
+    must raise `FUSEError` with an errorcode of `errno.ENOSYS`. Further requests
+    of this type will then be handled directly by the FUSE kernel module without
+    calling the handler again.
 
     The only exception that request handlers are allowed to raise is
     `FUSEError`. This will cause the specified errno to be returned by the
