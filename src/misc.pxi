@@ -2,7 +2,7 @@
 misc.pxi
 
 This file defines various functions that are used internally by
-PYFUSE3. It is included by pyfuse3.pyx.
+pyfuse3. It is included by pyfuse3.pyx.
 
 Copyright © 2013 Nikolaus Rath <Nikolaus.org>
 
@@ -10,34 +10,12 @@ This file is part of pyfuse3. This work may be distributed under
 the terms of the GNU LGPL.
 '''
 
-cdef int handle_exc(fuse_req_t req):
-    '''Try to call fuse_reply_err and terminate main loop'''
-
-    cdef int res
-    global exc_info
-
-    res = pthread_mutex_lock(&exc_info_mutex)
-    if res != 0:
-        log.error('pthread_mutex_lock failed with %s',
-                  strerror(res))
-    if not exc_info:
-        exc_info = sys.exc_info()
-        log.info('handler raised %s exception (%s), terminating main loop.',
-                 exc_info[0], exc_info[1])
-        fuse_session_exit(session)
-    else:
-        log.exception('Only one exception can be re-raised in `pyfuse3.main`, '
-                      'the following exception will be lost')
-
-    pthread_mutex_unlock(&exc_info_mutex)
-    if res != 0:
-        log.error('pthread_mutex_ulock failed with %s',
-                  strerror(res))
-
-    if req is NULL:
-        return 0
-    else:
-        return fuse_reply_err(req, errno.EIO)
+cdef void save_retval(object val):
+    global py_retval
+    if py_retval is not None and val is not None:
+        log.error('py_retval was not awaited - please report a bug at '
+                  'https://github.com/libfuse/pyfuse3/issues!')
+    py_retval = val
 
 cdef object get_request_context(fuse_req_t req):
     '''Get RequestContext() object'''
@@ -84,8 +62,6 @@ cdef void init_fuse_ops():
     fuse_ops.releasedir = fuse_releasedir
     fuse_ops.fsyncdir = fuse_fsyncdir
     fuse_ops.statfs = fuse_statfs
-    ASSIGN_DARWIN(fuse_ops.setxattr, &fuse_setxattr_darwin)
-    ASSIGN_DARWIN(fuse_ops.getxattr, &fuse_getxattr_darwin)
     ASSIGN_NOT_DARWIN(fuse_ops.setxattr, &fuse_setxattr)
     ASSIGN_NOT_DARWIN(fuse_ops.getxattr, &fuse_getxattr)
     fuse_ops.listxattr = fuse_listxattr
@@ -549,64 +525,6 @@ cdef PyBytes_from_bufvec(fuse_bufvec *src):
         return buf[:res]
     else:
         return buf
-
-cdef class VoidPtrCapsule:
-    cdef void* ptr
-
-cdef free_p(VoidPtrCapsule cap):
-    stdlib.free(cap.ptr)
-
-cdef inline encap_ptr(void *ptr):
-    cdef VoidPtrCapsule cap
-    cap = VoidPtrCapsule.__new__(VoidPtrCapsule)
-    cap.ptr = ptr
-    return cap
-
-cdef void signal_handler(int sig, siginfo_t *si, void* ctx) nogil:
-    global exit_reason
-    if session != NULL:
-        fuse_session_exit(session)
-    exit_reason = sig
-
-cdef void do_nothing(int sig, siginfo_t *si, void* ctx) nogil:
-    pass
-
-cdef int sigaction_p(int sig, sigaction_t *sa,
-                     sigaction_t *old_sa) except -1:
-    cdef int res
-    res = sigaction(sig, sa, old_sa)
-    if res != 0:
-        raise OSError(errno.errno, 'sigaction failed with '
-                      + strerror(errno.errno))
-    return 0
-
-cdef sigaction_t sa_backup[5]
-cdef set_signal_handlers():
-    cdef sigaction_t sa
-
-    sigemptyset(&sa.sa_mask)
-    sa.sa_sigaction = &signal_handler
-    sa.sa_flags = SA_SIGINFO
-    sigaction_p(signal.SIGTERM, &sa, &sa_backup[0])
-    sigaction_p(signal.SIGINT, &sa, &sa_backup[1])
-    sigaction_p(signal.SIGHUP, &sa, &sa_backup[2])
-
-    # This is used to interrupt system calls without
-    # doing anything else.
-    sa.sa_sigaction = &do_nothing
-    sa.sa_flags = SA_SIGINFO
-    sigaction_p(signal.SIGUSR1, &sa, &sa_backup[3])
-
-    sa.sa_handler = signal.SIG_IGN
-    sa.sa_flags = 0
-    sigaction_p(signal.SIGPIPE, &sa, &sa_backup[4])
-
-cdef restore_signal_handlers():
-    sigaction_p(signal.SIGTERM, &sa_backup[0], NULL)
-    sigaction_p(signal.SIGINT, &sa_backup[1], NULL)
-    sigaction_p(signal.SIGHUP, &sa_backup[2], NULL)
-    sigaction_p(signal.SIGUSR1, &sa_backup[3], NULL)
-    sigaction_p(signal.SIGPIPE, &sa_backup[4], NULL)
 
 cdef void* calloc_or_raise(size_t nmemb, size_t size) except NULL:
     cdef void* mem

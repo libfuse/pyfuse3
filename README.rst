@@ -9,8 +9,9 @@ The pyfuse3 Module
 
 .. start-intro
 
-pyfuse3 is a set of Python 3 bindings for `libfuse 3`_ and enables you
-to easily write a full-featured Linux filesystem in Python.
+pyfuse3 is a set of Python 3 bindings for `libfuse 3`_ using
+asynchronous I/O. It enables you to easily write a full-featured Linux
+filesystem in Python.
 
 pyfuse3 releases can be downloaded from PyPi_. The documentation
 can be `read online`__ and is also included in the ``doc/html``

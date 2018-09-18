@@ -23,6 +23,7 @@ import errno
 import stat
 import time
 import logging
+import trio
 import threading
 from util import fuse_test_marker, wait_for_mount, umount, cleanup, wait_for
 
@@ -152,10 +153,10 @@ class Fs(pyfuse3.Operations):
         self.status.getattr_called = False
         self.status.lookup_called = False
         self.status.read_called = False
-        self.status.entry_timeout = 2
-        self.status.attr_timeout = 2
+        self.status.entry_timeout = 99999
+        self.status.attr_timeout = 99999
 
-    def getattr(self, inode, ctx=None):
+    async def getattr(self, inode, ctx=None):
         entry = pyfuse3.EntryAttributes()
         if inode == pyfuse3.ROOT_INODE:
             entry.st_mode = (stat.S_IFDIR | 0o755)
@@ -179,7 +180,7 @@ class Fs(pyfuse3.Operations):
         self.status.getattr_called = True
         return entry
 
-    def forget(self, inode_list):
+    async def forget(self, inode_list):
         for (inode, cnt) in inode_list:
             if inode == self.hello_inode:
                 self.lookup_cnt -= 1
@@ -187,36 +188,38 @@ class Fs(pyfuse3.Operations):
             else:
                 assert inode == pyfuse3.ROOT_INODE
 
-    def lookup(self, parent_inode, name, ctx=None):
+    async def lookup(self, parent_inode, name, ctx=None):
         if parent_inode != pyfuse3.ROOT_INODE or name != self.hello_name:
             raise pyfuse3.FUSEError(errno.ENOENT)
         self.lookup_cnt += 1
         self.status.lookup_called = True
-        return self.getattr(self.hello_inode)
+        return await self.getattr(self.hello_inode)
 
-    def opendir(self, inode, ctx):
+    async def opendir(self, inode, ctx):
         if inode != pyfuse3.ROOT_INODE:
             raise pyfuse3.FUSEError(errno.ENOENT)
         return inode
 
-    def readdir(self, fh, off):
+    async def readdir(self, fh, off, token):
         assert fh == pyfuse3.ROOT_INODE
         if off == 0:
-            yield (self.hello_name, self.getattr(self.hello_inode), 1)
+            pyfuse3.readdir_reply(
+                token, self.hello_name, await self.getattr(self.hello_inode), 1)
+        return
 
-    def open(self, inode, flags, ctx):
+    async def open(self, inode, flags, ctx):
         if inode != self.hello_inode:
             raise pyfuse3.FUSEError(errno.ENOENT)
         if flags & os.O_RDWR or flags & os.O_WRONLY:
             raise pyfuse3.FUSEError(errno.EPERM)
         return inode
 
-    def read(self, fh, off, size):
+    async def read(self, fh, off, size):
         assert fh == self.hello_inode
         self.status.read_called = True
         return self.hello_data[off:off+size]
 
-    def setxattr(self, inode, name, value, ctx):
+    async def setxattr(self, inode, name, value, ctx):
         if inode != pyfuse3.ROOT_INODE or name != b'command':
             raise FUSEError(errno.ENOTSUP)
 
@@ -229,6 +232,9 @@ class Fs(pyfuse3.Operations):
                                 data=self.hello_data)
         else:
             raise FUSEError(errno.EINVAL)
+
+async def fuse_main():
+    await pyfuse3.main()
 
 def run_fs(mountpoint, cross_process):
     # Logging (note that we run in a new process, so we can't
@@ -248,6 +254,6 @@ def run_fs(mountpoint, cross_process):
     fuse_options.add('fsname=pyfuse3_testfs')
     pyfuse3.init(testfs, mountpoint, fuse_options)
     try:
-        pyfuse3.main(workers=1)
+        trio.run(fuse_main)
     finally:
         pyfuse3.close()

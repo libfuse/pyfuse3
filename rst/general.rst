@@ -16,10 +16,14 @@ functions like looking up the inode given a file name, looking up
 attributes of an inode, opening a (file) inode for reading or writing
 or listing the contents of a (directory) inode.
 
+pyfuse3 uses asynchronous I/O using Trio_. If you have not yet used
+Trio before, please read the `Trio tutorial`_ first.
+
 An instance of the operations class is passed to `pyfuse3.init` to
 mount the file system. To enter the request handling loop, run
-`pyfuse3.main`. This function will return when the file system should
-be unmounted again, which is done by calling `pyfuse3.close`.
+`pyfuse3.main` in a trio event loop. This function will return when
+the file system should be unmounted again, which is done by calling
+`pyfuse3.close`.
 
 All character data (directory entry names, extended attribute names
 and values, symbolic link targets etc) are passed as `bytes` and must
@@ -29,7 +33,8 @@ For easier debugging, it is strongly recommended that applications
 using pyfuse3 also make use of the faulthandler_ module.
 
 .. _faulthandler: http://docs.python.org/3/library/faulthandler.html
-
+.. _Trio tutorial: https://trio.readthedocs.io/en/latest/tutorial.html
+.. _Trio: https://github.com/python-trio/trio
 
 Lookup Counts
 =============

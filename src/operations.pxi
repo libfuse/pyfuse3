@@ -10,7 +10,6 @@ the terms of the GNU LGPL.
 
 cdef class Operations:
     '''
-
     This class defines the request handler methods that an pyfuse3 file system
     may implement. If a particular request handler has not been implemented, it
     must raise `FUSEError` with an errorcode of `errno.ENOSYS`. Further requests
@@ -52,7 +51,7 @@ cdef class Operations:
 
         pass
 
-    def lookup(self, parent_inode, name, ctx):
+    async def lookup(self, parent_inode, name, ctx):
         '''Look up a directory entry by name and get its attributes.
 
         This method should return an `EntryAttributes` instance for the
@@ -75,7 +74,7 @@ cdef class Operations:
 
         raise FUSEError(errno.ENOSYS)
 
-    def forget(self, inode_list):
+    async def forget(self, inode_list):
         '''Decrease lookup counts for inodes in *inode_list*
 
         *inode_list* is a list of ``(inode, nlookup)`` tuples. This method
@@ -98,7 +97,7 @@ cdef class Operations:
 
         pass
 
-    def getattr(self, inode, ctx):
+    async def getattr(self, inode, ctx):
         '''Get attributes for *inode*
 
         *ctx* will be a `RequestContext` instance.
@@ -111,7 +110,7 @@ cdef class Operations:
         raise FUSEError(errno.ENOSYS)
 
 
-    def setattr(self, inode, attr, fields, fh, ctx):
+    async def setattr(self, inode, attr, fields, fh, ctx):
         '''Change attributes of *inode*
 
         *fields* will be an `SetattrFields` instance that specifies which
@@ -138,7 +137,7 @@ cdef class Operations:
 
         raise FUSEError(errno.ENOSYS)
 
-    def readlink(self, inode, ctx):
+    async def readlink(self, inode, ctx):
         '''Return target of symbolic link *inode*.
 
         *ctx* will be a `RequestContext` instance.
@@ -147,7 +146,7 @@ cdef class Operations:
         raise FUSEError(errno.ENOSYS)
 
 
-    def mknod(self, parent_inode, name, mode, rdev, ctx):
+    async def mknod(self, parent_inode, name, mode, rdev, ctx):
         '''Create (possibly special) file
 
         This method must create a (special or regular) file *name* in the
@@ -165,7 +164,7 @@ cdef class Operations:
 
         raise FUSEError(errno.ENOSYS)
 
-    def mkdir(self, parent_inode, name, mode, ctx):
+    async def mkdir(self, parent_inode, name, mode, ctx):
         '''Create a directory
 
         This method must create a new directory *name* with mode *mode* in the
@@ -181,7 +180,7 @@ cdef class Operations:
 
         raise FUSEError(errno.ENOSYS)
 
-    def unlink(self, parent_inode, name, ctx):
+    async def unlink(self, parent_inode, name, ctx):
         '''Remove a (possibly special) file
 
         This method must remove the (special or regular) file *name* from the
@@ -203,7 +202,7 @@ cdef class Operations:
 
         raise FUSEError(errno.ENOSYS)
 
-    def rmdir(self, parent_inode, name, ctx):
+    async def rmdir(self, parent_inode, name, ctx):
         '''Remove directory *name*
 
         This method must remove the directory *name* from the direcory with
@@ -227,7 +226,7 @@ cdef class Operations:
 
         raise FUSEError(errno.ENOSYS)
 
-    def symlink(self, parent_inode, name, target, ctx):
+    async def symlink(self, parent_inode, name, target, ctx):
         '''Create a symbolic link
 
         This method must create a symbolink link named *name* in the directory
@@ -243,7 +242,7 @@ cdef class Operations:
 
         raise FUSEError(errno.ENOSYS)
 
-    def rename(self, parent_inode_old, name_old, parent_inode_new,
+    async def rename(self, parent_inode_old, name_old, parent_inode_new,
                name_new, flags, ctx):
         '''Rename a directory entry.
 
@@ -276,7 +275,7 @@ cdef class Operations:
 
         raise FUSEError(errno.ENOSYS)
 
-    def link(self, inode, new_parent_inode, new_name, ctx):
+    async def link(self, inode, new_parent_inode, new_name, ctx):
         '''Create directory entry *name* in *parent_inode* refering to *inode*.
 
         *ctx* will be a `RequestContext` instance.
@@ -290,7 +289,7 @@ cdef class Operations:
 
         raise FUSEError(errno.ENOSYS)
 
-    def open(self, inode, flags, ctx):
+    async def open(self, inode, flags, ctx):
         '''Open a inode *inode* with *flags*.
 
         *ctx* will be a `RequestContext` instance.
@@ -306,7 +305,7 @@ cdef class Operations:
 
         raise FUSEError(errno.ENOSYS)
 
-    def read(self, fh, off, size):
+    async def read(self, fh, off, size):
         '''Read *size* bytes from *fh* at position *off*
 
         *fh* will by an integer filehandle returned by a prior `open` or
@@ -319,7 +318,7 @@ cdef class Operations:
 
         raise FUSEError(errno.ENOSYS)
 
-    def write(self, fh, off, buf):
+    async def write(self, fh, off, buf):
         '''Write *buf* into *fh* at *off*
 
         *fh* will by an integer filehandle returned by a prior `open` or
@@ -333,7 +332,7 @@ cdef class Operations:
 
         raise FUSEError(errno.ENOSYS)
 
-    def flush(self, fh):
+    async def flush(self, fh):
         '''Handle close() syscall.
 
         *fh* will by an integer filehandle returned by a prior `open` or
@@ -346,7 +345,7 @@ cdef class Operations:
 
         raise FUSEError(errno.ENOSYS)
 
-    def release(self, fh):
+    async def release(self, fh):
         '''Release open file
 
         This method will be called when the last file descriptor of *fh* has
@@ -364,7 +363,7 @@ cdef class Operations:
 
         raise FUSEError(errno.ENOSYS)
 
-    def fsync(self, fh, datasync):
+    async def fsync(self, fh, datasync):
         '''Flush buffers for open file *fh*
 
         If *datasync* is true, only the file contents should be
@@ -376,7 +375,7 @@ cdef class Operations:
 
         raise FUSEError(errno.ENOSYS)
 
-    def opendir(self, inode, ctx):
+    async def opendir(self, inode, ctx):
         '''Open the directory with inode *inode*
 
         *ctx* will be a `RequestContext` instance.
@@ -389,34 +388,38 @@ cdef class Operations:
         raise FUSEError(errno.ENOSYS)
 
 
-    def readdir(self, fh, off):
+    async def readdir(self, fh, start_id, token):
         '''Read entries in open directory *fh*.
 
-        This method should return an iterator over the contents of directory
-        *fh* (as returned by a prior `opendir` call), starting at the entry
-        identified by *off*.
+        This method should list the contents of directory *fh* (as returned by a
+        prior `opendir` call), starting at the entry identified by *start_id*.
 
-        The iterator must yield tuples of the form :samp:`({name}, {attr},
-        {next_})`, where *attr* is an `EntryAttributes` instance and *next_*
-        gives an offset that can be passed as *off* to start a successive
-        `readdir` call at the right position.
+        Instead of returning the directory entries directly, the method must
+        call `readdir_reply` for each directory entry. If `readdir_reply`
+        returns True, the file system must increase the lookup count for the
+        provided directory entry by one and call `readdir_reply` again for the
+        next entry (if any). If `readdir_reply` returns False, the lookup count
+        must *not* be increased and the method should return without further
+        calls to `readdir_reply`.
 
-        Iteration may be stopped as soon as enough elements have been
-        retrieved. The method should be prepared for this case.
+        The *start_id* parameter will be either zero (in which case listing
+        should begin with the first entry) or it will correspond to a value that
+        was previously passed by the file system to the `readdir_reply`
+        function in the *next_id* parameter.
 
         If entries are added or removed during a `readdir` cycle, they may or
         may not be returned. However, they must not cause other entries to be
         skipped or returned more than once.
 
-        :file:`.` and :file:`..` entries may be included but are not required.
-
-        The lookup count for each returned directory entry - except for
-        :file:`.` and :file:`..`  - implicitly increases by one.
+        :file:`.` and :file:`..` entries may be included but are not
+        required. However, if they are reported the filesystem *must not*
+        increase the lookup count for the corresponding inodes (even if
+        `readdir_reply` returns True).
         '''
 
         raise FUSEError(errno.ENOSYS)
 
-    def releasedir(self, fh):
+    async def releasedir(self, fh):
         '''Release open directory
 
         This method will be called exactly once for each `opendir` call. After
@@ -426,7 +429,7 @@ cdef class Operations:
 
         raise FUSEError(errno.ENOSYS)
 
-    def fsyncdir(self, fh, datasync):
+    async def fsyncdir(self, fh, datasync):
         '''Flush buffers for open directory *fh*
 
         If *datasync* is true, only the directory contents should be
@@ -435,7 +438,7 @@ cdef class Operations:
 
         raise FUSEError(errno.ENOSYS)
 
-    def statfs(self, ctx):
+    async def statfs(self, ctx):
         '''Get file system statistics
 
         *ctx* will be a `RequestContext` instance.
@@ -467,7 +470,7 @@ cdef class Operations:
 
         log.error("\n".join(code))
 
-    def setxattr(self, inode, name, value, ctx):
+    async def setxattr(self, inode, name, value, ctx):
         '''Set extended attribute *name* of *inode* to *value*.
 
         *ctx* will be a `RequestContext` instance.
@@ -479,7 +482,7 @@ cdef class Operations:
 
         raise FUSEError(errno.ENOSYS)
 
-    def getxattr(self, inode, name, ctx):
+    async def getxattr(self, inode, name, ctx):
         '''Return extended attribute *name* of *inode*
 
         *ctx* will be a `RequestContext` instance.
@@ -491,18 +494,18 @@ cdef class Operations:
 
         raise FUSEError(errno.ENOSYS)
 
-    def listxattr(self, inode, ctx):
+    async def listxattr(self, inode, ctx):
         '''Get list of extended attributes for *inode*
 
         *ctx* will be a `RequestContext` instance.
 
-        This method must return an iterator over a sequence of `bytes` objects.
-        The objects must not to include zero-bytes (``\\0``).
+        This method must return a sequence of `bytes` objects.  The objects must
+        not include zero-bytes (``\\0``).
         '''
 
         raise FUSEError(errno.ENOSYS)
 
-    def removexattr(self, inode, name, ctx):
+    async def removexattr(self, inode, name, ctx):
         '''Remove extended attribute *name* of *inode*
 
         *ctx* will be a `RequestContext` instance.
@@ -515,7 +518,7 @@ cdef class Operations:
         raise FUSEError(errno.ENOSYS)
 
 
-    def access(self, inode, mode, ctx):
+    async def access(self, inode, mode, ctx):
         '''Check if requesting process has *mode* rights on *inode*.
 
         *ctx* will be a `RequestContext` instance.
@@ -531,7 +534,7 @@ cdef class Operations:
 
         raise FUSEError(errno.ENOSYS)
 
-    def create(self, parent_inode, name, mode, flags, ctx):
+    async def create(self, parent_inode, name, mode, flags, ctx):
         '''Create a file with permissions *mode* and open it with *flags*
 
         *ctx* will be a `RequestContext` instance.

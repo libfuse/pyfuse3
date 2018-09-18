@@ -37,6 +37,7 @@ import stat
 import logging
 import errno
 import pyfuse3
+import trio
 
 try:
     import faulthandler
@@ -54,7 +55,7 @@ class TestFs(pyfuse3.Operations):
         self.hello_inode = pyfuse3.ROOT_INODE+1
         self.hello_data = b"hello world\n"
 
-    def getattr(self, inode, ctx=None):
+    async def getattr(self, inode, ctx=None):
         entry = pyfuse3.EntryAttributes()
         if inode == pyfuse3.ROOT_INODE:
             entry.st_mode = (stat.S_IFDIR | 0o755)
@@ -75,31 +76,33 @@ class TestFs(pyfuse3.Operations):
 
         return entry
 
-    def lookup(self, parent_inode, name, ctx=None):
+    async def lookup(self, parent_inode, name, ctx=None):
         if parent_inode != pyfuse3.ROOT_INODE or name != self.hello_name:
             raise pyfuse3.FUSEError(errno.ENOENT)
         return self.getattr(self.hello_inode)
 
-    def opendir(self, inode, ctx):
+    async def opendir(self, inode, ctx):
         if inode != pyfuse3.ROOT_INODE:
             raise pyfuse3.FUSEError(errno.ENOENT)
         return inode
 
-    def readdir(self, fh, off):
+    async def readdir(self, fh, start_id, token):
         assert fh == pyfuse3.ROOT_INODE
 
         # only one entry
-        if off == 0:
-            yield (self.hello_name, self.getattr(self.hello_inode), 1)
+        if start_id == 0:
+            pyfuse3.readdir_reply(
+                token, self.hello_name, await self.getattr(self.hello_inode), 1)
+        return
 
-    def open(self, inode, flags, ctx):
+    async def open(self, inode, flags, ctx):
         if inode != self.hello_inode:
             raise pyfuse3.FUSEError(errno.ENOENT)
         if flags & os.O_RDWR or flags & os.O_WRONLY:
             raise pyfuse3.FUSEError(errno.EPERM)
         return inode
 
-    def read(self, fh, off, size):
+    async def read(self, fh, off, size):
         assert fh == self.hello_inode
         return self.hello_data[off:off+size]
 
@@ -131,6 +134,9 @@ def parse_args():
     return parser.parse_args()
 
 
+async def fuse_main():
+    await pyfuse3.main()
+
 def main():
     options = parse_args()
     init_logging(options.debug)
@@ -142,7 +148,7 @@ def main():
         fuse_options.add('debug')
     pyfuse3.init(testfs, options.mountpoint, fuse_options)
     try:
-        pyfuse3.main(workers=1)
+        trio.run(fuse_main)
     except:
         pyfuse3.close(unmount=False)
         raise

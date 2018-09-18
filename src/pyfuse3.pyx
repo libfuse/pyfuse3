@@ -19,25 +19,21 @@ cdef extern from "pyfuse3.h":
 ###########
 
 from fuse_lowlevel cimport *
-from pthread cimport *
 from posix.stat cimport struct_stat, S_IFMT, S_IFDIR, S_IFREG
 from posix.types cimport mode_t, dev_t, off_t
 from libc.stdint cimport uint32_t
 from libc.stdlib cimport const_char
 from libc cimport stdlib, string, errno, dirent
+from posix cimport unistd
 from libc.errno cimport ETIMEDOUT, EPROTO, EINVAL, EPERM, ENOMSG, ENOATTR
 from posix.unistd cimport getpid
 from posix.time cimport timespec
-from posix.signal cimport (sigemptyset, sigaddset, SIG_BLOCK, SIG_SETMASK,
-                           siginfo_t, sigaction_t, sigaction, SA_SIGINFO)
 from cpython.bytes cimport (PyBytes_AsStringAndSize, PyBytes_FromStringAndSize,
                             PyBytes_AsString, PyBytes_FromString, PyBytes_AS_STRING)
 from cpython.buffer cimport (PyObject_GetBuffer, PyBuffer_Release,
                              PyBUF_CONTIG_RO, PyBUF_CONTIG)
 cimport cpython.exc
 cimport cython
-from cpython.version cimport PY_MAJOR_VERSION
-from libc cimport signal
 
 
 ######################
@@ -108,6 +104,7 @@ import os
 import os.path
 import sys
 import threading
+import trio
 
 ##################
 # GLOBAL VARIABLES
@@ -120,9 +117,8 @@ cdef object operations
 cdef object mountpoint_b
 cdef fuse_session* session = NULL
 cdef fuse_lowlevel_ops fuse_ops
-cdef object exc_info
-cdef int exit_reason
-cdef pthread_mutex_t exc_info_mutex
+cdef int session_fd
+cdef object py_retval
 
 cdef object _notify_queue
 _notify_queue = Queue(maxsize=1000)

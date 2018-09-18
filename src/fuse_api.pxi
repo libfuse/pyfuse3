@@ -10,6 +10,8 @@ This file is part of pyfuse3. This work may be distributed under
 the terms of the GNU LGPL.
 '''
 
+import trio
+
 def listdir(path):
     '''Like `os.listdir`, but releases the GIL.
 
@@ -224,6 +226,7 @@ def init(ops, mountpoint, options=default_options):
     global fuse_ops
     global mountpoint_b
     global session
+    global session_fd
 
     mountpoint_b = str2bytes(os.path.abspath(mountpoint))
     operations = ops
@@ -241,99 +244,114 @@ def init(ops, mountpoint, options=default_options):
     if res != 0:
         raise RuntimeError('fuse_session_mount failed')
 
-    pthread_mutex_init(&exc_info_mutex, NULL)
+    session_fd = fuse_session_fd(session)
 
-def main(workers=None, handle_signals=True):
-    '''Run FUSE main loop
+cdef class _WorkerData:
+    """For internal use by pyfuse3 only."""
 
-    *workers* specifies the number of threads that will process requests
-    concurrently. If *workers* is `None`, pyfuse3 will pick a reasonable
-    number bigger than one.  If *workers* is ``1`` all requests will be
-    processed by the thread calling `main`.
+    cdef int task_count
+    cdef int task_serial
+    cdef object read_queue
+    cdef object write_queue
+    cdef int active_readers
+    cdef int active_writers
 
-    This function will also start additional threads for internal purposes (even
-    if *workers* is ``1``). These (and all worker threads) are guaranteed to
-    have terminated when `main` returns.
+    def __init__(self):
+        self.read_queue = trio.hazmat.ParkingLot()
+        self.write_queue = trio.hazmat.ParkingLot()
+        self.active_readers = 0
+        self.active_writers = 0
 
-    Unless *handle_signals* is `False`, while this function is running, special
-    signal handlers will be installed for the *SIGTERM*, *SIGINT* (Ctrl-C),
-    *SIGHUP*, *SIGUSR1* and *SIGPIPE* signals. *SIGPIPE* will be ignored,
-    while the other three signals will cause request processing to stop
-    and the function to return.  *SIGINT* (Ctrl-C) will thus *not* result in
-    a `KeyboardInterrupt` exception while this function is runnning.
+    cdef get_name(self):
+        self.task_serial += 1
+        return 'pyfuse-%02d' % self.task_serial
 
-    When the function returns because the file system has received an unmount
-    request it will return `None`. If it returns because it has received a
-    signal, it will return the signal number.
-    '''
+cdef _WorkerData worker_data = _WorkerData()
 
-    global exc_info
-    global exit_reason
+
+async def _wait_fuse_readable():
+    #name = trio.hazmat.current_task().name
+    worker_data.active_readers += 1
+    if worker_data.active_readers > 1:
+    #    log.debug('%s: Resource busy, parking in read queue.', name)
+        await worker_data.read_queue.park()
+
+    # Our turn!
+    #log.debug('%s: Waiting for fuse fd to become readable...', name)
+    await trio.hazmat.wait_readable(session_fd)
+    worker_data.active_readers -= 1
+
+    #log.debug('%s: fuse fd readable, unparking next task.', name)
+    worker_data.read_queue.unpark()
+
+
+async def _wait_fuse_writable():
+    #name = trio.hazmat.current_task().name
+    worker_data.active_writers += 1
+    if worker_data.active_writers > 1:
+    #    log.debug('%s: Resource busy, parking in writ queue.', name)
+        await worker_data.write_queue.park()
+
+    # Our turn!
+    #log.debug('%s: Waiting for fuse fd to become writable...', name)
+    await trio.hazmat.wait_writable(session_fd)
+    worker_data.active_writers -= 1
+
+    #log.debug('%s: fuse fd writable, unparking next task.', name)
+    worker_data.write_queue.unpark()
+
+async def main(int min_tasks=1, int max_tasks=99):
+    '''Run FUSE main loop'''
 
     if session == NULL:
         raise RuntimeError('Need to call init() before main()')
 
-    if workers == 0:
-        raise ValueError('No workers is not a good idea')
+    # Start notification handling thread
+    t = threading.Thread(target=_notify_loop)
+    t.daemon = True
+    t.start()
+    try:
+        async with trio.open_nursery() as nursery:
+            worker_data.task_count = 1
+            worker_data.task_serial = 1
+            nursery.start_soon(trio_wrap, _session_loop, nursery, min_tasks, max_tasks,
+                               name=worker_data.get_name())
+    finally:
+        _notify_queue.put(None, block=True, timeout=5)
 
-    if workers is None:
-        # We may add some smartness here later.
-        workers = 30
+# Any top level trio coroutines (i.e., coroutines that are passed
+# to trio.run) must be pure-Python.
+exec_scope = dict()
+exec('''
+async def trio_wrap(fn, *args, **kwargs):
+  await fn(*args, **kwargs)
+''', exec_scope)
+trio_wrap = exec_scope['trio_wrap']
 
-    # SIGKILL cannot be caught, so we can use it as a placeholder
-    # for "regular exit".
-    exit_reason = signal.SIGKILL
-    with contextlib.ExitStack() as on_exit:
-        if handle_signals:
-            set_signal_handlers()
-            on_exit.callback(lambda: restore_signal_handlers())
 
-        # Start notification handling thread
-        t = threading.Thread(target=_notify_loop)
-        t.daemon = True
-        t.start()
-        on_exit.callback(_notify_queue.put, None, block=True, timeout=5)
-
-        on_exit.callback(lambda: fuse_session_reset(session))
-        exc_info = None
-        log.debug('Calling fuse_session_loop')
-        if workers == 1:
-            session_loop_single()
-        else:
-            session_loop_mt(workers)
-
-    if exc_info:
-        # Re-raise expression from request handler
-        log.debug('Terminated main loop because request handler raised exception, re-raising..')
-        tmp = exc_info
-        exc_info = None
-
-        # The explicit version check works around a Cython bug with
-        # the 3-parameter version of the raise statement, c.f.
-        # https://github.com/cython/cython/commit/a6195f1a44ab21f5aa4b2a1b1842dd93115a3f42
-        if PY_MAJOR_VERSION < 3:
-            raise tmp[0], tmp[1], tmp[2]
-        else:
-            raise tmp[1].with_traceback(tmp[2])
-
-    if exit_reason == signal.SIGKILL:
-        return None
-    else:
-        return exit_reason
-
-cdef session_loop_single():
-    '''Process requests'''
-
+async def _session_loop(nursery, int min_tasks, int max_tasks):
     cdef int res
     cdef fuse_buf buf
+
+    name = trio.hazmat.current_task().name
 
     buf.mem = NULL
     buf.size = 0
     buf.pos = 0
     buf.flags = 0
     while not fuse_session_exited(session):
-        with nogil:
-            res = fuse_session_receive_buf(session, &buf)
+        if len(worker_data.read_queue) > min_tasks:
+            log.debug('%s: too many idle tasks (%d total, %d waiting), terminating.',
+                      name, worker_data.task_count, len(worker_data.read_queue))
+            break
+        await _wait_fuse_readable()
+        res = fuse_session_receive_buf(session, &buf)
+        if not worker_data.read_queue and worker_data.task_count < max_tasks:
+            worker_data.task_count += 1
+            log.debug('%s: No tasks waiting, starting another worker (now %d total).',
+                      name, worker_data.task_count)
+            nursery.start_soon(trio_wrap, _session_loop, nursery, min_tasks, max_tasks,
+                               name=worker_data.get_name())
 
         if res == -errno.EINTR:
             continue
@@ -343,98 +361,19 @@ cdef session_loop_single():
         elif res == 0:
             break
 
+        # When fuse_session_process_buf() calls back into one of our handler
+        # methods, the handler will start a co-routine and store it in
+        # py_retval.
+        log.debug('%s: processing request...', name)
+        save_retval(None)
         fuse_session_process_buf(session, &buf)
+        if py_retval is not None:
+            await py_retval
+        log.debug('%s: processing complete.', name)
+
+    log.debug('%s: terminated', name)
     stdlib.free(buf.mem)
-
-ctypedef struct worker_data_t:
-    sem_t* sem
-    int thread_no
-    int started
-    pthread_t thread_id
-
-cdef void* worker_start(void* data) with gil:
-    cdef worker_data_t *wd
-    cdef int res
-    global exc_info
-
-    wd = <worker_data_t*> data
-
-    t = threading.current_thread()
-    t.name = 'fuse-worker-%d' % (wd.thread_no+1,)
-
-    try:
-        session_loop_single()
-    except:
-        fuse_session_exit(session)
-        log.error('FUSE worker thread %d terminated with exception, '
-                  'aborting processing', wd.thread_id)
-        res = pthread_mutex_lock(&exc_info_mutex)
-        if res != 0:
-            log.error('pthread_mutex_lock failed with %s',
-                      strerror(res))
-        if not exc_info:
-            exc_info = sys.exc_info()
-        else:
-            log.exception('Only one exception can be re-raised, the following '
-                          'exception will be lost:')
-        pthread_mutex_unlock(&exc_info_mutex)
-        if res != 0:
-            log.error('pthread_mutex_ulock failed with %s',
-                      strerror(res))
-
-    finally:
-        sem_post(wd.sem)
-
-cdef session_loop_mt(workers):
-    cdef worker_data_t *wd
-    cdef sigset_t newset, oldset
-    cdef int res, i
-    cdef sem_t sem
-
-    if sem_init(&sem, 0, 0) != 0:
-        raise OSError(errno.errno, 'sem_init failed with '
-                      + strerror(errno.errno))
-
-    sigemptyset(&newset);
-    sigaddset(&newset, signal.SIGTERM);
-    sigaddset(&newset, signal.SIGINT);
-    sigaddset(&newset, signal.SIGHUP);
-    sigaddset(&newset, signal.SIGQUIT);
-
-    PyEval_InitThreads()
-    wd = <worker_data_t*> calloc_or_raise(workers, sizeof(worker_data_t))
-    try:
-        for i in range(workers):
-            wd[i].sem = &sem
-            wd[i].thread_no = i
-
-            # Ensure that signals get delivered to main thread
-            pthread_sigmask(SIG_BLOCK, &newset, &oldset)
-            res = pthread_create(&wd[i].thread_id, NULL, &worker_start, wd+i)
-            pthread_sigmask(SIG_SETMASK, &oldset, NULL)
-            if res != 0:
-                raise OSError(res, 'pthread_create failed with '
-                              + strerror(res))
-            wd[i].started = 1
-
-        with nogil:
-            while not fuse_session_exited(session):
-                sem_wait(&sem) # also interrupted by signals
-
-    finally:
-        for i in range(workers):
-            if wd[i].started:
-                res = pthread_kill(wd[i].thread_id, signal.SIGUSR1)
-                # Thread may have terminated already
-                if res != 0 and res != errno.ESRCH:
-                    log.error('pthread_kill failed with: %s', strerror(res))
-                with nogil:
-                    res = pthread_join(wd[i].thread_id, NULL)
-                if res != 0:
-                    log.error('pthread_join failed with: %s', strerror(res))
-
-        stdlib.free(wd)
-
+    worker_data.task_count -= 1
 
 def close(unmount=True):
     '''Clean up and ensure filesystem is unmounted
@@ -457,7 +396,6 @@ def close(unmount=True):
 
     global mountpoint_b
     global session
-    global exc_info
 
     if unmount:
         log.debug('Calling fuse_session_unmount')
@@ -468,19 +406,6 @@ def close(unmount=True):
 
     mountpoint_b = None
     session = NULL
-
-    # destroy handler may have given us an exception
-    if exc_info:
-        tmp = exc_info
-        exc_info = None
-
-        # The explicit version check works around a Cython bug with
-        # the 3-parameter version of the raise statement, c.f.
-        # https://github.com/cython/cython/commit/a6195f1a44ab21f5aa4b2a1b1842dd93115a3f42
-        if PY_MAJOR_VERSION < 3:
-            raise tmp[0], tmp[1], tmp[2]
-        else:
-            raise tmp[1].with_traceback(tmp[2])
 
 def invalidate_inode(fuse_ino_t inode, attr_only=False):
     '''Invalidate cache for *inode*
@@ -572,3 +497,49 @@ def get_sup_groups(pid):
         gids.add(int(x))
 
     return gids
+
+
+@cython.freelist(10)
+cdef class ReaddirToken:
+    cdef fuse_req_t req
+    cdef char *buf_start
+    cdef char *buf
+    cdef size_t size
+
+def readdir_reply(ReaddirToken token, name, EntryAttributes attr, off_t next_id):
+    '''Report a directory entry in response to a `~Operations.readdir` request.
+
+    This function should be called by the `~Operations.readdir` handler to
+    provide the list of directory entries. The function should be called
+    once for each directory entry, until it returns False.
+
+    *token* must be the token received by the `~Operations.readdir` handler.
+
+    *name* and must be the name of the directory entry and *attr* an
+     `EntryAttributes` instance holding its attributes.
+
+    *next_id* must be a 64-bit integer value that uniquely identifies the
+    current position in the list of directory entries. It may be passed back
+    to a later `~Operations.readdir` call to start another listing at the
+    right position. This value should be robust in the presence of file
+    removals and creations, i.e. if files are created or removed after a
+    call to `~Operations.readdir` and `~Operations.readdir` is called again
+    with *start_id* set to any previously supplied *next_id* values, under
+    no circumstances must any file be reported twice or skipped over.
+    '''
+
+    cdef char *cname
+
+    if token.buf_start == NULL:
+        token.buf_start = <char*> calloc_or_raise(token.size, sizeof(char))
+        token.buf = token.buf_start
+
+    cname = PyBytes_AsString(name)
+    len_ = fuse_add_direntry_plus(token.req, token.buf, token.size,
+                                  cname, &attr.fuse_param, next_id)
+    if len_ > token.size:
+        return False
+
+    token.size -= len_
+    token.buf = &token.buf[len_]
+    return True
