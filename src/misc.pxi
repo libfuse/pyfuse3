@@ -490,7 +490,7 @@ cdef class StatvfsData:
         for (k,v) in state.items():
             setattr(self, k, v)
 
-# As of Cython 0.23.1, @cython.freelist cannot be used for
+# As of Cython 0.28.1, @cython.freelist cannot be used for
 # classes that derive from a builtin type.
 cdef class FUSEError(Exception):
     '''
