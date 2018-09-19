@@ -5,7 +5,7 @@
 .. currentmodule:: pyfuse3
 
 .. autofunction:: init
-.. autofunction:: main
+.. autocofunction:: main
 .. autofunction:: close
 .. autofunction:: invalidate_inode
 .. autofunction:: invalidate_entry
