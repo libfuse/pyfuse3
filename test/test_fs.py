@@ -25,7 +25,7 @@ import time
 import logging
 import trio
 import threading
-from util import fuse_test_marker, wait_for_mount, umount, cleanup, wait_for
+from util import fuse_test_marker, wait_for_mount, umount, cleanup
 
 pytestmark = fuse_test_marker()
 
@@ -68,17 +68,12 @@ def test_invalidate_entry(testfs):
     os.stat(path)
     assert not fs_state.lookup_called
 
-    # Unfortunately there's no way to determine when the
-    # kernel has processed the forget() request, so we
-    # wait longer and longer until it works.
-    def check(_wait_time=[0.01]):
-        pyfuse3.setxattr(mnt_dir, 'command', b'forget_entry')
-        time.sleep(_wait_time[0])
-        fs_state.lookup_called = False
-        os.stat(path)
-        _wait_time[0] += max(1, _wait_time[0])
-        return fs_state.lookup_called
-    assert wait_for(check)
+    # Hardcoded sleeptimes - sorry! Needed because of the special semantics of
+    # invalidate_entry()
+    pyfuse3.setxattr(mnt_dir, 'command', b'forget_entry')
+    time.sleep(1.1)
+    os.stat(path)
+    assert fs_state.lookup_called
 
 def test_invalidate_inode(testfs):
     (mnt_dir, fs_state) = testfs
@@ -90,18 +85,10 @@ def test_invalidate_inode(testfs):
         assert fh.read() == 'hello world\n'
         assert not fs_state.read_called
 
-        # Unfortunately there's no way to determine when the
-        # kernel has processed the forget() request, so we
-        # wait longer and longer until it works.
-        def check(_wait_time=[0.01]):
-            pyfuse3.setxattr(mnt_dir, 'command', b'forget_inode')
-            time.sleep(_wait_time[0])
-            fs_state.read_called = False
-            fh.seek(0)
-            assert fh.read() == 'hello world\n'
-            _wait_time[0] += max(1, _wait_time[0])
-            return fs_state.read_called
-        assert wait_for(check)
+        pyfuse3.setxattr(mnt_dir, 'command', b'forget_inode')
+        fh.seek(0)
+        assert fh.read() == 'hello world\n'
+        assert fs_state.read_called
 
 def test_notify_store(testfs):
     (mnt_dir, fs_state) = testfs
@@ -224,14 +211,22 @@ class Fs(pyfuse3.Operations):
             raise FUSEError(errno.ENOTSUP)
 
         if value == b'forget_entry':
-            pyfuse3.invalidate_entry(pyfuse3.ROOT_INODE, self.hello_name)
+            # This is ugly, but we have to finish this request
+            # before we can send the invalidate request.
+            threading.Thread(target=_delayed_invalidate,
+                             args=(pyfuse3.ROOT_INODE, self.hello_name)).start()
         elif value == b'forget_inode':
-            pyfuse3.invalidate_inode(self.hello_inode)
+            await pyfuse3.invalidate_inode(self.hello_inode)
         elif value == b'store':
-            pyfuse3.notify_store(self.hello_inode, offset=0,
-                                data=self.hello_data)
+            await pyfuse3.notify_store(self.hello_inode, offset=0,
+                                       data=self.hello_data)
         else:
             raise FUSEError(errno.EINVAL)
+
+def _delayed_invalidate(inode, name):
+    time.sleep(1)  # cf test_invalidate_entry()
+    pyfuse3.invalidate_entry(inode, name)
+
 
 def run_fs(mountpoint, cross_process):
     # Logging (note that we run in a new process, so we can't

@@ -51,9 +51,3 @@ the terms of the GNU LGPL.
 #else
 #error This should not happen
 #endif
-
-/*
- * Constants
- */
-#define NOTIFY_INVAL_INODE 1
-#define NOTIFY_INVAL_ENTRY 2

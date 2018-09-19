@@ -56,9 +56,6 @@ cdef extern from "macros.c" nogil:
     void ASSIGN_DARWIN(void*, void*)
     void ASSIGN_NOT_DARWIN(void*, void*)
 
-    enum:
-        NOTIFY_INVAL_INODE
-        NOTIFY_INVAL_ENTRY
 
 cdef extern from "xattr.h" nogil:
     int setxattr_p (char *path, char *name,
@@ -90,7 +87,6 @@ cdef extern from *:
         EDEADLK
 
 cdef extern from "Python.h" nogil:
-    void PyEval_InitThreads()
     int PY_SSIZE_T_MAX
 
 # Actually passed as -D to cc (and defined in setup.py)
@@ -102,13 +98,10 @@ cdef extern from *:
 ################
 
 from pickle import PicklingError
-from queue import Queue
-import contextlib
 import logging
 import os
 import os.path
 import sys
-import threading
 import trio
 
 import _pyfuse3
@@ -130,9 +123,6 @@ cdef fuse_session* session = NULL
 cdef fuse_lowlevel_ops fuse_ops
 cdef int session_fd
 cdef object py_retval
-
-cdef object _notify_queue
-_notify_queue = Queue(maxsize=1000)
 
 ROOT_INODE = FUSE_ROOT_ID
 __version__ = PYFUSE3_VERSION.decode('utf-8')
@@ -737,6 +727,7 @@ def init(ops, mountpoint, options=default_options):
 
     session_fd = fuse_session_fd(session)
 
+
 @async_wrapper
 async def main(int min_tasks=1, int max_tasks=99):
     '''Run FUSE main loop'''
@@ -744,18 +735,12 @@ async def main(int min_tasks=1, int max_tasks=99):
     if session == NULL:
         raise RuntimeError('Need to call init() before main()')
 
-    # Start notification handling thread
-    t = threading.Thread(target=_notify_loop)
-    t.daemon = True
-    t.start()
-    try:
-        async with trio.open_nursery() as nursery:
-            worker_data.task_count = 1
-            worker_data.task_serial = 1
-            nursery.start_soon(_session_loop, nursery, min_tasks, max_tasks,
-                               name=worker_data.get_name())
-    finally:
-        _notify_queue.put(None, block=True, timeout=5)
+    async with trio.open_nursery() as nursery:
+        worker_data.task_count = 1
+        worker_data.task_serial = 1
+        nursery.start_soon(_session_loop, nursery, min_tasks, max_tasks,
+                           name=worker_data.get_name())
+
 
 def close(unmount=True):
     '''Clean up and ensure filesystem is unmounted
@@ -789,39 +774,82 @@ def close(unmount=True):
     mountpoint_b = None
     session = NULL
 
-def invalidate_inode(fuse_ino_t inode, attr_only=False):
+async def invalidate_inode(fuse_ino_t inode, attr_only=False):
     '''Invalidate cache for *inode*
 
     Instructs the FUSE kernel module to forgot cached attributes and
-    data (unless *attr_only* is True) for *inode*. This operation is
-    carried out asynchronously, i.e. the method may return before the
-    kernel has executed the request.
+    data (unless *attr_only* is True) for *inode*.
+
+    If the operation is not supported by the kernel, raises `OSError`
+    with errno ENOSYS.
     '''
 
-    cdef NotifyRequest req
-    req = NotifyRequest.__new__(NotifyRequest)
-    req.kind = NOTIFY_INVAL_INODE
-    req.ino = inode
-    req.attr_only = bool(attr_only)
-    _notify_queue.put(req)
+    cdef int ret
+    await _wait_fuse_writable()
+    if attr_only:
+        ret = fuse_lowlevel_notify_inval_inode(session, inode, -1, 0)
+    else:
+        ret = fuse_lowlevel_notify_inval_inode(session, inode, 0, 0)
 
-def invalidate_entry(fuse_ino_t inode_p, bytes name):
+    if ret != 0:
+        raise OSError(-ret, 'fuse_lowlevel_notify_inval_inode returned: ' + strerror(-ret))
+
+
+def invalidate_entry(fuse_ino_t inode_p, bytes name, fuse_ino_t deleted=0):
     '''Invalidate directory entry
 
-    Instructs the FUSE kernel module to forget about the directory
-    entry *name* in the directory with inode *inode_p*. This operation
-    is carried out asynchronously, i.e. the method may return before
-    the kernel has executed the request.
+    Instructs the FUSE kernel module to forget about the directory entry *name*
+    in the directory with inode *inode_p*.
+
+    If the inode passed as *deleted* matches the inode that is currently
+    associated with *name* by the kernel, any inotify watchers of this inode are
+    informed that the entry has been deleted.
+
+    If there is a pending filesystem operation that is related to the parent
+    directory or directory entry, this function will block until that operation
+    has completed. Therefore, to avoid a deadlock this function must not be
+    called while handling a related request, nor while holding a lock that could
+    be needed for handling such a request.
+
+    As for kernel 4.18, a "related operation" is a `~Operations.lookup`,
+    `~Operations.symlink`, `~Operations.mknod`, `~Operations.mkdir`,
+    `~Operations.unlink`, `~Operations.rename`, `~Operations.link` or
+    `~Operations.create` request for the parent, and a `~Operations.setattr`,
+    `~Operations.unlink`, `~Operations.rmdir`, `~Operations.rename`,
+    `~Operations.setxattr`, `~Operations.removexattr` or `~Operations.readdir`
+    request for the inode itself.
+
+    For technical reasons, this function can also not return control to the main
+    event loop but will actually block. To return control to the event loop
+    while this function is running, call it in a separate thread using
+    `trio.run_sync_in_worker_thread
+    <https://trio.readthedocs.io/en/latest/reference-core.html#trio.run_sync_in_worker_thread>`_.
     '''
 
-    cdef NotifyRequest req
-    req = NotifyRequest.__new__(NotifyRequest)
-    req.kind = NOTIFY_INVAL_ENTRY
-    req.ino = inode_p
-    req.name = name
-    _notify_queue.put(req)
+    cdef char *cname
+    cdef ssize_t slen
+    cdef size_t len_
+    cdef int ret
 
-def notify_store(inode, offset, data):
+    PyBytes_AsStringAndSize(name, &cname, &slen)
+    # len_ is guaranteed positive
+    len_ = <size_t> slen
+
+    if deleted:
+        with nogil: # might block!
+            ret = fuse_lowlevel_notify_delete(session, inode_p, deleted, cname, len_)
+        if ret != 0:
+            raise OSError(-ret, 'fuse_lowlevel_notify_delete returned: '
+                          + strerror(-ret))
+    else:
+        with nogil: # might block!
+            ret = fuse_lowlevel_notify_inval_entry(session, inode_p, cname, len_)
+        if ret != 0:
+            raise OSError(-ret, 'fuse_lowlevel_notify_inval_entry returned: '
+                          + strerror(-ret))
+
+
+async def notify_store(inode, offset, data):
     '''Store data in kernel page cache
 
     Sends *data* for the kernel to store it in the page cache for *inode* at
@@ -830,6 +858,9 @@ def notify_store(inode, offset, data):
 
     If this function raises an exception, the store may still have completed
     partially.
+
+    If the operation is not supported by the kernel, raises `OSError`
+    with errno ENOSYS.
     '''
 
     cdef int ret
@@ -851,8 +882,8 @@ def notify_store(inode, offset, data):
 
     ino = inode
     off = offset
-    with nogil:
-        ret = fuse_lowlevel_notify_store(session, ino, off, &bufvec, 0)
+    await _wait_fuse_writable()
+    ret = fuse_lowlevel_notify_store(session, ino, off, &bufvec, 0)
 
     PyBuffer_Release(&pybuf)
     if ret != 0:
