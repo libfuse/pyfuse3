@@ -36,9 +36,9 @@ cimport cpython.exc
 cimport cython
 
 
-######################
-# EXTERNAL DEFINITIONS
-######################
+########################
+# EXTERNAL DEFINITIONS #
+########################
 
 cdef extern from "macros.c" nogil:
     long GET_BIRTHTIME(struct_stat* buf)
@@ -75,6 +75,11 @@ cdef extern from "xattr.h" nogil:
         XATTR_NOFOLLOW
         XATTR_NODEFAULT
         XATTR_NOSECURITY
+
+cdef extern from "<linux/fs.h>" nogil:
+  enum:
+    RENAME_EXCHANGE
+    RENAME_NOREPLACE
 
 cdef extern from "gettime.h" nogil:
     int gettime_realtime(timespec *tp)
@@ -129,7 +134,17 @@ cdef object py_retval
 cdef object _notify_queue
 _notify_queue = Queue(maxsize=1000)
 
-include "constants.pxi"
+ROOT_INODE = FUSE_ROOT_ID
+__version__ = PYFUSE3_VERSION.decode('utf-8')
+
+# In the Cython source, we want the names to refer to the
+# C constants. Therefore, we assign through globals().
+g = globals()
+g['ENOATTR'] = ENOATTR
+g['RENAME_EXCHANGE'] = RENAME_EXCHANGE
+g['RENAME_NOREPLACE'] = RENAME_NOREPLACE
+
+
 
 #######################
 # FUSE REQUEST HANDLERS
@@ -137,14 +152,769 @@ include "constants.pxi"
 
 include "handlers.pxi"
 
-####################
-# INTERNAL FUNCTIONS
-####################
 
-include "misc.pxi"
+########################################
+# INTERNAL FUNCTIONS & DATA STRUCTURES #
+########################################
 
-####################
-# FUSE API FUNCTIONS
-####################
+include "internal.pxi"
 
-include "fuse_api.pxi"
+
+######################
+# EXTERNAL API       #
+######################
+
+@cython.freelist(10)
+cdef class RequestContext:
+    '''
+    Instances of this class are passed to some `Operations` methods to
+    provide information about the caller of the syscall that initiated
+    the request.
+    '''
+
+    cdef readonly uid_t uid
+    cdef readonly pid_t pid
+    cdef readonly gid_t gid
+    cdef readonly mode_t umask
+
+    def __getstate__(self):
+        raise PicklingError("RequestContext instances can't be pickled")
+
+
+@cython.freelist(10)
+cdef class SetattrFields:
+    '''
+    `SetattrFields` instances are passed to the `~Operations.setattr` handler
+    to specify which attributes should be updated.
+    '''
+
+    cdef readonly object update_atime
+    cdef readonly object update_mtime
+    cdef readonly object update_ctime
+    cdef readonly object update_mode
+    cdef readonly object update_uid
+    cdef readonly object update_gid
+    cdef readonly object update_size
+
+    def __cinit__(self):
+        self.update_atime = False
+        self.update_mtime = False
+        self.update_ctime = False
+        self.update_mode = False
+        self.update_uid = False
+        self.update_gid = False
+        self.update_size = False
+
+    def __getstate__(self):
+        raise PicklingError("SetattrFields instances can't be pickled")
+
+@cython.freelist(30)
+cdef class EntryAttributes:
+    '''
+    Instances of this class store attributes of directory entries.
+    Most of the attributes correspond to the elements of the ``stat``
+    C struct as returned by e.g. ``fstat`` and should be
+    self-explanatory.
+    '''
+
+    # Attributes are documented in rst/data.rst
+
+    cdef fuse_entry_param fuse_param
+    cdef struct_stat *attr
+
+    def __cinit__(self):
+        string.memset(&self.fuse_param, 0, sizeof(fuse_entry_param))
+        self.attr = &self.fuse_param.attr
+        self.fuse_param.generation = 0
+        self.fuse_param.entry_timeout = 300
+        self.fuse_param.attr_timeout = 300
+
+        self.attr.st_mode = S_IFREG
+        self.attr.st_blksize = 4096
+        self.attr.st_nlink = 1
+
+    @property
+    def st_ino(self):
+        return self.fuse_param.ino
+    @st_ino.setter
+    def st_ino(self, val):
+        self.fuse_param.ino = val
+        self.attr.st_ino = val
+
+    @property
+    def generation(self):
+        '''The inode generation number'''
+        return self.fuse_param.generation
+    @generation.setter
+    def generation(self, val):
+        self.fuse_param.generation = val
+
+    @property
+    def attr_timeout(self):
+        '''Validity timeout for the attributes of the directory entry
+
+        Floating point numbers may be used. Units are seconds.
+        '''
+        return self.fuse_param.attr_timeout
+    @attr_timeout.setter
+    def attr_timeout(self, val):
+        self.fuse_param.attr_timeout = val
+
+    @property
+    def entry_timeout(self):
+        '''Validity timeout for the name/existence of the directory entry
+
+        Floating point numbers may be used. Units are seconds.
+        '''
+        return self.fuse_param.entry_timeout
+    @entry_timeout.setter
+    def entry_timeout(self, val):
+        self.fuse_param.entry_timeout = val
+
+    @property
+    def st_mode(self):
+        return self.attr.st_mode
+    @st_mode.setter
+    def st_mode(self, val):
+        self.attr.st_mode = val
+
+    @property
+    def st_nlink(self):
+        return self.attr.st_nlink
+    @st_nlink.setter
+    def st_nlink(self, val):
+        self.attr.st_nlink = val
+
+    @property
+    def st_uid(self):
+        return self.attr.st_uid
+    @st_uid.setter
+    def st_uid(self, val):
+        self.attr.st_uid = val
+
+    @property
+    def st_gid(self):
+        return self.attr.st_gid
+    @st_gid.setter
+    def st_gid(self, val):
+        self.attr.st_gid = val
+
+    @property
+    def st_rdev(self):
+        return self.attr.st_rdev
+    @st_rdev.setter
+    def st_rdev(self, val):
+        self.attr.st_rdev = val
+
+    @property
+    def st_size(self):
+        return self.attr.st_size
+    @st_size.setter
+    def st_size(self, val):
+        self.attr.st_size = val
+
+    @property
+    def st_blocks(self):
+        return self.attr.st_blocks
+    @st_blocks.setter
+    def st_blocks(self, val):
+        self.attr.st_blocks = val
+
+    @property
+    def st_blksize(self):
+        return self.attr.st_blksize
+    @st_blksize.setter
+    def st_blksize(self, val):
+        self.attr.st_blksize = val
+
+    @property
+    def st_atime_ns(self):
+        '''Time of last access in (integer) nanoseconds'''
+        return (int(self.attr.st_atime) * 10**9 + GET_ATIME_NS(self.attr))
+    @st_atime_ns.setter
+    def st_atime_ns(self, val):
+        self.attr.st_atime = val / 10**9
+        SET_ATIME_NS(self.attr, val % 10**9)
+
+    @property
+    def st_mtime_ns(self):
+        '''Time of last modification in (integer) nanoseconds'''
+        return (int(self.attr.st_mtime) * 10**9 + GET_MTIME_NS(self.attr))
+    @st_mtime_ns.setter
+    def st_mtime_ns(self, val):
+        self.attr.st_mtime = val / 10**9
+        SET_MTIME_NS(self.attr, val % 10**9)
+
+    @property
+    def st_ctime_ns(self):
+        '''Time of last inode modification in (integer) nanoseconds'''
+        return (int(self.attr.st_ctime) * 10**9 + GET_CTIME_NS(self.attr))
+    @st_ctime_ns.setter
+    def st_ctime_ns(self, val):
+        self.attr.st_ctime = val / 10**9
+        SET_CTIME_NS(self.attr, val % 10**9)
+
+    @property
+    def st_birthtime_ns(self):
+        '''Time of inode creation in (integer) nanoseconds.
+
+        Only available under BSD and OS X. Will be zero on Linux.
+        '''
+
+        # Use C macro to prevent compiler error on Linux
+        # (where st_birthtime does not exist)
+        return int(GET_BIRTHTIME(self.attr) * 10**9
+                    + GET_BIRTHTIME_NS(self.attr))
+
+    @st_birthtime_ns.setter
+    def st_birthtime_ns(self, val):
+        # Use C macro to prevent compiler error on Linux
+        # (where st_birthtime does not exist)
+        SET_BIRTHTIME(self.attr, val / 10**9)
+        SET_BIRTHTIME_NS(self.attr, val % 10**9)
+
+    # Pickling and copy support
+    def __getstate__(self):
+        state = dict()
+        for k in ('st_ino', 'generation', 'entry_timeout', 'attr_timeout',
+                  'st_mode', 'st_nlink', 'st_uid', 'st_gid', 'st_rdev',
+                  'st_size', 'st_blksize', 'st_blocks', 'st_atime_ns',
+                  'st_ctime_ns', 'st_mtime_ns', 'st_birthtime_ns'):
+            state[k] = getattr(self, k)
+        return state
+
+    def __setstate__(self, state):
+        for (k,v) in state.items():
+            setattr(self, k, v)
+
+
+@cython.freelist(1)
+cdef class StatvfsData:
+    '''
+    Instances of this class store information about the file system.
+    The attributes correspond to the elements of the ``statvfs``
+    struct, see :manpage:`statvfs(2)` for details.
+    '''
+
+    cdef statvfs stat
+
+    def __cinit__(self):
+        string.memset(&self.stat, 0, sizeof(statvfs))
+
+    @property
+    def f_bsize(self):
+        return self.stat.f_bsize
+    @f_bsize.setter
+    def f_bsize(self, val):
+        self.stat.f_bsize = val
+
+    @property
+    def f_frsize(self):
+        return self.stat.f_frsize
+    @f_frsize.setter
+    def f_frsize(self, val):
+        self.stat.f_frsize = val
+
+    @property
+    def f_blocks(self):
+        return self.stat.f_blocks
+    @f_blocks.setter
+    def f_blocks(self, val):
+        self.stat.f_blocks = val
+
+    @property
+    def f_bfree(self):
+        return self.stat.f_bfree
+    @f_bfree.setter
+    def f_bfree(self, val):
+        self.stat.f_bfree = val
+
+    @property
+    def f_bavail(self):
+        return self.stat.f_bavail
+    @f_bavail.setter
+    def f_bavail(self, val):
+        self.stat.f_bavail = val
+
+    @property
+    def f_files(self):
+        return self.stat.f_files
+    @f_files.setter
+    def f_files(self, val):
+        self.stat.f_files = val
+
+    @property
+    def f_ffree(self):
+        return self.stat.f_ffree
+    @f_ffree.setter
+    def f_ffree(self, val):
+        self.stat.f_ffree = val
+
+    @property
+    def f_favail(self):
+        return self.stat.f_favail
+    @f_favail.setter
+    def f_favail(self, val):
+        self.stat.f_favail = val
+
+    @property
+    def f_namemax(self):
+        return self.stat.f_namemax
+    @f_namemax.setter
+    def f_namemax(self, val):
+        self.stat.f_namemax = val
+
+    # Pickling and copy support
+    def __getstate__(self):
+        state = dict()
+        for k in ('f_bsize', 'f_frsize', 'f_blocks', 'f_bfree',
+                  'f_bavail', 'f_files', 'f_ffree', 'f_favail',
+                  'f_namemax'):
+            state[k] = getattr(self, k)
+        return state
+
+    def __setstate__(self, state):
+        for (k,v) in state.items():
+            setattr(self, k, v)
+
+# As of Cython 0.28.1, @cython.freelist cannot be used for
+# classes that derive from a builtin type.
+cdef class FUSEError(Exception):
+    '''
+    This exception may be raised by request handlers to indicate that
+    the requested operation could not be carried out. The system call
+    that resulted in the request (if any) will then fail with error
+    code *errno_*.
+    '''
+
+    # If we call this variable "errno", we will get syntax errors
+    # during C compilation (maybe something else declares errno as
+    # a macro?)
+    cdef readonly int errno_
+
+    @property
+    def errno(self):
+        '''Error code to return to client process'''
+        return self.errno_
+
+    def __cinit__(self, errno):
+        self.errno_ = errno
+
+    def __str__(self):
+        return strerror(self.errno_)
+
+def listdir(path):
+    '''Like `os.listdir`, but releases the GIL.
+
+    This function returns an iterator over the directory entries in *path*.
+
+    The returned values are of type :ref:`str <python:textseq>`. Surrogate
+    escape coding (cf.  `PEP 383 <http://www.python.org/dev/peps/pep-0383/>`_)
+    is used for directory names that do not have a string representation.
+    '''
+
+    if not isinstance(path, str):
+        raise TypeError('*path* argument must be of type str')
+
+    cdef dirent.DIR* dirp
+    cdef dirent.dirent* res
+    cdef char* buf
+
+    path_b = str2bytes(path)
+    buf = <char*> path_b
+
+    with nogil:
+        dirp = dirent.opendir(buf)
+
+    if dirp == NULL:
+        raise OSError(errno.errno, strerror(errno.errno), path)
+
+    names = list()
+    while True:
+        errno.errno = 0
+        with nogil:
+            res = dirent.readdir(dirp)
+
+        if res is NULL:
+           if errno.errno != 0:
+               raise OSError(errno.errno, strerror(errno.errno), path)
+           else:
+               break
+        if string.strcmp(res.d_name, b'.') == 0 or \
+           string.strcmp(res.d_name, b'..') == 0:
+            continue
+
+        names.append(bytes2str(PyBytes_FromString(res.d_name)))
+
+    with nogil:
+        dirent.closedir(dirp)
+
+    return names
+
+
+def setxattr(path, name, bytes value, namespace='user'):
+    '''Set extended attribute
+
+    *path* and *name* have to be of type `str`. In Python 3.x, they may
+    contain surrogates. *value* has to be of type `bytes`.
+
+    Under FreeBSD, the *namespace* parameter may be set to *system* or *user* to
+    select the namespace for the extended attribute. For other platforms, this
+    parameter is ignored.
+
+    In contrast to the `os.setxattr` function from the standard library, the
+    method provided by pyfuse3 is also available for non-Linux systems.
+    '''
+
+    if not isinstance(path, str):
+        raise TypeError('*path* argument must be of type str')
+
+    if not isinstance(name, str):
+        raise TypeError('*name* argument must be of type str')
+
+    if namespace not in ('system', 'user'):
+        raise ValueError('*namespace* parameter must be "system" or "user", not %s'
+                         % namespace)
+
+    cdef int ret
+    cdef Py_ssize_t len_
+    cdef char *cvalue
+    cdef char *cpath
+    cdef char *cname
+    cdef int cnamespace
+
+    if namespace == 'system':
+        cnamespace = EXTATTR_NAMESPACE_SYSTEM
+    else:
+        cnamespace = EXTATTR_NAMESPACE_USER
+
+    path_b = str2bytes(path)
+    name_b = str2bytes(name)
+    PyBytes_AsStringAndSize(value, &cvalue, &len_)
+    cpath = <char*> path_b
+    cname = <char*> name_b
+
+    with nogil:
+        # len_ is guaranteed positive
+        ret = setxattr_p(cpath, cname, cvalue, <size_t> len_, cnamespace)
+
+    if ret != 0:
+        raise OSError(errno.errno, strerror(errno.errno), path)
+
+
+def getxattr(path, name, size_t size_guess=128, namespace='user'):
+    '''Get extended attribute
+
+    *path* and *name* have to be of type `str`. In Python 3.x, they may
+    contain surrogates. Returns a value of type `bytes`.
+
+    If the caller knows the approximate size of the attribute value,
+    it should be supplied in *size_guess*. If the guess turns out
+    to be wrong, the system call has to be carried out three times
+    (the first call will fail, the second determines the size and
+    the third finally gets the value).
+
+    Under FreeBSD, the *namespace* parameter may be set to *system* or *user* to
+    select the namespace for the extended attribute. For other platforms, this
+    parameter is ignored.
+
+    In contrast to the `os.getxattr` function from the standard library, the
+    method provided by pyfuse3 is also available for non-Linux systems.
+    '''
+
+    if not isinstance(path, str):
+        raise TypeError('*path* argument must be of type str')
+
+    if not isinstance(name, str):
+        raise TypeError('*name* argument must be of type str')
+
+    if namespace not in ('system', 'user'):
+        raise ValueError('*namespace* parameter must be "system" or "user", not %s'
+                         % namespace)
+
+    cdef ssize_t ret
+    cdef char *buf
+    cdef char *cpath
+    cdef char *cname
+    cdef size_t bufsize
+    cdef int cnamespace
+
+    if namespace == 'system':
+        cnamespace = EXTATTR_NAMESPACE_SYSTEM
+    else:
+        cnamespace = EXTATTR_NAMESPACE_USER
+
+    path_b = str2bytes(path)
+    name_b = str2bytes(name)
+    cpath = <char*> path_b
+    cname = <char*> name_b
+
+    bufsize = size_guess
+    buf = <char*> stdlib.malloc(bufsize * sizeof(char))
+
+    if buf is NULL:
+        cpython.exc.PyErr_NoMemory()
+
+    try:
+        with nogil:
+            ret = getxattr_p(cpath, cname, buf, bufsize, cnamespace)
+
+        if ret < 0 and errno.errno == errno.ERANGE:
+            with nogil:
+                ret = getxattr_p(cpath, cname, NULL, 0, cnamespace)
+            if ret < 0:
+                raise OSError(errno.errno, strerror(errno.errno), path)
+            bufsize = <size_t> ret
+            stdlib.free(buf)
+            buf = <char*> stdlib.malloc(bufsize * sizeof(char))
+            if buf is NULL:
+                cpython.exc.PyErr_NoMemory()
+
+            with nogil:
+                ret = getxattr_p(cpath, cname, buf, bufsize, cnamespace)
+
+        if ret < 0:
+            raise OSError(errno.errno, strerror(errno.errno), path)
+
+        return PyBytes_FromStringAndSize(buf, ret)
+
+    finally:
+        stdlib.free(buf)
+
+
+default_options = frozenset(('default_permissions',))
+
+def init(ops, mountpoint, options=default_options):
+    '''Initialize and mount FUSE file system
+
+    *ops* has to be an instance of the `Operations` class (or another
+    class defining the same methods).
+
+    *args* has to be a set of strings. `default_options` provides some
+    reasonable defaults. It is recommended to use these options as a basis and
+    add or remove options as necessary. For example::
+
+        my_opts = set(pyfuse3.default_options)
+        my_opts.add('allow_other')
+        my_opts.discard('default_permissions')
+        pyfuse3.init(ops, mountpoint, my_opts)
+
+    Valid options are listed under ``struct
+    fuse_opt fuse_mount_opts[]``
+    (in `mount.c <https://github.com/libfuse/libfuse/blob/fuse-3.2.6/lib/mount.c#L80>`_)
+    and ``struct fuse_opt fuse_ll_opts[]``
+    (in `fuse_lowlevel_c <https://github.com/libfuse/libfuse/blob/fuse-3.2.6/lib/fuse_lowlevel.c#L2572>`_).
+    '''
+
+    log.debug('Initializing pyfuse3')
+    cdef fuse_args f_args
+    cdef int res
+
+    if not isinstance(mountpoint, str):
+        raise TypeError('*mountpoint_* argument must be of type str')
+
+    global operations
+    global fuse_ops
+    global mountpoint_b
+    global session
+    global session_fd
+
+    mountpoint_b = str2bytes(os.path.abspath(mountpoint))
+    operations = ops
+
+    make_fuse_args(options, &f_args)
+
+    log.debug('Calling fuse_session_new')
+    init_fuse_ops()
+    session = fuse_session_new(&f_args, &fuse_ops, sizeof(fuse_ops), NULL)
+    if not session:
+        raise RuntimeError("fuse_session_new() failed")
+
+    log.debug('Calling fuse_session_mount')
+    res = fuse_session_mount(session, <char*>mountpoint_b)
+    if res != 0:
+        raise RuntimeError('fuse_session_mount failed')
+
+    session_fd = fuse_session_fd(session)
+
+@async_wrapper
+async def main(int min_tasks=1, int max_tasks=99):
+    '''Run FUSE main loop'''
+
+    if session == NULL:
+        raise RuntimeError('Need to call init() before main()')
+
+    # Start notification handling thread
+    t = threading.Thread(target=_notify_loop)
+    t.daemon = True
+    t.start()
+    try:
+        async with trio.open_nursery() as nursery:
+            worker_data.task_count = 1
+            worker_data.task_serial = 1
+            nursery.start_soon(_session_loop, nursery, min_tasks, max_tasks,
+                               name=worker_data.get_name())
+    finally:
+        _notify_queue.put(None, block=True, timeout=5)
+
+def close(unmount=True):
+    '''Clean up and ensure filesystem is unmounted
+
+    If *unmount* is False, only clean up operations are peformed, but the file
+    system is not explicitly unmounted.
+
+    Normally, the filesystem is unmounted by the user calling umount(8) or
+    fusermount(1), which then terminates the FUSE main loop. However, the loop
+    may also terminate as a result of an exception or a signal. In this case the
+    filesystem remains mounted, but any attempt to access it will block (while
+    the filesystem process is still running) or (after the filesystem process
+    has terminated) return an error. If *unmount* is True, this function will
+    ensure that the filesystem is properly unmounted.
+
+    Note: if the connection to the kernel is terminated via the
+    ``/sys/fs/fuse/connections/`` interface, this function will *not* unmount
+    the filesystem even if *unmount* is True.
+    '''
+
+    global mountpoint_b
+    global session
+
+    if unmount:
+        log.debug('Calling fuse_session_unmount')
+        fuse_session_unmount(session)
+
+    log.debug('Calling fuse_session_destroy')
+    fuse_session_destroy(session)
+
+    mountpoint_b = None
+    session = NULL
+
+def invalidate_inode(fuse_ino_t inode, attr_only=False):
+    '''Invalidate cache for *inode*
+
+    Instructs the FUSE kernel module to forgot cached attributes and
+    data (unless *attr_only* is True) for *inode*. This operation is
+    carried out asynchronously, i.e. the method may return before the
+    kernel has executed the request.
+    '''
+
+    cdef NotifyRequest req
+    req = NotifyRequest.__new__(NotifyRequest)
+    req.kind = NOTIFY_INVAL_INODE
+    req.ino = inode
+    req.attr_only = bool(attr_only)
+    _notify_queue.put(req)
+
+def invalidate_entry(fuse_ino_t inode_p, bytes name):
+    '''Invalidate directory entry
+
+    Instructs the FUSE kernel module to forget about the directory
+    entry *name* in the directory with inode *inode_p*. This operation
+    is carried out asynchronously, i.e. the method may return before
+    the kernel has executed the request.
+    '''
+
+    cdef NotifyRequest req
+    req = NotifyRequest.__new__(NotifyRequest)
+    req.kind = NOTIFY_INVAL_ENTRY
+    req.ino = inode_p
+    req.name = name
+    _notify_queue.put(req)
+
+def notify_store(inode, offset, data):
+    '''Store data in kernel page cache
+
+    Sends *data* for the kernel to store it in the page cache for *inode* at
+    *offset*. If this provides data beyond the current file size, the file is
+    automatically extended.
+
+    If this function raises an exception, the store may still have completed
+    partially.
+    '''
+
+    cdef int ret
+    cdef fuse_ino_t ino
+    cdef off_t off
+    cdef Py_buffer pybuf
+    cdef fuse_bufvec bufvec
+    cdef fuse_buf *buf
+
+    PyObject_GetBuffer(data, &pybuf, PyBUF_CONTIG_RO)
+    bufvec.count = 1
+    bufvec.idx = 0
+    bufvec.off = 0
+
+    buf = bufvec.buf
+    buf[0].flags = 0
+    buf[0].mem = pybuf.buf
+    buf[0].size = <size_t> pybuf.len # guaranteed positive
+
+    ino = inode
+    off = offset
+    with nogil:
+        ret = fuse_lowlevel_notify_store(session, ino, off, &bufvec, 0)
+
+    PyBuffer_Release(&pybuf)
+    if ret != 0:
+        raise OSError(-ret, 'fuse_lowlevel_notify_store returned: ' + strerror(-ret))
+
+def get_sup_groups(pid):
+    '''Return supplementary group ids of *pid*
+
+    This function is relatively expensive because it has to read the group ids
+    from ``/proc/[pid]/status``. For the same reason, it will also not work on
+    systems that do not provide a ``/proc`` file system.
+
+    Returns a set.
+    '''
+
+    with open('/proc/%d/status' % pid, 'r') as fh:
+        for line in fh:
+            if line.startswith('Groups:'):
+                break
+        else:
+            raise RuntimeError("Unable to parse %s" % fh.name)
+    gids = set()
+    for x in line.split()[1:]:
+        gids.add(int(x))
+
+    return gids
+
+
+def readdir_reply(ReaddirToken token, name, EntryAttributes attr, off_t next_id):
+    '''Report a directory entry in response to a `~Operations.readdir` request.
+
+    This function should be called by the `~Operations.readdir` handler to
+    provide the list of directory entries. The function should be called
+    once for each directory entry, until it returns False.
+
+    *token* must be the token received by the `~Operations.readdir` handler.
+
+    *name* and must be the name of the directory entry and *attr* an
+     `EntryAttributes` instance holding its attributes.
+
+    *next_id* must be a 64-bit integer value that uniquely identifies the
+    current position in the list of directory entries. It may be passed back
+    to a later `~Operations.readdir` call to start another listing at the
+    right position. This value should be robust in the presence of file
+    removals and creations, i.e. if files are created or removed after a
+    call to `~Operations.readdir` and `~Operations.readdir` is called again
+    with *start_id* set to any previously supplied *next_id* values, under
+    no circumstances must any file be reported twice or skipped over.
+    '''
+
+    cdef char *cname
+
+    if token.buf_start == NULL:
+        token.buf_start = <char*> calloc_or_raise(token.size, sizeof(char))
+        token.buf = token.buf_start
+
+    cname = PyBytes_AsString(name)
+    len_ = fuse_add_direntry_plus(token.req, token.buf, token.size,
+                                  cname, &attr.fuse_param, next_id)
+    if len_ > token.size:
+        return False
+
+    token.size -= len_
+    token.buf = &token.buf[len_]
+    return True

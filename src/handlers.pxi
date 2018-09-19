@@ -602,6 +602,13 @@ async def fuse_opendir_async (_Container c):
         log.error('fuse_opendir(): fuse_reply_* failed with %s', strerror(-ret))
 
 
+@cython.freelist(10)
+cdef class ReaddirToken:
+    cdef fuse_req_t req
+    cdef char *buf_start
+    cdef char *buf
+    cdef size_t size
+
 cdef void fuse_readdirplus (fuse_req_t req, fuse_ino_t ino, size_t size, off_t off,
                             fuse_file_info *fi):
     global py_retval
