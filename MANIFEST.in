@@ -8,5 +8,5 @@ graft util
 graft test
 prune test/.cache
 exclude MANIFEST.in
-recursive-include src *.pyx *.pxi *.c *.h
+recursive-include src *.pyx *.py *.pxi *.c *.h
 global-exclude *.pyc

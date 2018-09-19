@@ -233,9 +233,6 @@ class Fs(pyfuse3.Operations):
         else:
             raise FUSEError(errno.EINVAL)
 
-async def fuse_main():
-    await pyfuse3.main()
-
 def run_fs(mountpoint, cross_process):
     # Logging (note that we run in a new process, so we can't
     # rely on direct log capture and instead print to stdout)
@@ -254,6 +251,6 @@ def run_fs(mountpoint, cross_process):
     fuse_options.add('fsname=pyfuse3_testfs')
     pyfuse3.init(testfs, mountpoint, fuse_options)
     try:
-        trio.run(fuse_main)
+        trio.run(pyfuse3.main)
     finally:
         pyfuse3.close()

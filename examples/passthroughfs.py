@@ -448,9 +448,6 @@ def parse_args(args):
 
     return parser.parse_args(args)
 
-async def fuse_main():
-    await pyfuse3.main()
-
 def main():
     options = parse_args(sys.argv[1:])
     init_logging(options.debug)
@@ -465,7 +462,7 @@ def main():
 
     try:
         log.debug('Entering main loop..')
-        trio.run(fuse_main)
+        trio.run(pyfuse3.main)
     except:
         pyfuse3.close(unmount=False)
         raise

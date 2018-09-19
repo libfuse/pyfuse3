@@ -134,9 +134,6 @@ def parse_args():
     return parser.parse_args()
 
 
-async def fuse_main():
-    await pyfuse3.main()
-
 def main():
     options = parse_args()
     init_logging(options.debug)
@@ -148,7 +145,7 @@ def main():
         fuse_options.add('debug')
     pyfuse3.init(testfs, options.mountpoint, fuse_options)
     try:
-        trio.run(fuse_main)
+        trio.run(pyfuse3.main)
     except:
         pyfuse3.close(unmount=False)
         raise

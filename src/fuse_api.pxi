@@ -300,6 +300,7 @@ async def _wait_fuse_writable():
     #log.debug('%s: fuse fd writable, unparking next task.', name)
     worker_data.write_queue.unpark()
 
+@async_wrapper
 async def main(int min_tasks=1, int max_tasks=99):
     '''Run FUSE main loop'''
 
@@ -314,21 +315,12 @@ async def main(int min_tasks=1, int max_tasks=99):
         async with trio.open_nursery() as nursery:
             worker_data.task_count = 1
             worker_data.task_serial = 1
-            nursery.start_soon(trio_wrap, _session_loop, nursery, min_tasks, max_tasks,
+            nursery.start_soon(_session_loop, nursery, min_tasks, max_tasks,
                                name=worker_data.get_name())
     finally:
         _notify_queue.put(None, block=True, timeout=5)
 
-# Any top level trio coroutines (i.e., coroutines that are passed
-# to trio.run) must be pure-Python.
-exec_scope = dict()
-exec('''
-async def trio_wrap(fn, *args, **kwargs):
-  await fn(*args, **kwargs)
-''', exec_scope)
-trio_wrap = exec_scope['trio_wrap']
-
-
+@async_wrapper
 async def _session_loop(nursery, int min_tasks, int max_tasks):
     cdef int res
     cdef fuse_buf buf
@@ -350,7 +342,7 @@ async def _session_loop(nursery, int min_tasks, int max_tasks):
             worker_data.task_count += 1
             log.debug('%s: No tasks waiting, starting another worker (now %d total).',
                       name, worker_data.task_count)
-            nursery.start_soon(trio_wrap, _session_loop, nursery, min_tasks, max_tasks,
+            nursery.start_soon(_session_loop, nursery, min_tasks, max_tasks,
                                name=worker_data.get_name())
 
         if res == -errno.EINTR:

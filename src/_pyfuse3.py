@@ -1,14 +1,32 @@
-# -*- coding: utf-8 -*-
 '''
-operations.pxi
+_pyfuse3.py
 
-Copyright © 2013 Nikolaus Rath <Nikolaus.org>
+Pure-Python components of pyfuse3.
+
+Copyright © 2018 Nikolaus Rath <Nikolaus.org>
 
 This file is part of pyfuse3. This work may be distributed under
 the terms of the GNU LGPL.
 '''
 
-cdef class Operations:
+import functools
+import errno
+
+# Will be injected by pyfuse3 extension module
+FUSEError = None
+
+__all__ = [ 'Operations', 'async_wrapper' ]
+
+# Any top level trio coroutines (i.e., coroutines that are passed
+# to trio.run) must be pure-Python. This wrapper ensures that this
+# is the case for Cython-defined async functions.
+def async_wrapper(fn):
+    @functools.wraps(fn)
+    async def wrapper(*args, **kwargs):
+        await fn(*args, **kwargs)
+    return wrapper
+
+class Operations:
     '''
     This class defines the request handler methods that an pyfuse3 file system
     may implement. If a particular request handler has not been implemented, it

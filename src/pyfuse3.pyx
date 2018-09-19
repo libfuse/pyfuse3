@@ -106,6 +106,12 @@ import sys
 import threading
 import trio
 
+import _pyfuse3
+_pyfuse3.FUSEError = FUSEError
+
+from _pyfuse3 import Operations, async_wrapper
+
+
 ##################
 # GLOBAL VARIABLES
 ##################
@@ -129,7 +135,6 @@ include "constants.pxi"
 # FUSE REQUEST HANDLERS
 #######################
 
-include "operations.pxi"
 include "handlers.pxi"
 
 ####################

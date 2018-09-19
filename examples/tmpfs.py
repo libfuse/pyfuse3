@@ -430,9 +430,6 @@ def parse_args():
 
     return parser.parse_args()
 
-async def fuse_main():
-    await pyfuse3.main()
-
 if __name__ == '__main__':
 
     options = parse_args()
@@ -447,7 +444,7 @@ if __name__ == '__main__':
     pyfuse3.init(operations, options.mountpoint, fuse_options)
 
     try:
-        trio.run(fuse_main)
+        trio.run(pyfuse3.main)
     except:
         pyfuse3.close(unmount=False)
         raise
