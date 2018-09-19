@@ -112,6 +112,21 @@ cdef make_fuse_args(args, fuse_args* f_args):
         stdlib.free(f_args.argv)
         raise
 
+def _notify_loop():
+    '''Process async invalidate_entry calls.'''
+
+    while True:
+        req = _notify_queue.get()
+        if req is None:
+            log.debug('terminating notify thread')
+            break
+
+        try:
+            invalidate_entry(*req)
+        except Exception:
+            log.exception('Failed to submit invalidate_entry request for '
+                          'parent inode %d, name %s', req[0], req[1])
+
 cdef str2bytes(s):
     '''Convert *s* to bytes'''
 

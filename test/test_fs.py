@@ -211,10 +211,7 @@ class Fs(pyfuse3.Operations):
             raise FUSEError(errno.ENOTSUP)
 
         if value == b'forget_entry':
-            # This is ugly, but we have to finish this request
-            # before we can send the invalidate request.
-            threading.Thread(target=_delayed_invalidate,
-                             args=(pyfuse3.ROOT_INODE, self.hello_name)).start()
+            pyfuse3.invalidate_entry_async(pyfuse3.ROOT_INODE, self.hello_name)
         elif value == b'forget_inode':
             await pyfuse3.invalidate_inode(self.hello_inode)
         elif value == b'store':
@@ -223,10 +220,8 @@ class Fs(pyfuse3.Operations):
         else:
             raise FUSEError(errno.EINVAL)
 
-def _delayed_invalidate(inode, name):
-    time.sleep(1)  # cf test_invalidate_entry()
-    pyfuse3.invalidate_entry(inode, name)
-
+        # Make sure that the request is pending before we return
+        await trio.sleep(0.1)
 
 def run_fs(mountpoint, cross_process):
     # Logging (note that we run in a new process, so we can't

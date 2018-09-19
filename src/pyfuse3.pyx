@@ -98,11 +98,13 @@ cdef extern from *:
 ################
 
 from pickle import PicklingError
+from queue import Queue
 import logging
 import os
 import os.path
 import sys
 import trio
+import threading
 
 import _pyfuse3
 _pyfuse3.FUSEError = FUSEError
@@ -123,6 +125,8 @@ cdef fuse_session* session = NULL
 cdef fuse_lowlevel_ops fuse_ops
 cdef int session_fd
 cdef object py_retval
+
+cdef object _notify_queue = None
 
 ROOT_INODE = FUSE_ROOT_ID
 __version__ = PYFUSE3_VERSION.decode('utf-8')
@@ -735,12 +739,15 @@ async def main(int min_tasks=1, int max_tasks=99):
     if session == NULL:
         raise RuntimeError('Need to call init() before main()')
 
-    async with trio.open_nursery() as nursery:
-        worker_data.task_count = 1
-        worker_data.task_serial = 1
-        nursery.start_soon(_session_loop, nursery, min_tasks, max_tasks,
-                           name=worker_data.get_name())
-
+    try:
+        async with trio.open_nursery() as nursery:
+            worker_data.task_count = 1
+            worker_data.task_serial = 1
+            nursery.start_soon(_session_loop, nursery, min_tasks, max_tasks,
+                               name=worker_data.get_name())
+    finally:
+        if _notify_queue is not None:
+            _notify_queue.put(None)
 
 def close(unmount=True):
     '''Clean up and ensure filesystem is unmounted
@@ -824,6 +831,8 @@ def invalidate_entry(fuse_ino_t inode_p, bytes name, fuse_ino_t deleted=0):
     while this function is running, call it in a separate thread using
     `trio.run_sync_in_worker_thread
     <https://trio.readthedocs.io/en/latest/reference-core.html#trio.run_sync_in_worker_thread>`_.
+    A less complicated alternative is to use the `invalidate_entry_async` function
+    instead.
     '''
 
     cdef char *cname
@@ -847,6 +856,36 @@ def invalidate_entry(fuse_ino_t inode_p, bytes name, fuse_ino_t deleted=0):
         if ret != 0:
             raise OSError(-ret, 'fuse_lowlevel_notify_inval_entry returned: '
                           + strerror(-ret))
+
+
+def invalidate_entry_async(inode_p, name, deleted=0):
+    '''Asynchronously invalidate directory entry
+
+    This function performs the same operation as `invalidate_entry`, but does so
+    asynchronously in a separate thread. This avoids the deadlocks that may
+    occur when using `invalidate_entry` from within a request handler, but means
+    that the function generally returns before the kernel has actually
+    invalidated the entry, and that no errors can be reported (they will be
+    logged though).
+
+    The directory entries that are to be invalidated are put in an unbounded
+    queue which is processed by a single thread. This means that if the entry at
+    the beginning of the queue cannot be invalidated yet because a related file
+    system operation is still in progress, none of the other entries will be
+    processed and repeated calls to this function will result in continued
+    growth of the queue.
+    '''
+
+    global _notify_queue
+
+    if _notify_queue is None:
+        log.debug('Starting notify worker.')
+        _notify_queue = Queue()
+        t = threading.Thread(target=_notify_loop)
+        t.daemon = True
+        t.start()
+
+    _notify_queue.put((inode_p, name, deleted))
 
 
 async def notify_store(inode, offset, data):
