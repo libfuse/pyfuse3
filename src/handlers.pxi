@@ -70,10 +70,8 @@ async def fuse_lookup_async (_Container c, name):
         entry = <EntryAttributes?> await operations.lookup(
             c.parent, name, ctx)
     except FUSEError as e:
-        await _wait_fuse_writable()
         ret = fuse_reply_err(c.req, e.errno)
     else:
-        await _wait_fuse_writable()
         ret = fuse_reply_entry(c.req, &entry.fuse_param)
 
     if ret != 0:
@@ -110,10 +108,8 @@ async def fuse_getattr_async (_Container c):
     try:
         entry = <EntryAttributes?> await operations.getattr(c.ino, ctx)
     except FUSEError as e:
-        await _wait_fuse_writable()
         ret = fuse_reply_err(c.req, e.errno)
     else:
-        await _wait_fuse_writable()
         ret = fuse_reply_attr(c.req, entry.attr, entry.fuse_param.attr_timeout)
 
     if ret != 0:
@@ -176,10 +172,8 @@ async def fuse_setattr_async (_Container c, fh):
     try:
         entry = <EntryAttributes?> await operations.setattr(c.ino, entry, fields, fh, ctx)
     except FUSEError as e:
-        await _wait_fuse_writable()
         ret = fuse_reply_err(c.req, e.errno)
     else:
-        await _wait_fuse_writable()
         ret = fuse_reply_attr(c.req, entry.attr, entry.fuse_param.attr_timeout)
 
     if ret != 0:
@@ -199,11 +193,9 @@ async def fuse_readlink_async (_Container c):
     try:
         target = await operations.readlink(c.ino, ctx)
     except FUSEError as e:
-        await _wait_fuse_writable()
         ret = fuse_reply_err(c.req, e.errno)
     else:
         name = PyBytes_AsString(target)
-        await _wait_fuse_writable()
         ret = fuse_reply_readlink(c.req, name)
 
     if ret != 0:
@@ -228,10 +220,8 @@ async def fuse_mknod_async (_Container c, name):
         entry = <EntryAttributes?> await operations.mknod(
             c.parent, name, c.mode, c.rdev, ctx)
     except FUSEError as e:
-        await _wait_fuse_writable()
         ret = fuse_reply_err(c.req, e.errno)
     else:
-        await _wait_fuse_writable()
         ret = fuse_reply_entry(c.req, &entry.fuse_param)
 
     if ret != 0:
@@ -258,10 +248,8 @@ async def fuse_mkdir_async (_Container c, name):
         entry = <EntryAttributes?> await operations.mkdir(
             c.parent, name, c.mode, ctx)
     except FUSEError as e:
-        await _wait_fuse_writable()
         ret = fuse_reply_err(c.req, e.errno)
     else:
-        await _wait_fuse_writable()
         ret = fuse_reply_entry(c.req, &entry.fuse_param)
 
     if ret != 0:
@@ -281,10 +269,8 @@ async def fuse_unlink_async (_Container c, name):
     try:
         await operations.unlink(c.parent, name, ctx)
     except FUSEError as e:
-        await _wait_fuse_writable()
         ret = fuse_reply_err(c.req, e.errno)
     else:
-        await _wait_fuse_writable()
         ret = fuse_reply_err(c.req, 0)
 
     if ret != 0:
@@ -304,10 +290,8 @@ async def fuse_rmdir_async (_Container c, name):
     try:
         await operations.rmdir(c.parent, name, ctx)
     except FUSEError as e:
-        await _wait_fuse_writable()
         ret = fuse_reply_err(c.req, e.errno)
     else:
-        await _wait_fuse_writable()
         ret = fuse_reply_err(c.req, 0)
 
     if ret != 0:
@@ -331,10 +315,8 @@ async def fuse_symlink_async (_Container c, name, link):
         entry = <EntryAttributes?> await operations.symlink(
             c.parent, name, link, ctx)
     except FUSEError as e:
-        await _wait_fuse_writable()
         ret = fuse_reply_err(c.req, e.errno)
     else:
-        await _wait_fuse_writable()
         ret = fuse_reply_entry(c.req, &entry.fuse_param)
 
     if ret != 0:
@@ -361,10 +343,8 @@ async def fuse_rename_async (_Container c, name, newname):
     try:
         await operations.rename(c.parent, name, newparent, newname, flags, ctx)
     except FUSEError as e:
-        await _wait_fuse_writable()
         ret = fuse_reply_err(c.req, e.errno)
     else:
-        await _wait_fuse_writable()
         ret = fuse_reply_err(c.req, 0)
 
     if ret != 0:
@@ -388,10 +368,8 @@ async def fuse_link_async (_Container c, newname):
         entry = <EntryAttributes?> await operations.link(
             c.ino, c.parent, newname, ctx)
     except FUSEError as e:
-        await _wait_fuse_writable()
         ret = fuse_reply_err(c.req, e.errno)
     else:
-        await _wait_fuse_writable()
         ret = fuse_reply_entry(c.req, &entry.fuse_param)
 
     if ret != 0:
@@ -412,14 +390,12 @@ async def fuse_open_async (_Container c):
     try:
         c.fi.fh = await operations.open(c.ino, c.fi.flags, ctx)
     except FUSEError as e:
-        await _wait_fuse_writable()
         ret = fuse_reply_err(c.req, e.errno)
     else:
         # Cached file data does not need to be invalidated.
         # http://article.gmane.org/gmane.comp.file-systems.fuse.devel/5325/
         c.fi.keep_cache = 1
 
-        await _wait_fuse_writable()
         ret = fuse_reply_open(c.req, &c.fi)
 
     if ret != 0:
@@ -442,11 +418,9 @@ async def fuse_read_async (_Container c):
     try:
         buf = await operations.read(c.fh, c.off, c.size)
     except FUSEError as e:
-        await _wait_fuse_writable()
         ret = fuse_reply_err(c.req, e.errno)
     else:
         PyObject_GetBuffer(buf, &pybuf, PyBUF_CONTIG_RO)
-        await _wait_fuse_writable()
         ret = fuse_reply_buf(c.req, <const_char*> pybuf.buf, <size_t> pybuf.len)
         PyBuffer_Release(&pybuf)
 
@@ -474,10 +448,8 @@ async def fuse_write_async (_Container c, pbuf):
     try:
         len_ = await operations.write(c.fh, c.off, pbuf)
     except FUSEError as e:
-        await _wait_fuse_writable()
         ret = fuse_reply_err(c.req, e.errno)
     else:
-        await _wait_fuse_writable()
         ret = fuse_reply_write(c.req, len_)
 
     if ret != 0:
@@ -500,10 +472,8 @@ async def fuse_write_buf_async (_Container c, buf):
     try:
         len_ = await operations.write(c.fh, c.off, buf)
     except FUSEError as e:
-        await _wait_fuse_writable()
         ret = fuse_reply_err(c.req, e.errno)
     else:
-        await _wait_fuse_writable()
         ret = fuse_reply_write(c.req, len_)
 
     if ret != 0:
@@ -522,10 +492,8 @@ async def fuse_flush_async (_Container c):
     try:
         await operations.flush(c.fh)
     except FUSEError as e:
-        await _wait_fuse_writable()
         ret = fuse_reply_err(c.req, e.errno)
     else:
-        await _wait_fuse_writable()
         ret = fuse_reply_err(c.req, 0)
 
     if ret != 0:
@@ -544,10 +512,8 @@ async def fuse_release_async (_Container c):
     try:
         await operations.release(c.fh)
     except FUSEError as e:
-        await _wait_fuse_writable()
         ret = fuse_reply_err(c.req, e.errno)
     else:
-        await _wait_fuse_writable()
         ret = fuse_reply_err(c.req, 0)
 
     if ret != 0:
@@ -568,10 +534,8 @@ async def fuse_fsync_async (_Container c):
     try:
         await operations.fsync(c.fh, c.flags != 0)
     except FUSEError as e:
-        await _wait_fuse_writable()
         ret = fuse_reply_err(c.req, e.errno)
     else:
-        await _wait_fuse_writable()
         ret = fuse_reply_err(c.req, 0)
 
     if ret != 0:
@@ -592,10 +556,8 @@ async def fuse_opendir_async (_Container c):
     try:
         c.fi.fh = await operations.opendir(c.ino, ctx)
     except FUSEError as e:
-        await _wait_fuse_writable()
         ret = fuse_reply_err(c.req, e.errno)
     else:
-        await _wait_fuse_writable()
         ret = fuse_reply_open(c.req, &c.fi)
 
     if ret != 0:
@@ -629,10 +591,8 @@ async def fuse_readdirplus_async (_Container c):
     try:
         await operations.readdir(c.fh, c.off, token)
     except FUSEError as e:
-        await _wait_fuse_writable()
         ret = fuse_reply_err(c.req, e.errno)
     else:
-        await _wait_fuse_writable()
         if token.buf_start == NULL:
             ret = fuse_reply_buf(c.req, NULL, 0)
         else:
@@ -656,10 +616,8 @@ async def fuse_releasedir_async (_Container c):
     try:
         await operations.releasedir(c.fh)
     except FUSEError as e:
-        await _wait_fuse_writable()
         ret = fuse_reply_err(c.req, e.errno)
     else:
-        await _wait_fuse_writable()
         ret = fuse_reply_err(c.req, 0)
 
     if ret != 0:
@@ -681,10 +639,8 @@ async def fuse_fsyncdir_async (_Container c):
     try:
         await operations.fsyncdir(c.fh, c.flags != 0)
     except FUSEError as e:
-        await _wait_fuse_writable()
         ret = fuse_reply_err(c.req, e.errno)
     else:
-        await _wait_fuse_writable()
         ret = fuse_reply_err(c.req, 0)
 
     if ret != 0:
@@ -705,10 +661,8 @@ async def fuse_statfs_async (_Container c):
     try:
         stats = <StatvfsData?> await operations.statfs(ctx)
     except FUSEError as e:
-        await _wait_fuse_writable()
         ret = fuse_reply_err(c.req, e.errno)
     else:
-        await _wait_fuse_writable()
         ret = fuse_reply_statfs(c.req, &stats.stat)
 
     if ret != 0:
@@ -759,10 +713,8 @@ async def fuse_setxattr_async (_Container c, name, value):
 
         await operations.setxattr(c.ino, name, value, ctx)
     except FUSEError as e:
-        await _wait_fuse_writable()
         ret = fuse_reply_err(c.req, e.errno)
     else:
-        await _wait_fuse_writable()
         ret = fuse_reply_err(c.req, 0)
 
     if ret != 0:
@@ -787,13 +739,11 @@ async def fuse_getxattr_async (_Container c, name):
     try:
         buf = await operations.getxattr(c.ino, name, ctx)
     except FUSEError as e:
-        await _wait_fuse_writable()
         ret = fuse_reply_err(c.req, e.errno)
     else:
         PyBytes_AsStringAndSize(buf, &cbuf, &len_s)
         len_ = <size_t> len_s # guaranteed positive
 
-        await _wait_fuse_writable()
         if c.size == 0:
             ret = fuse_reply_xattr(c.req, len_)
         elif len_ <= c.size:
@@ -823,7 +773,6 @@ async def fuse_listxattr_async (_Container c):
     try:
         res = await operations.listxattr(c.ino, ctx)
     except FUSEError as e:
-        await _wait_fuse_writable()
         ret = fuse_reply_err(c.req, e.errno)
     else:
         buf = b'\0'.join(res) + b'\0'
@@ -834,7 +783,6 @@ async def fuse_listxattr_async (_Container c):
         if len_ == 1: # No attributes
             len_ = 0
 
-        await _wait_fuse_writable()
         if c.size == 0:
             ret = fuse_reply_xattr(c.req, len_)
         elif len_ <= c.size:
@@ -859,10 +807,8 @@ async def fuse_removexattr_async (_Container c, name):
     try:
         await operations.removexattr(c.ino, name, ctx)
     except FUSEError as e:
-        await _wait_fuse_writable()
         ret = fuse_reply_err(c.req, e.errno)
     else:
-        await _wait_fuse_writable()
         ret = fuse_reply_err(c.req, 0)
 
     if ret != 0:
@@ -884,10 +830,8 @@ async def fuse_access_async (_Container c):
     try:
         allowed = await operations.access(c.ino, mask, ctx)
     except FUSEError as e:
-        await _wait_fuse_writable()
         ret = fuse_reply_err(c.req, e.errno)
     else:
-        await _wait_fuse_writable()
         if allowed:
             ret = fuse_reply_err(c.req, 0)
         else:
@@ -915,7 +859,6 @@ async def fuse_create_async (_Container c, name):
     try:
         tmp = await operations.create(c.parent, name, c.mode, c.fi.flags, ctx)
     except FUSEError as e:
-        await _wait_fuse_writable()
         ret = fuse_reply_err(c.req, e.errno)
     else:
         c.fi.fh = tmp[0]
@@ -925,7 +868,6 @@ async def fuse_create_async (_Container c, name):
         # http://article.gmane.org/gmane.comp.file-systems.fuse.devel/5325/
         c.fi.keep_cache = 1
 
-        await _wait_fuse_writable()
         ret = fuse_reply_create(c.req, &entry.fuse_param, &c.fi)
 
     if ret != 0:

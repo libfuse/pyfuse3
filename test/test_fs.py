@@ -213,10 +213,10 @@ class Fs(pyfuse3.Operations):
         if value == b'forget_entry':
             pyfuse3.invalidate_entry_async(pyfuse3.ROOT_INODE, self.hello_name)
         elif value == b'forget_inode':
-            await pyfuse3.invalidate_inode(self.hello_inode)
+            pyfuse3.invalidate_inode(self.hello_inode)
         elif value == b'store':
-            await pyfuse3.notify_store(self.hello_inode, offset=0,
-                                       data=self.hello_data)
+            pyfuse3.notify_store(self.hello_inode, offset=0,
+                                 data=self.hello_data)
         else:
             raise FUSEError(errno.EINVAL)
 

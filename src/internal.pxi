@@ -181,15 +181,11 @@ cdef class _WorkerData:
     cdef int task_count
     cdef int task_serial
     cdef object read_queue
-    cdef object write_queue
     cdef int active_readers
-    cdef int active_writers
 
     def __init__(self):
         self.read_queue = trio.hazmat.ParkingLot()
-        self.write_queue = trio.hazmat.ParkingLot()
         self.active_readers = 0
-        self.active_writers = 0
 
     cdef get_name(self):
         self.task_serial += 1
@@ -211,22 +207,6 @@ async def _wait_fuse_readable():
 
     #log.debug('%s: fuse fd readable, unparking next task.', name)
     worker_data.read_queue.unpark()
-
-
-async def _wait_fuse_writable():
-    #name = trio.hazmat.current_task().name
-    worker_data.active_writers += 1
-    if worker_data.active_writers > 1:
-    #    log.debug('%s: Resource busy, parking in writ queue.', name)
-        await worker_data.write_queue.park()
-
-    # Our turn!
-    #log.debug('%s: Waiting for fuse fd to become writable...', name)
-    await trio.hazmat.wait_writable(session_fd)
-    worker_data.active_writers -= 1
-
-    #log.debug('%s: fuse fd writable, unparking next task.', name)
-    worker_data.write_queue.unpark()
 
 
 @async_wrapper

@@ -781,7 +781,7 @@ def close(unmount=True):
     mountpoint_b = None
     session = NULL
 
-async def invalidate_inode(fuse_ino_t inode, attr_only=False):
+def invalidate_inode(fuse_ino_t inode, attr_only=False):
     '''Invalidate cache for *inode*
 
     Instructs the FUSE kernel module to forgot cached attributes and
@@ -791,12 +791,16 @@ async def invalidate_inode(fuse_ino_t inode, attr_only=False):
     with errno ENOSYS.
     '''
 
+    # This should not block, but the kernel may need to do some work so release
+    # the GIL to give other threads a chance to run.
+
     cdef int ret
-    await _wait_fuse_writable()
     if attr_only:
-        ret = fuse_lowlevel_notify_inval_inode(session, inode, -1, 0)
+        with nogil:
+            ret = fuse_lowlevel_notify_inval_inode(session, inode, -1, 0)
     else:
-        ret = fuse_lowlevel_notify_inval_inode(session, inode, 0, 0)
+        with nogil:
+            ret = fuse_lowlevel_notify_inval_inode(session, inode, 0, 0)
 
     if ret != 0:
         raise OSError(-ret, 'fuse_lowlevel_notify_inval_inode returned: ' + strerror(-ret))
@@ -888,7 +892,7 @@ def invalidate_entry_async(inode_p, name, deleted=0):
     _notify_queue.put((inode_p, name, deleted))
 
 
-async def notify_store(inode, offset, data):
+def notify_store(inode, offset, data):
     '''Store data in kernel page cache
 
     Sends *data* for the kernel to store it in the page cache for *inode* at
@@ -901,6 +905,9 @@ async def notify_store(inode, offset, data):
     If the operation is not supported by the kernel, raises `OSError`
     with errno ENOSYS.
     '''
+
+    # This should not block, but the kernel may need to do some work so release
+    # the GIL to give other threads a chance to run.
 
     cdef int ret
     cdef fuse_ino_t ino
@@ -921,8 +928,8 @@ async def notify_store(inode, offset, data):
 
     ino = inode
     off = offset
-    await _wait_fuse_writable()
-    ret = fuse_lowlevel_notify_store(session, ino, off, &bufvec, 0)
+    with nogil:
+        ret = fuse_lowlevel_notify_store(session, ino, off, &bufvec, 0)
 
     PyBuffer_Release(&pybuf)
     if ret != 0:
