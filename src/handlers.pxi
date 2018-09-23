@@ -49,11 +49,6 @@ cdef void fuse_init (void *userdata, fuse_conn_info *conn):
     # init hander modify `conn` in the future.
     operations.init()
 
-
-cdef void fuse_destroy (void *userdata):
-    operations.destroy()
-
-
 cdef void fuse_lookup (fuse_req_t req, fuse_ino_t parent,
                        const_char *name):
     cdef _Container c = _Container()

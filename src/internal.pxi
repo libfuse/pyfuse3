@@ -38,7 +38,6 @@ cdef void init_fuse_ops():
     string.memset(&fuse_ops, 0, sizeof(fuse_lowlevel_ops))
 
     fuse_ops.init = fuse_init
-    fuse_ops.destroy = fuse_destroy
     fuse_ops.lookup = fuse_lookup
     fuse_ops.forget = fuse_forget
     fuse_ops.getattr = fuse_getattr

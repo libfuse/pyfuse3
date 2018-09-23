@@ -57,18 +57,6 @@ class Operations:
 
         pass
 
-    def destroy(self):
-        '''Clean up operations.
-
-        This method will be called when `pyfuse3.close` has been called and the
-        file system is about to be unmounted.
-
-        This method must not raise any exceptions (not even `FUSEError`), since
-        it is not handling a particular client request.
-        '''
-
-        pass
-
     async def lookup(self, parent_inode, name, ctx):
         '''Look up a directory entry by name and get its attributes.
 
