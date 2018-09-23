@@ -1,0 +1,3 @@
+--ignore-dir=doc
+--ignore-dir=build
+--ignore-file=is:pyfuse3.c
