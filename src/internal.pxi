@@ -179,11 +179,11 @@ cdef class _WorkerData:
 
     cdef int task_count
     cdef int task_serial
-    cdef object read_queue
+    cdef object read_lock
     cdef int active_readers
 
     def __init__(self):
-        self.read_queue = trio.hazmat.ParkingLot()
+        self.read_lock = trio.Lock()
         self.active_readers = 0
 
     cdef get_name(self):
@@ -195,17 +195,13 @@ cdef _WorkerData worker_data = _WorkerData()
 async def _wait_fuse_readable():
     #name = trio.hazmat.current_task().name
     worker_data.active_readers += 1
-    if worker_data.active_readers > 1:
-    #    log.debug('%s: Resource busy, parking in read queue.', name)
-        await worker_data.read_queue.park()
+    # log.debug('%s: Waiting for read lock...', name)
+    async with worker_data.read_lock:
+        #log.debug('%s: Waiting for fuse fd to become readable...', name)
+        await trio.hazmat.wait_readable(session_fd)
 
-    # Our turn!
-    #log.debug('%s: Waiting for fuse fd to become readable...', name)
-    await trio.hazmat.wait_readable(session_fd)
     worker_data.active_readers -= 1
-
     #log.debug('%s: fuse fd readable, unparking next task.', name)
-    worker_data.read_queue.unpark()
 
 
 @async_wrapper
@@ -220,13 +216,13 @@ async def _session_loop(nursery, int min_tasks, int max_tasks):
     buf.pos = 0
     buf.flags = 0
     while not fuse_session_exited(session):
-        if len(worker_data.read_queue) > min_tasks:
+        if worker_data.active_readers > min_tasks:
             log.debug('%s: too many idle tasks (%d total, %d waiting), terminating.',
-                      name, worker_data.task_count, len(worker_data.read_queue))
+                      name, worker_data.task_count, worker_data.active_readers)
             break
         await _wait_fuse_readable()
         res = fuse_session_receive_buf(session, &buf)
-        if not worker_data.read_queue and worker_data.task_count < max_tasks:
+        if not worker_data.active_readers and worker_data.task_count < max_tasks:
             worker_data.task_count += 1
             log.debug('%s: No tasks waiting, starting another worker (now %d total).',
                       name, worker_data.task_count)
