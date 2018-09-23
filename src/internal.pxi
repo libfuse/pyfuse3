@@ -195,7 +195,7 @@ cdef _WorkerData worker_data = _WorkerData()
 async def _wait_fuse_readable():
     #name = trio.hazmat.current_task().name
     worker_data.active_readers += 1
-    # log.debug('%s: Waiting for read lock...', name)
+    #log.debug('%s: Waiting for read lock...', name)
     async with worker_data.read_lock:
         #log.debug('%s: Waiting for fuse fd to become readable...', name)
         await trio.hazmat.wait_readable(session_fd)
@@ -240,12 +240,12 @@ async def _session_loop(nursery, int min_tasks, int max_tasks):
         # When fuse_session_process_buf() calls back into one of our handler
         # methods, the handler will start a co-routine and store it in
         # py_retval.
-        log.debug('%s: processing request...', name)
+        #log.debug('%s: processing request...', name)
         save_retval(None)
         fuse_session_process_buf(session, &buf)
         if py_retval is not None:
             await py_retval
-        log.debug('%s: processing complete.', name)
+        #log.debug('%s: processing complete.', name)
 
     log.debug('%s: terminated', name)
     stdlib.free(buf.mem)
