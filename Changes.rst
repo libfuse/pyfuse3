@@ -4,8 +4,8 @@
 
 .. currentmodule:: pyfuse
 
-Unreleased Changes
-==================
+Release 0.9 (2018-09-27)
+========================
 
 * First release
 * pyfuse3 was forked from python-llfuse - thanks for all the work!
