@@ -92,10 +92,10 @@ class Operations:
         the inode.
 
         If the file system is unmounted, it may not have received `forget` calls
-        to bring all lookup counts to zero. The `destroy` method should be used
-        to clean up inodes that at that point still have non-zero lookup count
-        (e.g. by calling `forget` with the current lookup count for every such
-        inode).
+        to bring all lookup counts to zero. The filesystem needs to take care to
+        clean up inodes that at that point still have non-zero lookup count
+        (e.g. by explicitly calling `forget` with the current lookup count for
+        every such inode after `main` has returned).
 
         This method must not raise any exceptions (not even `FUSEError`), since
         it is not handling a particular client request.
