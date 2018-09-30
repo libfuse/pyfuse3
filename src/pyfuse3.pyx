@@ -19,11 +19,12 @@ cdef extern from "pyfuse3.h":
 ###########
 
 from fuse_lowlevel cimport *
+from macros cimport *
 from posix.stat cimport struct_stat, S_IFMT, S_IFDIR, S_IFREG
 from posix.types cimport mode_t, dev_t, off_t
 from libc.stdint cimport uint32_t
 from libc.stdlib cimport const_char
-from libc cimport stdlib, string, errno, dirent
+from libc cimport stdlib, string, errno
 from posix cimport unistd
 from libc.errno cimport ETIMEDOUT, EPROTO, EINVAL, EPERM, ENOMSG, ENOATTR
 from posix.unistd cimport getpid
@@ -34,57 +35,18 @@ from cpython.buffer cimport (PyObject_GetBuffer, PyBuffer_Release,
                              PyBUF_CONTIG_RO, PyBUF_CONTIG)
 cimport cpython.exc
 cimport cython
+cimport libc_extra
 
 
 ########################
 # EXTERNAL DEFINITIONS #
 ########################
 
-cdef extern from "macros.c" nogil:
-    long GET_BIRTHTIME(struct_stat* buf)
-    long GET_ATIME_NS(struct_stat* buf)
-    long GET_CTIME_NS(struct_stat* buf)
-    long GET_MTIME_NS(struct_stat* buf)
-    long GET_BIRTHTIME_NS(struct_stat* buf)
-
-    void SET_BIRTHTIME(struct_stat* buf, long val)
-    void SET_ATIME_NS(struct_stat* buf, long val)
-    void SET_CTIME_NS(struct_stat* buf, long val)
-    void SET_MTIME_NS(struct_stat* buf, long val)
-    void SET_BIRTHTIME_NS(struct_stat* buf, long val)
-
-    void ASSIGN_DARWIN(void*, void*)
-    void ASSIGN_NOT_DARWIN(void*, void*)
-
-
-cdef extern from "xattr.h" nogil:
-    int setxattr_p (char *path, char *name,
-                    void *value, int size, int namespace)
-
-    ssize_t getxattr_p (char *path, char *name,
-                        void *value, int size, int namespace)
-
-    enum:
-        EXTATTR_NAMESPACE_SYSTEM
-        EXTATTR_NAMESPACE_USER
-        XATTR_CREATE
-        XATTR_REPLACE
-        XATTR_NOFOLLOW
-        XATTR_NODEFAULT
-        XATTR_NOSECURITY
 
 cdef extern from "<linux/fs.h>" nogil:
   enum:
     RENAME_EXCHANGE
     RENAME_NOREPLACE
-
-cdef extern from "gettime.h" nogil:
-    int gettime_realtime(timespec *tp)
-
-cdef extern from *:
-    # Missing in the Cython provided libc/errno.pxd:
-    enum:
-        EDEADLK
 
 cdef extern from "Python.h" nogil:
     int PY_SSIZE_T_MAX
@@ -510,15 +472,15 @@ def listdir(path):
     if not isinstance(path, str):
         raise TypeError('*path* argument must be of type str')
 
-    cdef dirent.DIR* dirp
-    cdef dirent.dirent* res
+    cdef libc_extra.DIR* dirp
+    cdef libc_extra.dirent* res
     cdef char* buf
 
     path_b = str2bytes(path)
     buf = <char*> path_b
 
     with nogil:
-        dirp = dirent.opendir(buf)
+        dirp = libc_extra.opendir(buf)
 
     if dirp == NULL:
         raise OSError(errno.errno, strerror(errno.errno), path)
@@ -527,7 +489,7 @@ def listdir(path):
     while True:
         errno.errno = 0
         with nogil:
-            res = dirent.readdir(dirp)
+            res = libc_extra.readdir(dirp)
 
         if res is NULL:
            if errno.errno != 0:
@@ -541,7 +503,7 @@ def listdir(path):
         names.append(bytes2str(PyBytes_FromString(res.d_name)))
 
     with nogil:
-        dirent.closedir(dirp)
+        libc_extra.closedir(dirp)
 
     return names
 
@@ -578,9 +540,9 @@ def setxattr(path, name, bytes value, namespace='user'):
     cdef int cnamespace
 
     if namespace == 'system':
-        cnamespace = EXTATTR_NAMESPACE_SYSTEM
+        cnamespace = libc_extra.EXTATTR_NAMESPACE_SYSTEM
     else:
-        cnamespace = EXTATTR_NAMESPACE_USER
+        cnamespace = libc_extra.EXTATTR_NAMESPACE_USER
 
     path_b = str2bytes(path)
     name_b = str2bytes(name)
@@ -590,7 +552,8 @@ def setxattr(path, name, bytes value, namespace='user'):
 
     with nogil:
         # len_ is guaranteed positive
-        ret = setxattr_p(cpath, cname, cvalue, <size_t> len_, cnamespace)
+        ret = libc_extra.setxattr_p(
+            cpath, cname, cvalue, <size_t> len_, cnamespace)
 
     if ret != 0:
         raise OSError(errno.errno, strerror(errno.errno), path)
@@ -634,9 +597,9 @@ def getxattr(path, name, size_t size_guess=128, namespace='user'):
     cdef int cnamespace
 
     if namespace == 'system':
-        cnamespace = EXTATTR_NAMESPACE_SYSTEM
+        cnamespace = libc_extra.EXTATTR_NAMESPACE_SYSTEM
     else:
-        cnamespace = EXTATTR_NAMESPACE_USER
+        cnamespace = libc_extra.EXTATTR_NAMESPACE_USER
 
     path_b = str2bytes(path)
     name_b = str2bytes(name)
@@ -651,11 +614,11 @@ def getxattr(path, name, size_t size_guess=128, namespace='user'):
 
     try:
         with nogil:
-            ret = getxattr_p(cpath, cname, buf, bufsize, cnamespace)
+            ret = libc_extra.getxattr_p(cpath, cname, buf, bufsize, cnamespace)
 
         if ret < 0 and errno.errno == errno.ERANGE:
             with nogil:
-                ret = getxattr_p(cpath, cname, NULL, 0, cnamespace)
+                ret = libc_extra.getxattr_p(cpath, cname, NULL, 0, cnamespace)
             if ret < 0:
                 raise OSError(errno.errno, strerror(errno.errno), path)
             bufsize = <size_t> ret
@@ -665,7 +628,7 @@ def getxattr(path, name, size_t size_guess=128, namespace='user'):
                 cpython.exc.PyErr_NoMemory()
 
             with nogil:
-                ret = getxattr_p(cpath, cname, buf, bufsize, cnamespace)
+                ret = libc_extra.getxattr_p(cpath, cname, buf, bufsize, cnamespace)
 
         if ret < 0:
             raise OSError(errno.errno, strerror(errno.errno), path)

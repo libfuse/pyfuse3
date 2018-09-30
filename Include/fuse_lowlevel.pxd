@@ -12,7 +12,7 @@ the terms of the GNU LGPL.
 from fuse_common cimport *
 from posix.stat cimport *
 from posix.types cimport *
-from libc.sys.statvfs cimport *
+from libc_extra cimport statvfs
 from libc.stdlib cimport const_char
 from libc.stdint cimport uint32_t
 

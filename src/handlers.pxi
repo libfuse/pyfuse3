@@ -139,7 +139,7 @@ async def fuse_setattr_async (_Container c, fh):
 
     attr = entry.attr
     if to_set & (FUSE_SET_ATTR_ATIME_NOW | FUSE_SET_ATTR_MTIME_NOW):
-        ret = gettime_realtime(&now)
+        ret = libc_extra.gettime_realtime(&now)
         if ret != 0:
             log.error('fuse_setattr(): clock_gettime(CLOCK_REALTIME) failed with %s',
                       strerror(errno.errno))
@@ -689,12 +689,12 @@ async def fuse_setxattr_async (_Container c, name, value):
         return
 
     # Make sure we know all the flags
-    if c.flags & ~(XATTR_CREATE | XATTR_REPLACE):
+    if c.flags & ~(libc_extra.XATTR_CREATE | libc_extra.XATTR_REPLACE):
         raise ValueError('unknown flag(s): %o' % c.flags)
 
     ctx = get_request_context(c.req)
     try:
-        if c.flags & XATTR_CREATE: # Attribute must not exist
+        if c.flags & libc_extra.XATTR_CREATE: # Attribute must not exist
             try:
                 await operations.getxattr(c.ino, name)
             except FUSEError as e:
@@ -703,7 +703,7 @@ async def fuse_setxattr_async (_Container c, name, value):
             else:
                 raise FUSEError(errno.EEXIST)
 
-        elif c.flags & XATTR_REPLACE: # Attribute must exist
+        elif c.flags & libc_extra.XATTR_REPLACE: # Attribute must exist
             await operations.getxattr(c.ino, name)
 
         await operations.setxattr(c.ino, name, value, ctx)
