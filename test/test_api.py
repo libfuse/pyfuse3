@@ -34,6 +34,9 @@ def test_sup_groups():
     gids2 = set(os.getgroups())
     assert gids == gids2
 
+def test_syncfs():
+    pyfuse3.syncfs('.')
+
 def _getxattr_helper(path, name):
     try:
         value = pyfuse3.getxattr(path, name)

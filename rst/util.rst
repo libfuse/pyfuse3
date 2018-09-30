@@ -12,3 +12,4 @@ when implementing file systems in Python.
 .. autofunction:: getxattr
 .. autofunction:: listdir
 .. autofunction:: get_sup_groups
+.. autofunction:: syncfs

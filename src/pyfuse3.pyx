@@ -508,6 +508,25 @@ def listdir(path):
     return names
 
 
+def syncfs(path):
+    '''Sync filesystem mounted at *path*
+
+    This is a Python interface to the syncfs(2) system call. There is no
+    particular relation to libfuse, it is provided by pyfuse3 as a convience.
+    '''
+
+    cdef int ret
+
+    fd = os.open(path, flags=os.O_DIRECTORY)
+    try:
+        ret = libc_extra.syncfs(fd)
+
+        if ret != 0:
+            raise OSError(errno.errno, strerror(errno.errno), path)
+    finally:
+        os.close(fd)
+
+
 def setxattr(path, name, bytes value, namespace='user'):
     '''Set extended attribute
 
