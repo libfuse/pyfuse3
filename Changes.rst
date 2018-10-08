@@ -4,8 +4,8 @@
 
 .. currentmodule:: pyfuse
 
-Unreleased Changes
-==================
+Release 1.0 (2018-10-08)
+========================
 
 * Added a new `syncfs` function.
 
