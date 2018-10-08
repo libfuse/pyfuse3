@@ -9,6 +9,7 @@ Steps for Releasing a New Version
     * `python3 setup.py build_ext --inplace && python3 -m pytest test`
     * Run tests under valgrind. Build python `--with-valgrind --with-pydebug`, then `valgrind --trace-children=yes "--trace-children-skip=*mount*" python-dbg -m pytest test/`
     * `./setup.py build_sphinx`
-    * `./setup.py upload_docs` 
+ * `./setup.py build_ext --inplace build_sphinx`
  * `./setup.py sdist upload --sign`
+ * `./setup.py upload_docs`
  * Git commit, git tag
