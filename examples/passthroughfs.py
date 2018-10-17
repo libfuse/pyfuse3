@@ -147,8 +147,8 @@ class Operations(pyfuse3.Operations):
                      'st_ctime_ns'):
             setattr(entry, attr, getattr(stat, attr))
         entry.generation = 0
-        entry.entry_timeout = 5
-        entry.attr_timeout = 5
+        entry.entry_timeout = 0
+        entry.attr_timeout = 0
         entry.st_blksize = 512
         entry.st_blocks = ((entry.st_size+entry.st_blksize-1) // entry.st_blksize)
 
@@ -170,6 +170,8 @@ class Operations(pyfuse3.Operations):
         log.debug('reading %s', path)
         entries = []
         for name in os.listdir(path):
+            if name == '.' or name == '..':
+                continue
             attr = self._getattr(path=os.path.join(path, name))
             entries.append((attr.st_ino, name, attr))
 
@@ -184,9 +186,10 @@ class Operations(pyfuse3.Operations):
         for (ino, name, attr) in sorted(entries):
             if ino <= off:
                 continue
-            self._lookup_cnt[inode] += 1
-            pyfuse3.readdir_reply(
-                token, fsencode(name), attr, ino)
+            if not pyfuse3.readdir_reply(
+                token, fsencode(name), attr, ino):
+                break
+            self._add_path(attr.st_ino, os.path.join(path, name))
 
     async def unlink(self, inode_p, name, ctx):
         name = fsdecode(name)

@@ -332,6 +332,7 @@ def tst_utimens(mnt_dir, ns_tol=0):
     checked_unlink(filename, mnt_dir, isdir=True)
 
 def tst_passthrough(src_dir, mnt_dir):
+    # Test propagation from source to mirror
     name = name_generator()
     src_name = os.path.join(src_dir, name)
     mnt_name = os.path.join(mnt_dir, name)
@@ -343,7 +344,23 @@ def tst_passthrough(src_dir, mnt_dir):
     assert name in os.listdir(mnt_dir)
     assert_same_stats(src_name, mnt_name)
 
+    # Test propagation from mirror to source
     name = name_generator()
+    src_name = os.path.join(src_dir, name)
+    mnt_name = os.path.join(mnt_dir, name)
+    assert name not in os.listdir(src_dir)
+    assert name not in os.listdir(mnt_dir)
+    with open(mnt_name, 'w') as fh:
+        fh.write('Hello, world')
+    assert name in os.listdir(src_dir)
+    assert name in os.listdir(mnt_dir)
+    assert_same_stats(src_name, mnt_name)
+
+    # Test propagation inside subdirectory
+    name = name_generator()
+    src_dir = os.path.join(src_dir, 'subdir')
+    mnt_dir = os.path.join(mnt_dir, 'subdir')
+    os.mkdir(src_dir)
     src_name = os.path.join(src_dir, name)
     mnt_name = os.path.join(mnt_dir, name)
     assert name not in os.listdir(src_dir)
