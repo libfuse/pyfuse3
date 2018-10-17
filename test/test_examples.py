@@ -334,22 +334,31 @@ def tst_utimens(mnt_dir, ns_tol=0):
 def tst_passthrough(src_dir, mnt_dir):
     name = name_generator()
     src_name = os.path.join(src_dir, name)
-    mnt_name = os.path.join(src_dir, name)
+    mnt_name = os.path.join(mnt_dir, name)
     assert name not in os.listdir(src_dir)
     assert name not in os.listdir(mnt_dir)
     with open(src_name, 'w') as fh:
         fh.write('Hello, world')
     assert name in os.listdir(src_dir)
     assert name in os.listdir(mnt_dir)
-    assert os.stat(src_name) == os.stat(mnt_name)
+    assert_same_stats(src_name, mnt_name)
 
     name = name_generator()
     src_name = os.path.join(src_dir, name)
-    mnt_name = os.path.join(src_dir, name)
+    mnt_name = os.path.join(mnt_dir, name)
     assert name not in os.listdir(src_dir)
     assert name not in os.listdir(mnt_dir)
     with open(mnt_name, 'w') as fh:
         fh.write('Hello, world')
     assert name in os.listdir(src_dir)
     assert name in os.listdir(mnt_dir)
-    assert os.stat(src_name) == os.stat(mnt_name)
+    assert_same_stats(src_name, mnt_name)
+
+def assert_same_stats(name1, name2):
+    stat1 = os.stat(name1)
+    stat2 = os.stat(name2)
+
+    for name in ('st_atime_ns', 'st_mtime_ns', 'st_ctime_ns',
+                 'st_mode', 'st_ino', 'st_nlink', 'st_uid',
+                 'st_gid', 'st_size'):
+        assert getattr(stat1, name) == getattr(stat2, name)
