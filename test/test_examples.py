@@ -57,7 +57,7 @@ def test_lltest(tmpdir):
             open(filename + 'does-not-exist', 'r+')
         assert exc_info.value.errno == errno.ENOENT
     except:
-        cleanup(mnt_dir)
+        cleanup(mount_process, mnt_dir)
         raise
     else:
         umount(mount_process, mnt_dir)
@@ -85,7 +85,7 @@ def test_tmpfs(tmpdir):
         tst_truncate_fd(mnt_dir)
         tst_unlink(mnt_dir)
     except:
-        cleanup(mnt_dir)
+        cleanup(mount_process, mnt_dir)
         raise
     else:
         umount(mount_process, mnt_dir)
@@ -117,7 +117,7 @@ def test_passthroughfs(tmpdir):
         tst_unlink(mnt_dir)
         tst_passthrough(src_dir, mnt_dir)
     except:
-        cleanup(mnt_dir)
+        cleanup(mount_process, mnt_dir)
         raise
     else:
         umount(mount_process, mnt_dir)
