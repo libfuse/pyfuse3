@@ -844,7 +844,7 @@ def invalidate_entry(fuse_ino_t inode_p, bytes name, fuse_ino_t deleted=0):
                           + strerror(-ret))
 
 
-def invalidate_entry_async(inode_p, name, deleted=0):
+def invalidate_entry_async(inode_p, name, deleted=0, ignore_enoent=False):
     '''Asynchronously invalidate directory entry
 
     This function performs the same operation as `invalidate_entry`, but does so
@@ -860,6 +860,12 @@ def invalidate_entry_async(inode_p, name, deleted=0):
     system operation is still in progress, none of the other entries will be
     processed and repeated calls to this function will result in continued
     growth of the queue.
+
+    If there are errors, an exception is logged using the `logging` module.
+
+    If *ignore_enoent* is True, ignore ENOENT errors (which occur if the
+    kernel doesn't actually have knowledge of the entry that is to be
+    removed).
     '''
 
     global _notify_queue
@@ -871,7 +877,7 @@ def invalidate_entry_async(inode_p, name, deleted=0):
         t.daemon = True
         t.start()
 
-    _notify_queue.put((inode_p, name, deleted))
+    _notify_queue.put((inode_p, name, deleted, ignore_enoent))
 
 
 def notify_store(inode, offset, data):

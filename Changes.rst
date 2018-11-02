@@ -9,6 +9,9 @@ Unreleased Changes
 
 * Fixed `examples/passthroughfs.py` - was not handling readdir()
   correctly.
+* `invalidate_entry_async` now accepts an additional *ignore_enoent*
+  parameter. When this is set, no errors are logged if the kernel is
+  not actually aware of the entry that should have been removed.
 
 
 Release 1.0 (2018-10-08)

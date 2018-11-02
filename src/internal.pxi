@@ -120,11 +120,15 @@ def _notify_loop():
             log.debug('terminating notify thread')
             break
 
+        (inode_p, name, deleted, ignore_enoent) = req
         try:
-            invalidate_entry(*req)
-        except Exception:
-            log.exception('Failed to submit invalidate_entry request for '
-                          'parent inode %d, name %s', req[0], req[1])
+            invalidate_entry(inode_p, name, deleted)
+        except Exception as exc:
+            if ignore_enoent and isinstance(exc, FileNotFoundError):
+                pass
+            else:
+                log.exception('Failed to submit invalidate_entry request for '
+                              'parent inode %d, name %s', req[0], req[1])
 
 cdef str2bytes(s):
     '''Convert *s* to bytes'''
