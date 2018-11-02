@@ -4,8 +4,8 @@
 
 .. currentmodule:: pyfuse
 
-Unreleased Changes
-==================
+Release 1.1 (2018-11-02)
+========================
 
 * Fixed `examples/passthroughfs.py` - was not handling readdir()
   correctly.
