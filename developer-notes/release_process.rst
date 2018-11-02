@@ -13,3 +13,24 @@ Steps for Releasing a New Version
  * `./setup.py sdist upload --sign`
  * `./setup.py upload_docs`
  * Git commit, git tag
+ * Send announcement to mailing list
+
+
+Announcement template:
+----------------------
+
+Dear all,
+
+I'm happy to announce a new release of pyfuse3. pyfuse3 provides Python
+bindings for libfuse and exclusively targets libfuse3 and Python 3.
+
+From the changelog:
+
+<paste here>
+
+As usual, the newest release can be downloaded from PyPi at
+https://pypi.python.org/pypi/pyfuse3/.
+
+Please report any bugs on the issue tracker at
+https://github.com/libfuse/pyfuse3/issues.  For discussion and
+questions, please use the general FUSE mailing list (i.e., this list).
