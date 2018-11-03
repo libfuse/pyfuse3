@@ -9,9 +9,9 @@ The pyfuse3 Module
 
 .. start-intro
 
-pyfuse3 is a set of Python 3 bindings for `libfuse 3`_ using
-asynchronous I/O. It enables you to easily write a full-featured Linux
-filesystem in Python.
+pyfuse3 is a set of Python 3 bindings for `libfuse 3`_. It provides
+an asynchronous API compatible with Trio_, and enables you to easily
+write a full-featured Linux filesystem in Python.
 
 pyfuse3 releases can be downloaded from PyPi_. The documentation
 can be `read online`__ and is also included in the ``doc/html``
@@ -57,3 +57,4 @@ Professional support is offered from `Rath Consulting`_.
 .. _PyPi: https://pypi.python.org/pypi/pyfuse3/
 .. _GitHub: https://github.com/libfuse/pyfuse3
 .. _`Rath Consulting`: http://www.rath-consulting.biz/
+.. _Trio: https://github.com/python-trio/trio

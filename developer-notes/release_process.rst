@@ -21,8 +21,11 @@ Announcement template:
 
 Dear all,
 
-I'm happy to announce a new release of pyfuse3. pyfuse3 provides Python
-bindings for libfuse and exclusively targets libfuse3 and Python 3.
+I'm happy to announce a new release of pyfuse3, version <X.Y>.
+
+pyfuse3 is a set of Python 3 bindings for libfuse3. It provides
+an asynchronous API compatible with Trio, and enables you to easily
+write a full-featured Linux filesystem in Python.
 
 From the changelog:
 
