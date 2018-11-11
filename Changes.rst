@@ -4,6 +4,11 @@
 
 .. currentmodule:: pyfuse
 
+Unreleased Changes
+==================
+
+* Clarified that `invalidate_inode` may block in some circumstances.
+
 Release 1.1 (2018-11-02)
 ========================
 

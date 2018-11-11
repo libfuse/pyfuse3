@@ -769,12 +769,16 @@ def invalidate_inode(fuse_ino_t inode, attr_only=False):
     Instructs the FUSE kernel module to forgot cached attributes and
     data (unless *attr_only* is True) for *inode*.
 
+    **This operation may block** if writeback caching is active and there is
+    dirty data for the inode that is to be invalidated. Unfortunately there is
+    no way to return control to the event loop until writeback is complete
+    (leading to a deadlock if the necessary write() requests cannot be processed
+    by the filesystem). Unless writeback caching is disabled, this function
+    should therefore be called from a separate thread.
+
     If the operation is not supported by the kernel, raises `OSError`
     with errno ENOSYS.
     '''
-
-    # This should not block, but the kernel may need to do some work so release
-    # the GIL to give other threads a chance to run.
 
     cdef int ret
     if attr_only:
