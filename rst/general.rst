@@ -79,7 +79,7 @@ file systems automatically take advantage of. Specifically:
   concurrently, but never at the same time as e.g. a rename or mkdir
   operation).
 
-* Unless writeback caching is enabled (which pyfuse3 does not
-  yet allow), calls to `~Operations.write` for the same inode are
-  automatically serialized (i.e., there are never concurrent calls for
-  the same inode even when multithreading is enabled).
+* Unless writeback caching is enabled, calls to `~Operations.write`
+  for the same inode are automatically serialized (i.e., there are
+  never concurrent calls for the same inode even when multithreading
+  is enabled).
