@@ -99,8 +99,11 @@ def cleanup(mount_process, mnt_dir):
         subprocess.call(['fusermount', '-z', '-u', mnt_dir], stdout=subprocess.DEVNULL,
                         stderr=subprocess.STDOUT)
 
-    mount_process.kill()
-    mount_process.wait(5)
+    mount_process.terminate()
+    try:
+        mount_process.wait(1)
+    except subprocess.TimeoutExpired:
+        mount_process.kill()
 
 def umount(mount_process, mnt_dir):
     if platform.system() == 'Darwin':
@@ -109,15 +112,16 @@ def umount(mount_process, mnt_dir):
         subprocess.check_call(['fusermount', '-z', '-u', mnt_dir])
     assert not os.path.ismount(mnt_dir)
 
-    # Give mount process a little while to terminate. Popen.wait(timeout)
-    # was only added in 3.3...
-    elapsed = 0
-    while elapsed < 30:
-        code = exitcode(mount_process)
-        if code is not None:
-            if code == 0:
-                return
-            pytest.fail('file system process terminated with code %s' % (code,))
-        time.sleep(0.1)
-        elapsed += 0.1
+    try:
+        code = mount_process.wait(5)
+        if code == 0:
+            return
+        pytest.fail('file system process terminated with code %s' % (code,))
+    except subprocess.TimeoutExpired:
+        mount_process.terminate()
+        try:
+            mount_process.wait(1)
+        except subprocess.TimeoutExpired:
+            mount_process.kill()
+
     pytest.fail('mount process did not terminate')
