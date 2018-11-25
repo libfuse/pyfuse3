@@ -27,15 +27,15 @@ _aio_read_lock = None
 # asyncio #
 ###########
 
-class AsyncioCompatibilityLayer:
+class _AsyncioCompatibilityLayer:
     def __repr__(self):
         return '<pyfuse3 asyncio compatibility layer>'
-_asyncio_layer = AsyncioCompatibilityLayer()
+_asyncio_layer = _AsyncioCompatibilityLayer()
 
-class AsyncioHazmatCompatibilityLayer:
+class _AsyncioHazmatCompatibilityLayer:
     def __repr__(self):
         return '<pyfuse3 asyncio hazmat compatibility layer>'
-_asyncio_layer.hazmat = AsyncioHazmatCompatibilityLayer()
+_asyncio_layer.hazmat = _AsyncioHazmatCompatibilityLayer()
 
 async def _wait_readable_asyncio(fd):
     future = asyncio.Future()
@@ -73,10 +73,7 @@ class _AsyncioNursery:
                 self.tasks.discard(task)
             # We waited for ALL_COMPLETED (default value of 'when' arg to asyncio.wait), so all tasks should be completed. If that's not the case, something's seriously wrong.
             assert len(pending) == 0
-
-def _open_nursery_asyncio():
-    return _AsyncioNursery()
-_asyncio_layer.open_nursery = _open_nursery_asyncio
+_asyncio_layer.open_nursery = _AsyncioNursery
 
 
 ########
