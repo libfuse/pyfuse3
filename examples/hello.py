@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 '''
-lltest.py - Example file system for pyfuse3.
+hello.py - Example file system for pyfuse3.
 
 This program presents a static file system containing a single file.
 
@@ -140,7 +140,7 @@ def main():
 
     testfs = TestFs()
     fuse_options = set(pyfuse3.default_options)
-    fuse_options.add('fsname=lltest')
+    fuse_options.add('fsname=hello')
     if options.debug_fuse:
         fuse_options.add('debug')
     pyfuse3.init(testfs, options.mountpoint, fuse_options)

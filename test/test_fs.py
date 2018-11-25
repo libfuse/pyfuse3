@@ -17,6 +17,7 @@ if __name__ == '__main__':
 
 import pyfuse3
 from pyfuse3 import FUSEError
+import asyncio
 import multiprocessing
 import os
 import errno
@@ -29,8 +30,13 @@ from util import fuse_test_marker, wait_for_mount, umount, cleanup
 
 pytestmark = fuse_test_marker()
 
+@pytest.fixture(params=[None, 'asyncio', 'trio'])
+def aio(request):
+    # None = default which should be Trio; at least one of the tests below will fail if that is not the case
+    return request.param
+
 @pytest.yield_fixture()
-def testfs(tmpdir):
+def testfs(tmpdir, aio):
 
     # We can't use forkserver because we have to make sure
     # that the server inherits the per-test stdout/stderr file
@@ -47,7 +53,7 @@ def testfs(tmpdir):
     with mp.Manager() as mgr:
         cross_process = mgr.Namespace()
         mount_process = mp.Process(target=run_fs,
-                                   args=(mnt_dir, cross_process))
+                                   args=(mnt_dir, cross_process, aio))
 
         mount_process.start()
         try:
@@ -130,7 +136,7 @@ def test_attr_timeout(testfs):
         assert fs_state.getattr_called
 
 class Fs(pyfuse3.Operations):
-    def __init__(self, cross_process):
+    def __init__(self, cross_process, aio):
         super(Fs, self).__init__()
         self.hello_name = b"message"
         self.hello_inode = pyfuse3.ROOT_INODE+1
@@ -142,6 +148,7 @@ class Fs(pyfuse3.Operations):
         self.status.read_called = False
         self.status.entry_timeout = 99999
         self.status.attr_timeout = 99999
+        self.aio = aio
 
     async def getattr(self, inode, ctx=None):
         entry = pyfuse3.EntryAttributes()
@@ -221,9 +228,12 @@ class Fs(pyfuse3.Operations):
             raise FUSEError(errno.EINVAL)
 
         # Make sure that the request is pending before we return
-        await trio.sleep(0.1)
+        if self.aio == 'asyncio':
+            await asyncio.sleep(0.1)
+        else:
+            await trio.sleep(0.1)
 
-def run_fs(mountpoint, cross_process):
+def run_fs(mountpoint, cross_process, aio):
     # Logging (note that we run in a new process, so we can't
     # rely on direct log capture and instead print to stdout)
     root_logger = logging.getLogger()
@@ -236,11 +246,18 @@ def run_fs(mountpoint, cross_process):
     root_logger.addHandler(handler)
     root_logger.setLevel(logging.DEBUG)
 
-    testfs = Fs(cross_process)
+    testfs = Fs(cross_process, aio)
     fuse_options = set(pyfuse3.default_options)
     fuse_options.add('fsname=pyfuse3_testfs')
     pyfuse3.init(testfs, mountpoint, fuse_options)
     try:
-        trio.run(pyfuse3.main)
+        if aio == 'asyncio':
+            loop = asyncio.get_event_loop()
+            try:
+                loop.run_until_complete(pyfuse3.main(aio='asyncio'))
+            finally:
+                loop.close()
+        else:
+            trio.run(pyfuse3.main)
     finally:
         pyfuse3.close()
