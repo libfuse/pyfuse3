@@ -162,7 +162,7 @@ def pkg_config(pkg, cflags=True, ldflags=False, min_ver=None):
             proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
             version = proc.communicate()[0].strip()
             if not version:
-                raise SystemExit() # pkg-config generates error message already
+                raise SystemExit(2) # pkg-config generates error message already
             else:
                 raise SystemExit('%s version too old (found: %s, required: %s)'
                                  % (pkg, version, min_ver))
@@ -177,7 +177,7 @@ def pkg_config(pkg, cflags=True, ldflags=False, min_ver=None):
     cflags = proc.stdout.readline().rstrip()
     proc.stdout.close()
     if proc.wait() != 0:
-        raise SystemExit() # pkg-config generates error message already
+        raise SystemExit(2) # pkg-config generates error message already
 
     return cflags.decode('us-ascii').split()
 
