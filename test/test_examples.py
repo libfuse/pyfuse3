@@ -37,10 +37,11 @@ def name_generator(__ctr=[0]):
     __ctr[0] += 1
     return 'testfile_%d' % __ctr[0]
 
-def test_lltest(tmpdir):
+@pytest.mark.parametrize('filename', ('hello.py', 'hello_asyncio.py'))
+def test_hello(tmpdir, filename):
     mnt_dir = str(tmpdir)
     cmdline = [sys.executable,
-               os.path.join(basename, 'examples', 'lltest.py'),
+               os.path.join(basename, 'examples', filename),
                mnt_dir ]
     mount_process = subprocess.Popen(cmdline, stdin=subprocess.DEVNULL,
                                      universal_newlines=True)

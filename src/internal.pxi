@@ -183,11 +183,9 @@ cdef class _WorkerData:
 
     cdef int task_count
     cdef int task_serial
-    cdef object read_lock
     cdef int active_readers
 
     def __init__(self):
-        self.read_lock = trio.Lock()
         self.active_readers = 0
 
     cdef get_name(self):
@@ -197,12 +195,12 @@ cdef class _WorkerData:
 cdef _WorkerData worker_data = _WorkerData()
 
 async def _wait_fuse_readable():
-    #name = trio.hazmat.current_task().name
+    #name = _aio.hazmat.current_task().name
     worker_data.active_readers += 1
     #log.debug('%s: Waiting for read lock...', name)
-    async with worker_data.read_lock:
+    async with _aio_read_lock:
         #log.debug('%s: Waiting for fuse fd to become readable...', name)
-        await trio.hazmat.wait_readable(session_fd)
+        await _aio.hazmat.wait_readable(session_fd)
 
     worker_data.active_readers -= 1
     #log.debug('%s: fuse fd readable, unparking next task.', name)
@@ -213,7 +211,7 @@ async def _session_loop(nursery, int min_tasks, int max_tasks):
     cdef int res
     cdef fuse_buf buf
 
-    name = trio.hazmat.current_task().name
+    name = _aio.hazmat.current_task().name
 
     buf.mem = NULL
     buf.size = 0
