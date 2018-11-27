@@ -37,15 +37,12 @@ def name_generator(__ctr=[0]):
     __ctr[0] += 1
     return 'testfile_%d' % __ctr[0]
 
-@pytest.fixture(params=['asyncio', 'trio'])
-def aio(request):
-    return request.param
-
-def test_hello(tmpdir, aio):
+@pytest.mark.parametrize('filename', ('hello.py', 'hello_asyncio.py'))
+def test_hello(tmpdir, filename):
     mnt_dir = str(tmpdir)
     cmdline = [sys.executable,
-               os.path.join(basename, 'examples', 'hello_asyncio.py' if aio == 'asyncio' else 'hello.py'),
-               mnt_dir]
+               os.path.join(basename, 'examples', filename),
+               mnt_dir ]
     mount_process = subprocess.Popen(cmdline, stdin=subprocess.DEVNULL,
                                      universal_newlines=True)
     try:
@@ -70,7 +67,7 @@ def test_tmpfs(tmpdir):
     mnt_dir = str(tmpdir)
     cmdline = [sys.executable,
                os.path.join(basename, 'examples', 'tmpfs.py'),
-               mnt_dir]
+               mnt_dir ]
     mount_process = subprocess.Popen(cmdline, stdin=subprocess.DEVNULL,
                                      universal_newlines=True)
     try:
@@ -99,7 +96,7 @@ def test_passthroughfs(tmpdir):
     src_dir = str(tmpdir.mkdir('src'))
     cmdline = [sys.executable,
                os.path.join(basename, 'examples', 'passthroughfs.py'),
-               src_dir, mnt_dir]
+               src_dir, mnt_dir ]
     mount_process = subprocess.Popen(cmdline, stdin=subprocess.DEVNULL,
                                      universal_newlines=True)
     try:
