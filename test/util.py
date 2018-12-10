@@ -9,11 +9,11 @@ This file is part of pyfuse3. This work may be distributed under
 the terms of the GNU LGPL.
 '''
 
-import platform
-import subprocess
-import pytest
 import os
+import platform
+import pytest
 import stat
+import subprocess
 import time
 
 def fuse_test_marker():
@@ -100,10 +100,16 @@ def cleanup(mount_process, mnt_dir):
                         stderr=subprocess.STDOUT)
 
     mount_process.terminate()
-    try:
-        mount_process.wait(1)
-    except subprocess.TimeoutExpired:
-        mount_process.kill()
+    if isinstance(mount_process, subprocess.Popen):
+        try:
+            mount_process.wait(1)
+        except subprocess.TimeoutExpired:
+            mount_process.kill()
+    else:
+        mount_process.join(5)
+        if mount_process.exitcode is None:
+            mount_process.kill()
+
 
 def umount(mount_process, mnt_dir):
     if platform.system() == 'Darwin':
@@ -112,16 +118,27 @@ def umount(mount_process, mnt_dir):
         subprocess.check_call(['fusermount', '-z', '-u', mnt_dir])
     assert not os.path.ismount(mnt_dir)
 
-    try:
-        code = mount_process.wait(5)
+    if isinstance(mount_process, subprocess.Popen):
+        try:
+            code = mount_process.wait(5)
+            if code == 0:
+                return
+            pytest.fail('file system process terminated with code %s' % (code,))
+        except subprocess.TimeoutExpired:
+            mount_process.terminate()
+            try:
+                mount_process.wait(1)
+            except subprocess.TimeoutExpired:
+                mount_process.kill()
+    else:
+        mount_process.join(5)
+        code = mount_process.exitcode
         if code == 0:
             return
-        pytest.fail('file system process terminated with code %s' % (code,))
-    except subprocess.TimeoutExpired:
-        mount_process.terminate()
-        try:
-            mount_process.wait(1)
-        except subprocess.TimeoutExpired:
-            mount_process.kill()
+        elif code is None:
+            mount_process.terminate()
+            mount_process.join(1)
+        else:
+            pytest.fail('file system process terminated with code %s' % (code,))
 
     pytest.fail('mount process did not terminate')
