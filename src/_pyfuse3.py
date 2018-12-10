@@ -9,13 +9,17 @@ This file is part of pyfuse3. This work may be distributed under
 the terms of the GNU LGPL.
 '''
 
-import functools
 import errno
+import functools
+import logging
+import os
 
 # Will be injected by pyfuse3 extension module
 FUSEError = None
 
 __all__ = [ 'Operations', 'async_wrapper' ]
+
+log = logging.getLogger(__name__)
 
 # Any top level trio coroutines (i.e., coroutines that are passed
 # to trio.run) must be pure-Python. This wrapper ensures that this
