@@ -13,7 +13,7 @@ Unreleased Changes
 Release 1.1 (2018-11-02)
 ========================
 
-* Fixed `examples/passthroughfs.py` - was not handling readdir()
+* Fixed :file:`examples/passthroughfs.py` - was not handling readdir()
   correctly.
 * `invalidate_entry_async` now accepts an additional *ignore_enoent*
   parameter. When this is set, no errors are logged if the kernel is
