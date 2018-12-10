@@ -16,8 +16,11 @@ functions like looking up the inode given a file name, looking up
 attributes of an inode, opening a (file) inode for reading or writing
 or listing the contents of a (directory) inode.
 
-pyfuse3 uses asynchronous I/O using Trio_. If you have not yet used
-Trio before, please read the `Trio tutorial`_ first.
+By default, pyfuse3 uses asynchronous I/O using Trio_, and most of the
+documentation assumes that you are using Trio. If you'd rather use
+asyncio, take a look at :ref:`asyncio Support <asyncio>`. If you would
+like to use Trio (which is recommended) but you have not yet used Trio
+before, please read the `Trio tutorial`_ first.
 
 An instance of the operations class is passed to `pyfuse3.init` to
 mount the file system. To enter the request handling loop, run

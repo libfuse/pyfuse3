@@ -13,6 +13,7 @@ Table of Contents
    about.rst
    install.rst
    general.rst
+   asyncio.rst
    fuse_api.rst
    data.rst
    operations.rst

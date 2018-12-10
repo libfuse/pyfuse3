@@ -136,7 +136,7 @@ def main():
           platforms=[ 'Linux' ],
           keywords=['FUSE', 'python' ],
           package_dir={'': 'src'},
-          py_modules=['_pyfuse3'],
+          py_modules=['_pyfuse3', 'pyfuse3_asyncio'],
           provides=['pyfuse3'],
           ext_modules=[Extension('pyfuse3', c_sources,
                                   extra_compile_args=compile_args,

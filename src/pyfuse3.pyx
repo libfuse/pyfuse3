@@ -65,6 +65,7 @@ import logging
 import os
 import os.path
 import sys
+import trio
 import threading
 
 import _pyfuse3
@@ -113,13 +114,6 @@ include "handlers.pxi"
 ########################################
 
 include "internal.pxi"
-
-
-########################################
-# ASYNCHRONOUS I/O COMPATIBILITY LAYER #
-########################################
-
-include "aio.pxi"
 
 
 ######################
@@ -700,7 +694,9 @@ def init(ops, mountpoint, options=default_options):
     global mountpoint_b
     global session
     global session_fd
+    global worker_data
 
+    worker_data = _WorkerData()
     mountpoint_b = str2bytes(os.path.abspath(mountpoint))
     operations = ops
 
@@ -721,16 +717,14 @@ def init(ops, mountpoint, options=default_options):
 
 
 @async_wrapper
-async def main(int min_tasks=1, int max_tasks=99, aio='trio'):
+async def main(int min_tasks=1, int max_tasks=99):
     '''Run FUSE main loop'''
 
     if session == NULL:
         raise RuntimeError('Need to call init() before main()')
 
-    _set_aio(aio)
-
     try:
-        async with _aio.open_nursery() as nursery:
+        async with trio.open_nursery() as nursery:
             worker_data.task_count = 1
             worker_data.task_serial = 1
             nursery.start_soon(_session_loop, nursery, min_tasks, max_tasks,

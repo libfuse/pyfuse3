@@ -13,7 +13,7 @@ Single-file, Read-only File System
 
 (shipped as :file:`examples/lltest.py`)
 
-.. literalinclude:: ../examples/lltest.py
+.. literalinclude:: ../examples/hello.py
    :linenos:
    :language: python
 
