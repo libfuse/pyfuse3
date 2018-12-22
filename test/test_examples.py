@@ -80,6 +80,7 @@ def test_tmpfs(tmpdir):
         tst_chmod(mnt_dir)
         tst_utimens(mnt_dir)
         tst_link(mnt_dir)
+        tst_rename(mnt_dir)
         tst_readdir(mnt_dir)
         tst_statvfs(mnt_dir)
         tst_truncate_path(mnt_dir)
@@ -111,6 +112,7 @@ def test_passthroughfs(tmpdir):
         # Underlying fs may not have full nanosecond resolution
         tst_utimens(mnt_dir, ns_tol=1000)
         tst_link(mnt_dir)
+        tst_rename(mnt_dir)
         tst_readdir(mnt_dir)
         tst_statvfs(mnt_dir)
         tst_truncate_path(mnt_dir)
@@ -241,6 +243,25 @@ def tst_link(mnt_dir):
     fstat1 = os.lstat(name1)
     assert fstat1.st_nlink == 1
     os.unlink(name1)
+
+def tst_rename(mnt_dir):
+    name1 = os.path.join(mnt_dir, name_generator())
+    name2 = os.path.join(mnt_dir, name_generator())
+    shutil.copyfile(TEST_FILE, name1)
+
+    assert os.path.basename(name1) in os.listdir(mnt_dir)
+    assert os.path.basename(name2) not in os.listdir(mnt_dir)
+    assert filecmp.cmp(name1, TEST_FILE, False)
+
+    fstat1 = os.lstat(name1)
+    os.rename(name1, name2)
+    fstat2 = os.lstat(name2)
+
+    assert fstat1 == fstat2
+    assert filecmp.cmp(name2, TEST_FILE, False)
+    assert os.path.basename(name1) not in os.listdir(mnt_dir)
+    assert os.path.basename(name2) in os.listdir(mnt_dir)
+    os.unlink(name2)
 
 def tst_readdir(mnt_dir):
     dir_ = os.path.join(mnt_dir, name_generator())

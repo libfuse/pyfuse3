@@ -4,6 +4,12 @@
 
 .. currentmodule:: pyfuse3
 
+Unreleased Changes
+==================
+
+* Fixed a bug in the `tmpfs.py` and `passthroughfs.py` example
+  file systems (rename now longer fails).
+
 Release 1.2 (2018-12-22)
 ========================
 

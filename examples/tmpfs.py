@@ -221,7 +221,11 @@ class Operations(pyfuse3.Operations):
                 stat.S_IROTH | stat.S_IWOTH | stat.S_IXOTH)
         return await self._create(inode_p, name, mode, ctx, target=target)
 
-    async def rename(self, inode_p_old, name_old, inode_p_new, name_new, ctx):
+    async def rename(self, inode_p_old, name_old, inode_p_new, name_new,
+                     flags, ctx):
+        if flags != 0:
+            raise FUSEError(errno.EINVAL)
+
         entry_old = await self.lookup(inode_p_old, name_old)
 
         try:

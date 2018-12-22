@@ -239,7 +239,11 @@ class Operations(pyfuse3.Operations):
         self._add_path(stat.st_ino, path)
         return await self.getattr(stat.st_ino)
 
-    async def rename(self, inode_p_old, name_old, inode_p_new, name_new, ctx):
+    async def rename(self, inode_p_old, name_old, inode_p_new, name_new,
+                     flags, ctx):
+        if flags != 0:
+            raise FUSEError(errno.EINVAL)
+
         name_old = fsdecode(name_old)
         name_new = fsdecode(name_new)
         parent_old = self._inode_to_path(inode_p_old)
