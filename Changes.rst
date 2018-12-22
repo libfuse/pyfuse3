@@ -4,8 +4,8 @@
 
 .. currentmodule:: pyfuse3
 
-Unreleased Changes
-==================
+Release 1.2 (2018-12-22)
+========================
 
 * Clarified that `invalidate_inode` may block in some circumstances.
 * Added support for using the asyncio module instead of Trio.
