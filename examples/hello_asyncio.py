@@ -81,7 +81,7 @@ class TestFs(pyfuse3.Operations):
     async def lookup(self, parent_inode, name, ctx=None):
         if parent_inode != pyfuse3.ROOT_INODE or name != self.hello_name:
             raise pyfuse3.FUSEError(errno.ENOENT)
-        return self.getattr(self.hello_inode)
+        return await self.getattr(self.hello_inode)
 
     async def opendir(self, inode, ctx):
         if inode != pyfuse3.ROOT_INODE:
