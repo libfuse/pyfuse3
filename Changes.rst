@@ -4,10 +4,15 @@
 
 .. currentmodule:: pyfuse3
 
+Release 1.3.1 (2019-07-17)
+==========================
+
+* Fixed a bug in the :file:`hello_asyncio.py` example.
+
 Release 1.3 (2019-06-02)
 ========================
 
-* Fixed a bug in the `tmpfs.py` and `passthroughfs.py` example
+* Fixed a bug in the :file:`tmpfs.py` and :file:`passthroughfs.py` example
   file systems (so rename operations no longer fail).
 
 Release 1.2 (2018-12-22)
