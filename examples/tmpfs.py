@@ -338,7 +338,7 @@ class Operations(pyfuse3.Operations):
 
         return stat_
 
-    async def open(self, inode, flags, ctx):
+    async def open(self, inode, flags, ctx, file_info):
         # Yeah, unused arguments
         #pylint: disable=W0613
         self.inode_open_count[inode] += 1

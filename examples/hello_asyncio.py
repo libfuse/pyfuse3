@@ -97,7 +97,7 @@ class TestFs(pyfuse3.Operations):
                 token, self.hello_name, await self.getattr(self.hello_inode), 1)
         return
 
-    async def open(self, inode, flags, ctx):
+    async def open(self, inode, flags, ctx, file_info):
         if inode != self.hello_inode:
             raise pyfuse3.FUSEError(errno.ENOENT)
         if flags & os.O_RDWR or flags & os.O_WRONLY:

@@ -374,7 +374,7 @@ class Operations(pyfuse3.Operations):
         stat_.f_namemax = statfs.f_namemax - (len(root)+1)
         return stat_
 
-    async def open(self, inode, flags, ctx):
+    async def open(self, inode, flags, ctx, file_info):
         if inode in self._inode_fd_map:
             fd = self._inode_fd_map[inode]
             self._fd_open_count[fd] += 1
