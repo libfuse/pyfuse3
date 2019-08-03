@@ -382,14 +382,32 @@ async def fuse_open_async (_Container c):
     cdef int ret
 
     ctx = get_request_context(c.req)
+
+    # Cached file data does not need to be invalidated.
+    # http://article.gmane.org/gmane.comp.file-systems.fuse.devel/5325/
+    c.fi.keep_cache = 1
+
     try:
-        c.fi.fh = await operations.open(c.ino, c.fi.flags, ctx)
+        res = await operations.open(c.ino, c.fi.flags, ctx, c.fi)
     except FUSEError as e:
         ret = fuse_reply_err(c.req, e.errno)
     else:
-        # Cached file data does not need to be invalidated.
-        # http://article.gmane.org/gmane.comp.file-systems.fuse.devel/5325/
-        c.fi.keep_cache = 1
+        if isinstance(res, tuple):
+            if len(res) >= 2:
+                new_fi = res[1]
+                # Some trickery is required to prevent GCC from complaining
+                # about assignments to the fi bitfields.
+                if new_fi["direct_io"]:
+                    c.fi.direct_io = 1
+                else:
+                    c.fi.direct_io = 0
+                if new_fi["keep_cache"]:
+                    c.fi.keep_cache = 1
+                else:
+                    c.fi.keep_cache = 0
+            c.fi.fh = res[0]
+        else:
+            c.fi.fh = res
 
         ret = fuse_reply_open(c.req, &c.fi)
 
