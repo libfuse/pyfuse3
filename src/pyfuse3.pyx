@@ -344,6 +344,46 @@ cdef class EntryAttributes:
             setattr(self, k, v)
 
 
+@cython.freelist(10)
+cdef class FileInfo:
+    '''
+    Instances of this class store options and data that ``open`` returns.
+    The attributes correspond to the elements of the ``fuse_file_info`` struct
+    that are relevant to the ``open`` function.
+    '''
+
+    cdef public uint64_t fh
+    cdef public bint direct_io
+    cdef public bint keep_cache
+    cdef public bint nonseekable
+
+    def __cinit__(self, fh=0, direct_io=0, keep_cache=1, nonseekable=0):
+        self.fh = fh
+        self.direct_io = direct_io
+        self.keep_cache = keep_cache
+        self.nonseekable = nonseekable
+
+    cdef _copy_to_fuse(self, fuse_file_info *out):
+        out.fh = self.fh
+
+        # Due to how Cython generates its C code, GCC will complain about
+        # assigning to the bitfields in the fuse_file_info struct.
+        # This is the workaround.
+        if self.direct_io:
+            out.direct_io = 1
+        else:
+            out.direct_io = 0
+
+        if self.keep_cache:
+            out.keep_cache = 1
+        else:
+            out.keep_cache = 0
+
+        if self.nonseekable:
+            out.nonseekable = 1
+        else:
+            out.nonseekable = 0
+
 @cython.freelist(1)
 cdef class StatvfsData:
     '''
