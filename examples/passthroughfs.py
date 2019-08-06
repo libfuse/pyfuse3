@@ -374,11 +374,11 @@ class Operations(pyfuse3.Operations):
         stat_.f_namemax = statfs.f_namemax - (len(root)+1)
         return stat_
 
-    async def open(self, inode, flags, ctx, file_info):
+    async def open(self, inode, flags, ctx):
         if inode in self._inode_fd_map:
             fd = self._inode_fd_map[inode]
             self._fd_open_count[fd] += 1
-            return fd
+            return pyfuse3.FileInfo(fh=fd)
         assert flags & os.O_CREAT == 0
         try:
             fd = os.open(self._inode_to_path(inode), flags)
@@ -387,7 +387,7 @@ class Operations(pyfuse3.Operations):
         self._inode_fd_map[inode] = fd
         self._fd_inode_map[fd] = inode
         self._fd_open_count[fd] = 1
-        return fd
+        return pyfuse3.FileInfo(fh=fd)
 
     async def create(self, inode_p, name, mode, flags, ctx):
         path = os.path.join(self._inode_to_path(inode_p), fsdecode(name))
