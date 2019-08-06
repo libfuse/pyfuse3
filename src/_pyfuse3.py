@@ -299,7 +299,7 @@ class Operations:
 
         raise FUSEError(errno.ENOSYS)
 
-    async def open(self, inode, flags, ctx, file_info):
+    async def open(self, inode, flags, ctx):
         '''Open a inode *inode* with *flags*.
 
         *ctx* will be a `RequestContext` instance.
@@ -308,16 +308,11 @@ class Operations:
         :manpage:`open(2)` manpage and defined in the `os` module (with the
         exception of ``O_CREAT``, ``O_EXCL``, ``O_NOCTTY`` and ``O_TRUNC``)
 
-        *file_info* will be a dictionary containing the fields of the
-        ``fuse_file_info`` struct.
-
-        This method must return an integer file handle. The file handle will be
-        passed to the `read`, `write`, `flush`, `fsync` and `release` methods to
-        identify the open file.
-
-        This method may additionally return a dictionary containing the writable
-        fields of ``fuse_file_info``, such as ``direct_info`` and
-        ``keep_cache``, which will then be copied back into the libfuse struct.
+        This method must return a ``FileInfo`` instance. The `fh` field must
+        contain an integer file handle, which will be passed to the `read`,
+        `write`, `flush`, `fsync` and `release` methods to identify the open
+        file. The ``FileInfo`` instance may also have relevant configuration
+        attributes set; see the ``FileInfo`` documentation for more information.
         '''
 
         raise FUSEError(errno.ENOSYS)
