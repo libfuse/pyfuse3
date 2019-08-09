@@ -105,6 +105,26 @@
 
    .. autoattribute:: st_mtime_ns
 
+.. autoclass:: FileInfo
+
+   .. autoattribute:: fh
+
+      This attribute must be set to the file handle to be returned from
+      `Operations.open`.
+
+   .. autoattribute:: direct_io
+
+      If true, signals to the kernel that this file should not be cached
+      or buffered.
+
+   .. autoattribute:: keep_cache
+
+      If true, signals to the kernel that previously cached data for this
+      inode is still valid, and should not be invalidated.
+
+   .. autoattribute:: nonseekable
+
+      If true, indicates that the file does not support seeking.
 
 .. autoclass:: SetattrFields
 

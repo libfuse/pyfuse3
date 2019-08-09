@@ -347,15 +347,9 @@ cdef class EntryAttributes:
 @cython.freelist(10)
 cdef class FileInfo:
     '''
-    Instances of this class store options and data that ``open`` returns.
-    The attributes correspond to the elements of the ``fuse_file_info`` struct
-    that are relevant to the ``open`` function.
-
-    Currently, the following fields are supported:
-    - `fh`: the file handle; must be filled
-    - `direct_io`
-    - `keep_cache`
-    - `nonseekable`
+    Instances of this class store options and data that `Operations.open`
+    returns. The attributes correspond to the elements of the ``fuse_file_info``
+    struct that are relevant to the `Operations.open` function.
     '''
 
     cdef public uint64_t fh

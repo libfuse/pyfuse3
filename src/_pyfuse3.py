@@ -308,11 +308,11 @@ class Operations:
         :manpage:`open(2)` manpage and defined in the `os` module (with the
         exception of ``O_CREAT``, ``O_EXCL``, ``O_NOCTTY`` and ``O_TRUNC``)
 
-        This method must return a ``FileInfo`` instance. The `fh` field must
-        contain an integer file handle, which will be passed to the `read`,
+        This method must return a `FileInfo` instance. The `FileInfo.fh` field
+        must contain an integer file handle, which will be passed to the `read`,
         `write`, `flush`, `fsync` and `release` methods to identify the open
-        file. The ``FileInfo`` instance may also have relevant configuration
-        attributes set; see the ``FileInfo`` documentation for more information.
+        file. The `FileInfo` instance may also have relevant configuration
+        attributes set; see the `FileInfo` documentation for more information.
         '''
 
         raise FUSEError(errno.ENOSYS)
