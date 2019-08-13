@@ -102,7 +102,7 @@ class TestFs(pyfuse3.Operations):
             raise pyfuse3.FUSEError(errno.ENOENT)
         if flags & os.O_RDWR or flags & os.O_WRONLY:
             raise pyfuse3.FUSEError(errno.EPERM)
-        return inode
+        return pyfuse3.FileInfo(fh=inode)
 
     async def read(self, fh, off, size):
         assert fh == self.hello_inode

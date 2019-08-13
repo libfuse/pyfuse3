@@ -344,7 +344,7 @@ class Operations(pyfuse3.Operations):
         self.inode_open_count[inode] += 1
 
         # Use inodes as a file handles
-        return inode
+        return pyfuse3.FileInfo(fh=inode)
 
     async def access(self, inode, mode, ctx):
         # Yeah, could be a function and has unused arguments
