@@ -212,18 +212,22 @@ class build_cython(setuptools.Command):
         self.extensions = self.distribution.ext_modules
 
     def run(self):
-        try:
-            version = subprocess.check_output(['cython', '--version'],
-                                              universal_newlines=True,
-                                              stderr=subprocess.STDOUT)
-        except OSError:
-            raise SystemExit('Cython needs to be installed for this command')
+        cython = None
+        for c in ('cython3', 'cython'):
+            try:
+                version = subprocess.check_output([c, '--version'],
+                                              universal_newlines=True, stderr=subprocess.STDOUT)
+                cython = c
+            except FileNotFoundError:
+                pass
+        if cython is None:
+            raise SystemExit('Cython needs to be installed for this command') from None
 
         hit = re.match('^Cython version (.+)$', version)
         if not hit or LooseVersion(hit.group(1)) < "0.24":
             raise SystemExit('Need Cython 0.24 or newer, found ' + version)
 
-        cmd = ['cython', '-Wextra', '--force', '-3', '--fast-fail',
+        cmd = [cython, '-Wextra', '--force', '-3', '--fast-fail',
                '--directive', 'embedsignature=True', '--include-dir',
                os.path.join(basedir, 'Include'), '--verbose' ]
         if DEVELOPER_MODE:
