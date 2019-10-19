@@ -23,7 +23,7 @@
 .. py:data:: RENAME_NOREPLACE
 
    A flag that may be passed to the `~Operations.rename` handler. When
-   passed, the handler must replace an existing target.
+   passed, the handler must not replace an existing target.
 
 .. py:data:: default_options
 
