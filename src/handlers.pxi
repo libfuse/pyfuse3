@@ -380,16 +380,16 @@ cdef void fuse_open (fuse_req_t req, fuse_ino_t ino, fuse_file_info *fi):
 
 async def fuse_open_async (_Container c):
     cdef int ret
-    cdef FileInfo res
+    cdef FileInfo fi
 
     ctx = get_request_context(c.req)
 
     try:
-        res = await operations.open(c.ino, c.fi.flags, ctx)
+        fi = <FileInfo?> await operations.open(c.ino, c.fi.flags, ctx)
     except FUSEError as e:
         ret = fuse_reply_err(c.req, e.errno)
     else:
-        res._copy_to_fuse(&c.fi)
+        fi._copy_to_fuse(&c.fi)
         ret = fuse_reply_open(c.req, &c.fi)
 
     if ret != 0:
