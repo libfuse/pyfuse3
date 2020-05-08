@@ -57,7 +57,7 @@ if DEVELOPER_MODE:
 # to work properly
 sys.path.insert(0, os.path.join(basedir, 'src'))
 
-PYFUSE3_VERSION = '2.0.0'
+PYFUSE3_VERSION = '3.0.0'
 
 def main():
 

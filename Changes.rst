@@ -4,14 +4,15 @@
 
 .. currentmodule:: pyfuse3
 
-Unreleased Changes
-==================
+Release 3.0.0 (2020-05-08)
+==========================
 
 * Changed `create` handler to return a `FileInfo` struct to allow for
   modification of certain kernel file attributes, e.g. ``direct_io``.
 
   Note that this change breaks backwards compatibility, code that depends
   on the old behavior needs to be changed.
+
 
 Release 2.0.0
 =============
