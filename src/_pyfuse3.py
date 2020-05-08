@@ -551,9 +551,9 @@ class Operations:
 
         *ctx* will be a `RequestContext` instance.
 
-        The method must return a tuple of the form *(fh, attr)*, where *fh* is a
-        file handle like the one returned by `open` and *attr* is an
-        `EntryAttributes` instance with the attributes of the newly created
+        The method must return a tuple of the form *(fi, attr)*, where *fi* is a
+        FileInfo instance handle like the one returned by `open` and *attr* is
+        an `EntryAttributes` instance with the attributes of the newly created
         directory entry.
 
         (Successful) execution of this handler increases the lookup count for

@@ -848,6 +848,7 @@ cdef void fuse_create (fuse_req_t req, fuse_ino_t parent, const_char *name,
 async def fuse_create_async (_Container c, name):
     cdef int ret
     cdef EntryAttributes entry
+    cdef FileInfo fi
 
     ctx = get_request_context(c.req)
     try:
@@ -855,13 +856,9 @@ async def fuse_create_async (_Container c, name):
     except FUSEError as e:
         ret = fuse_reply_err(c.req, e.errno)
     else:
-        c.fi.fh = tmp[0]
+        fi = <FileInfo?> tmp[0]
         entry = <EntryAttributes?> tmp[1]
-
-        # Cached file data does not need to be invalidated.
-        # http://article.gmane.org/gmane.comp.file-systems.fuse.devel/5325/
-        c.fi.keep_cache = 1
-
+        fi._copy_to_fuse(&c.fi)
         ret = fuse_reply_create(c.req, &entry.fuse_param, &c.fi)
 
     if ret != 0:

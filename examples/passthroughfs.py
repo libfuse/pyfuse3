@@ -400,7 +400,7 @@ class Operations(pyfuse3.Operations):
         self._inode_fd_map[attr.st_ino] = fd
         self._fd_inode_map[fd] = attr.st_ino
         self._fd_open_count[fd] = 1
-        return (fd, attr)
+        return (pyfuse3.FileInfo(fh=fd), attr)
 
     async def read(self, fd, offset, length):
         os.lseek(fd, offset, os.SEEK_SET)

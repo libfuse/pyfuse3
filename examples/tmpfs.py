@@ -355,7 +355,7 @@ class Operations(pyfuse3.Operations):
         #pylint: disable=W0612
         entry = await self._create(inode_parent, name, mode, ctx)
         self.inode_open_count[entry.st_ino] += 1
-        return (entry.st_ino, entry)
+        return (pyfuse3.FileInfo(fh=entry.st_ino), entry)
 
     async def _create(self, inode_p, name, mode, ctx, rdev=0, target=None):
         if (await self.getattr(inode_p)).st_nlink == 0:
