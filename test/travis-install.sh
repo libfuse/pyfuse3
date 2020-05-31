@@ -15,7 +15,7 @@ pip install \
 
 cython --version
 
-pip install meson
+pip install meson ninja
 
 ninja --version
 meson --version
