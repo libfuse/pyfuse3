@@ -21,7 +21,7 @@ def enable():
     '''Switch pyfuse3 to asyncio mode.'''
 
     fake_trio = sys.modules['pyfuse3_asyncio']
-    fake_trio.hazmat = fake_trio
+    fake_trio.lowlevel = fake_trio
     pyfuse3.trio = fake_trio
 
 

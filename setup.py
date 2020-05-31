@@ -135,7 +135,7 @@ def main():
                        'Operating System :: POSIX :: BSD :: FreeBSD'],
           platforms=[ 'Linux' ],
           keywords=['FUSE', 'python' ],
-          install_requires=['trio'],
+          install_requires=['trio >= 0.15'],
           tests_require=['pytest', 'pytest-trio'],
           python_requires='>=3.5',
           package_dir={'': 'src'},
