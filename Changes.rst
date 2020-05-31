@@ -5,8 +5,8 @@
 .. currentmodule:: pyfuse3
 
 
-Unreleased Changes
-==================
+Release 3.1.0 (2020-05-31)
+==========================
 
 * Made compatible with newest Trio module.
 
