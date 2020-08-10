@@ -42,12 +42,6 @@ Contributing
 The pyfuse3 source code is available on GitHub_.
 
 
-Professional Support
---------------------
-
-Professional support is offered from `Rath Consulting`_.
-
-
 .. __: http://www.rath.org/pyfuse3-docs/
 .. _libfuse 3: http://github.com/libfuse/libfuse
 .. _FUSE mailing list: https://lists.sourceforge.net/lists/listinfo/fuse-devel
@@ -56,6 +50,5 @@ Professional support is offered from `Rath Consulting`_.
 .. _Gmane: http://www.gmane.org/
 .. _PyPi: https://pypi.python.org/pypi/pyfuse3/
 .. _GitHub: https://github.com/libfuse/pyfuse3
-.. _`Rath Consulting`: http://www.rath-consulting.biz/
 .. _Trio: https://github.com/python-trio/trio
 .. _asyncio: https://docs.python.org/3/library/asyncio.html
