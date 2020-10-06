@@ -5,6 +5,13 @@
 .. currentmodule:: pyfuse3
 
 
+Release 3.1.1 (2020-10-06)
+==========================
+
+* No source changes. Regenerated Cython files with Cython 0.29.21 for Python 3.9
+  compatibility.
+
+
 Release 3.1.0 (2020-05-31)
 ==========================
 
