@@ -198,7 +198,7 @@ class Fs(pyfuse3.Operations):
         if inode != self.hello_inode:
             raise pyfuse3.FUSEError(errno.ENOENT)
         if flags & os.O_RDWR or flags & os.O_WRONLY:
-            raise pyfuse3.FUSEError(errno.EPERM)
+            raise pyfuse3.FUSEError(errno.EACCES)
         return pyfuse3.FileInfo(fh=inode)
 
     async def read(self, fh, off, size):
