@@ -829,7 +829,7 @@ async def fuse_access_async (_Container c):
         if allowed:
             ret = fuse_reply_err(c.req, 0)
         else:
-            ret = fuse_reply_err(c.req, EPERM)
+            ret = fuse_reply_err(c.req, EACCES)
 
     if ret != 0:
         log.error('fuse_access(): fuse_reply_* failed with %s', strerror(-ret))

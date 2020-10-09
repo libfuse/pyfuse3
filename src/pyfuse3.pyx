@@ -26,7 +26,7 @@ from libc.stdint cimport uint32_t
 from libc.stdlib cimport const_char
 from libc cimport stdlib, string, errno
 from posix cimport unistd
-from libc.errno cimport ETIMEDOUT, EPROTO, EINVAL, EPERM, ENOMSG, ENOATTR
+from libc.errno cimport EACCES, ETIMEDOUT, EPROTO, EINVAL, ENOMSG, ENOATTR
 from posix.unistd cimport getpid
 from posix.time cimport timespec
 from cpython.bytes cimport (PyBytes_AsStringAndSize, PyBytes_FromStringAndSize,
