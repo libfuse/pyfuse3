@@ -1,10 +1,15 @@
 sudo: required
-dist: xenial
+language: python
 
-language:
-    - python
-python:
-    - "3.7"
+matrix:
+    include:
+        - python: "3.8"
+          os: linux
+          dist: focal
+        - python: "3.9-dev"
+          os: linux
+          dist: focal
+
 addons:
   apt:
     packages:
@@ -12,5 +17,10 @@ addons:
     - pkg-config
     - gcc
     - ninja-build
+    - meson
+    - python3-sphinx
+    - cython3
+    - libfuse3-dev
+    - fuse3
 install: test/travis-install.sh
 script: test/travis-test.sh
