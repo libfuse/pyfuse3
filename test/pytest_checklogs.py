@@ -114,4 +114,4 @@ def check_output(caplog, capfd, request):
             if (record.levelno >= logging.WARNING and
                 not getattr(record, 'checklogs_ignore', False)):
                 pytest.fail('Logger received warning messages.')
-    check_test_output(capfd, request)
+    check_test_output(capfd, request.node)
