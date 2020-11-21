@@ -136,7 +136,7 @@ def main():
           platforms=[ 'Linux' ],
           keywords=['FUSE', 'python' ],
           install_requires=['trio >= 0.15'],
-          tests_require=['pytest', 'pytest-trio'],
+          tests_require=['pytest >= 3.4.0', 'pytest-trio'],
           python_requires='>=3.5',
           package_dir={'': 'src'},
           py_modules=['_pyfuse3', 'pyfuse3_asyncio'],
