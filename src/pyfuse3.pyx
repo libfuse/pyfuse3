@@ -289,7 +289,7 @@ cdef class EntryAttributes:
         return (int(self.attr.st_atime) * 10**9 + GET_ATIME_NS(self.attr))
     @st_atime_ns.setter
     def st_atime_ns(self, val):
-        self.attr.st_atime = val / 10**9
+        self.attr.st_atime = val // 10**9
         SET_ATIME_NS(self.attr, val % 10**9)
 
     @property
@@ -298,7 +298,7 @@ cdef class EntryAttributes:
         return (int(self.attr.st_mtime) * 10**9 + GET_MTIME_NS(self.attr))
     @st_mtime_ns.setter
     def st_mtime_ns(self, val):
-        self.attr.st_mtime = val / 10**9
+        self.attr.st_mtime = val // 10**9
         SET_MTIME_NS(self.attr, val % 10**9)
 
     @property
@@ -307,7 +307,7 @@ cdef class EntryAttributes:
         return (int(self.attr.st_ctime) * 10**9 + GET_CTIME_NS(self.attr))
     @st_ctime_ns.setter
     def st_ctime_ns(self, val):
-        self.attr.st_ctime = val / 10**9
+        self.attr.st_ctime = val // 10**9
         SET_CTIME_NS(self.attr, val % 10**9)
 
     @property
@@ -326,7 +326,7 @@ cdef class EntryAttributes:
     def st_birthtime_ns(self, val):
         # Use C macro to prevent compiler error on Linux
         # (where st_birthtime does not exist)
-        SET_BIRTHTIME(self.attr, val / 10**9)
+        SET_BIRTHTIME(self.attr, val // 10**9)
         SET_BIRTHTIME_NS(self.attr, val % 10**9)
 
     # Pickling and copy support
