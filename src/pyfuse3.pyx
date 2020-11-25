@@ -93,6 +93,8 @@ cdef object _notify_queue = None
 ROOT_INODE = FUSE_ROOT_ID
 __version__ = PYFUSE3_VERSION.decode('utf-8')
 
+_NANOS_PER_SEC = 1000000000
+
 # In the Cython source, we want the names to refer to the
 # C constants. Therefore, we assign through globals().
 g = globals()
@@ -286,29 +288,29 @@ cdef class EntryAttributes:
     @property
     def st_atime_ns(self):
         '''Time of last access in (integer) nanoseconds'''
-        return (int(self.attr.st_atime) * 10**9 + GET_ATIME_NS(self.attr))
+        return (int(self.attr.st_atime) * _NANOS_PER_SEC + GET_ATIME_NS(self.attr))
     @st_atime_ns.setter
     def st_atime_ns(self, val):
-        self.attr.st_atime = val / 10**9
-        SET_ATIME_NS(self.attr, val % 10**9)
+        self.attr.st_atime = (val // _NANOS_PER_SEC)
+        SET_ATIME_NS(self.attr, val % _NANOS_PER_SEC)
 
     @property
     def st_mtime_ns(self):
         '''Time of last modification in (integer) nanoseconds'''
-        return (int(self.attr.st_mtime) * 10**9 + GET_MTIME_NS(self.attr))
+        return (int(self.attr.st_mtime) * _NANOS_PER_SEC + GET_MTIME_NS(self.attr))
     @st_mtime_ns.setter
     def st_mtime_ns(self, val):
-        self.attr.st_mtime = val / 10**9
-        SET_MTIME_NS(self.attr, val % 10**9)
+        self.attr.st_mtime = val // _NANOS_PER_SEC
+        SET_MTIME_NS(self.attr, val % _NANOS_PER_SEC)
 
     @property
     def st_ctime_ns(self):
         '''Time of last inode modification in (integer) nanoseconds'''
-        return (int(self.attr.st_ctime) * 10**9 + GET_CTIME_NS(self.attr))
+        return (int(self.attr.st_ctime) * _NANOS_PER_SEC + GET_CTIME_NS(self.attr))
     @st_ctime_ns.setter
     def st_ctime_ns(self, val):
-        self.attr.st_ctime = val / 10**9
-        SET_CTIME_NS(self.attr, val % 10**9)
+        self.attr.st_ctime = val // _NANOS_PER_SEC
+        SET_CTIME_NS(self.attr, val % _NANOS_PER_SEC)
 
     @property
     def st_birthtime_ns(self):
@@ -319,15 +321,15 @@ cdef class EntryAttributes:
 
         # Use C macro to prevent compiler error on Linux
         # (where st_birthtime does not exist)
-        return int(GET_BIRTHTIME(self.attr) * 10**9
+        return int(GET_BIRTHTIME(self.attr) * _NANOS_PER_SEC
                     + GET_BIRTHTIME_NS(self.attr))
 
     @st_birthtime_ns.setter
     def st_birthtime_ns(self, val):
         # Use C macro to prevent compiler error on Linux
         # (where st_birthtime does not exist)
-        SET_BIRTHTIME(self.attr, val / 10**9)
-        SET_BIRTHTIME_NS(self.attr, val % 10**9)
+        SET_BIRTHTIME(self.attr, val // _NANOS_PER_SEC)
+        SET_BIRTHTIME_NS(self.attr, val % _NANOS_PER_SEC)
 
     # Pickling and copy support
     def __getstate__(self):
