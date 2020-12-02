@@ -18,11 +18,12 @@ import pyfuse3
 from pyfuse3 import _NANOS_PER_SEC
 
 def test_rounding():
-    # Incorrect division previously reaulted in rounding errors for
+    # Incorrect division previously resulted in rounding errors for
     # all dates.
     entry = pyfuse3.EntryAttributes()
 
-    secs = 100*365*24*3600 + 999
+    # Approximately 100 years, ending in 999
+    secs = 100 * 365 * 24 * 3600 + 999
     nanos = _NANOS_PER_SEC - 1
 
     total = secs * _NANOS_PER_SEC + nanos
