@@ -291,7 +291,7 @@ cdef class EntryAttributes:
         return (int(self.attr.st_atime) * _NANOS_PER_SEC + GET_ATIME_NS(self.attr))
     @st_atime_ns.setter
     def st_atime_ns(self, val):
-        self.attr.st_atime = (val // _NANOS_PER_SEC)
+        self.attr.st_atime = val // _NANOS_PER_SEC
         SET_ATIME_NS(self.attr, val % _NANOS_PER_SEC)
 
     @property
