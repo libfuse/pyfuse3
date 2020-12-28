@@ -199,16 +199,32 @@ cdef class _WorkerData:
 cdef _WorkerData worker_data
 
 async def _wait_fuse_readable():
+    '''Wait for FUSE fd to become readable
+
+    Return True if the fd is readable, or False if the main loop
+    should terminate.
+    '''
+
     #name = trio.lowlevel.current_task().name
     worker_data.active_readers += 1
-    #log.debug('%s: Waiting for read lock...', name)
-    async with worker_data.read_lock:
-        #log.debug('%s: Waiting for fuse fd to become readable...', name)
-        await trio.lowlevel.wait_readable(session_fd)
+    try:
+        #log.debug('%s: Waiting for read lock...', name)
+        async with worker_data.read_lock:
+            #log.debug('%s: Waiting for fuse fd to become readable...', name)
+            if fuse_session_exited(session):
+                log.debug('FUSE session exit flag set while waiting for FUSE fd '
+                          'to become readable.')
+                return False
+            await trio.lowlevel.wait_readable(session_fd)
+            #log.debug('%s: fuse fd readable, unparking next task.', name)
+    except trio.ClosedResourceError:
+        log.debug('FUSE fd about to be closed.')
+        return False
 
-    worker_data.active_readers -= 1
-    #log.debug('%s: fuse fd readable, unparking next task.', name)
+    finally:
+        worker_data.active_readers -= 1
 
+    return True
 
 @async_wrapper
 async def _session_loop(nursery, int min_tasks, int max_tasks):
@@ -226,7 +242,10 @@ async def _session_loop(nursery, int min_tasks, int max_tasks):
             log.debug('%s: too many idle tasks (%d total, %d waiting), terminating.',
                       name, worker_data.task_count, worker_data.active_readers)
             break
-        await _wait_fuse_readable()
+
+        if not await _wait_fuse_readable():
+            break
+
         res = fuse_session_receive_buf(session, &buf)
         if not worker_data.active_readers and worker_data.task_count < max_tasks:
             worker_data.task_count += 1

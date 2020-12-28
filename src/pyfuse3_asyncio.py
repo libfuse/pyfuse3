@@ -13,6 +13,7 @@ the terms of the GNU LGPL.
 import asyncio
 import pyfuse3
 import sys
+import collections
 
 Lock = asyncio.Lock
 
@@ -22,6 +23,7 @@ def enable():
 
     fake_trio = sys.modules['pyfuse3_asyncio']
     fake_trio.lowlevel = fake_trio
+    fake_trio.from_thread = fake_trio
     pyfuse3.trio = fake_trio
 
 
@@ -31,12 +33,32 @@ def disable():
     pyfuse3.trio = sys.modules['trio']
 
 
+def current_trio_token():
+    return 'asyncio'
+
+
+_read_futures = collections.defaultdict(set)
 async def wait_readable(fd):
     future = asyncio.Future()
-    loop = asyncio.get_event_loop()
-    loop.add_reader(fd, future.set_result, None)
-    future.add_done_callback(lambda f: loop.remove_reader(fd))
-    await future
+    _read_futures[fd].add(future)
+    try:
+        loop = asyncio.get_event_loop()
+        loop.add_reader(fd, future.set_result, None)
+        future.add_done_callback(lambda f: loop.remove_reader(fd))
+        await future
+    finally:
+        _read_futures[fd].remove(future)
+        if not _read_futures[fd]:
+            del _read_futures[fd]
+
+
+def notify_closing(fd):
+    for f in _read_futures[fd]:
+        f.set_exception(ClosedResourceError())
+
+
+class ClosedResourceError(Exception):
+    pass
 
 
 def current_task():

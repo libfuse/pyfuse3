@@ -133,6 +133,25 @@ def test_attr_timeout(testfs):
         os.fstat(fh.fileno())
         assert fs_state.getattr_called
 
+def test_terminate(tmpdir):
+    mnt_dir = str(tmpdir)
+    mp = get_mp()
+    with mp.Manager() as mgr:
+        fs_state = mgr.Namespace()
+        mount_process = mp.Process(target=run_fs,
+                                   args=(mnt_dir, fs_state))
+
+        mount_process.start()
+        try:
+            wait_for_mount(mount_process, mnt_dir)
+            pyfuse3.setxattr(mnt_dir, 'command', b'terminate')
+            mount_process.join(5)
+            assert mount_process.exitcode is not None
+        except:
+            cleanup(mount_process, mnt_dir)
+            raise
+
+
 class Fs(pyfuse3.Operations):
     def __init__(self, cross_process):
         super(Fs, self).__init__()
@@ -216,16 +235,22 @@ class Fs(pyfuse3.Operations):
 
         if value == b'forget_entry':
             pyfuse3.invalidate_entry_async(pyfuse3.ROOT_INODE, self.hello_name)
+
+            # Make sure that the request is pending before we return
+            await trio.sleep(0.1)
+
         elif value == b'forget_inode':
             pyfuse3.invalidate_inode(self.hello_inode)
+
         elif value == b'store':
             pyfuse3.notify_store(self.hello_inode, offset=0,
                                  data=self.hello_data)
+
+        elif value == b'terminate':
+            pyfuse3.terminate()
         else:
             raise FUSEError(errno.EINVAL)
 
-        # Make sure that the request is pending before we return
-        await trio.sleep(0.1)
 
 def run_fs(mountpoint, cross_process):
     # Logging (note that we run in a new process, so we can't

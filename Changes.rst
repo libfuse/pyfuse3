@@ -10,6 +10,9 @@ Release 3.x.y (TBD)
 * Fix long-standing rounding error in file date handling when the nanosecond
   part of file dates were > 999999500.
 
+* There is a new `pyfuse3.terminate()` function to gracefully end the
+  main loop.
+
 
 Release 3.1.1 (2020-10-06)
 ==========================

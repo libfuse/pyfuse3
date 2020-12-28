@@ -97,6 +97,15 @@ class TestFs(pyfuse3.Operations):
                 token, self.hello_name, await self.getattr(self.hello_inode), 1)
         return
 
+    async def setxattr(self, inode, name, value, ctx):
+        if inode != pyfuse3.ROOT_INODE or name != b'command':
+            raise pyfuse3.FUSEError(errno.ENOTSUP)
+
+        if value == b'terminate':
+            pyfuse3.terminate()
+        else:
+            raise pyfuse3.FUSEError(errno.EINVAL)
+
     async def open(self, inode, flags, ctx):
         if inode != self.hello_inode:
             raise pyfuse3.FUSEError(errno.ENOENT)

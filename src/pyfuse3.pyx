@@ -102,6 +102,7 @@ g['ENOATTR'] = ENOATTR
 g['RENAME_EXCHANGE'] = RENAME_EXCHANGE
 g['RENAME_NOREPLACE'] = RENAME_NOREPLACE
 
+trio_token = None
 
 
 #######################
@@ -765,6 +766,9 @@ async def main(int min_tasks=1, int max_tasks=99):
     if session == NULL:
         raise RuntimeError('Need to call init() before main()')
 
+    global trio_token
+    trio_token = trio.lowlevel.current_trio_token()
+
     try:
         async with trio.open_nursery() as nursery:
             worker_data.task_count = 1
@@ -772,8 +776,25 @@ async def main(int min_tasks=1, int max_tasks=99):
             nursery.start_soon(_session_loop, nursery, min_tasks, max_tasks,
                                name=worker_data.get_name())
     finally:
+        trio_token = None
         if _notify_queue is not None:
             _notify_queue.put(None)
+
+
+def terminate():
+    '''Terminate FUSE main loop.
+
+    This function gracefully terminates the FUSE main loop (resulting in the call to
+    main() to return).
+
+    When called by a thread different from the one that runs the main loop, the call must
+    be wrapped with `trio.from_thread.run_sync`. The necessary *trio_token* argument can
+    (for convience) be retrieved from the `trio_token` module attribute.
+    '''
+
+    fuse_session_exit(session)
+    trio.lowlevel.notify_closing(session_fd)
+
 
 def close(unmount=True):
     '''Clean up and ensure filesystem is unmounted
