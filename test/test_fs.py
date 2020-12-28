@@ -29,9 +29,7 @@ from util import fuse_test_marker, wait_for_mount, umount, cleanup
 
 pytestmark = fuse_test_marker()
 
-@pytest.yield_fixture()
-def testfs(tmpdir):
-
+def get_mp():
     # We can't use forkserver because we have to make sure
     # that the server inherits the per-test stdout/stderr file
     # descriptors.
@@ -43,7 +41,13 @@ def testfs(tmpdir):
     if threading.active_count() != 1:
         raise RuntimeError("Multi-threaded test running is not supported")
 
+    return mp
+
+
+@pytest.yield_fixture()
+def testfs(tmpdir):
     mnt_dir = str(tmpdir)
+    mp = get_mp()
     with mp.Manager() as mgr:
         cross_process = mgr.Namespace()
         mount_process = mp.Process(target=run_fs,
