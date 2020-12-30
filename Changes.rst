@@ -4,7 +4,7 @@
 
 .. currentmodule:: pyfuse3
 
-Release 3.x.y (TBD)
+Release 3.2.0 (2020-12-30)
 ==========================
 
 * Fix long-standing rounding error in file date handling when the nanosecond
