@@ -367,10 +367,10 @@ def tst_rounding(mnt_dir, ns_tol=0):
     # Max nanos
     nanos = _NANOS_PER_SEC - 1
 
-    # seconds+ns and ns_tol as a float in seconds 
+    # seconds+ns and ns_tol as a float in seconds
     secs_f = secs + nanos / _NANOS_PER_SEC
     secs_tol = ns_tol / _NANOS_PER_SEC
-    
+
     atime_ns = secs * _NANOS_PER_SEC + nanos
     mtime_ns = atime_ns
 
