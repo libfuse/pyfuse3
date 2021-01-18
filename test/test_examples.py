@@ -433,4 +433,7 @@ def assert_same_stats(name1, name2):
     for name in ('st_atime_ns', 'st_mtime_ns', 'st_ctime_ns',
                  'st_mode', 'st_ino', 'st_nlink', 'st_uid',
                  'st_gid', 'st_size'):
-        assert getattr(stat1, name) == getattr(stat2, name)
+        v1 = getattr(stat1, name)
+        v2 = getattr(stat2, name)
+        assert  v1 == v2, 'Attribute {} differs by {} ({} vs {})'.format(
+            name, v1 - v2, v1, v2)
