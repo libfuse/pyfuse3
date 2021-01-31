@@ -22,12 +22,14 @@ def test_rounding():
     # all dates.
     entry = pyfuse3.EntryAttributes()
 
-    # Approximately 100 years, ending in 999
-    secs = 100 * 365 * 24 * 3600 + 999
+    # Approximately 67 years, ending in 999.
+    # Note: 67 years were chosen to avoid y2038 issues (1970 + 67 = 2037).
+    #       Testing these is **not** in scope of this test.
+    secs = 67 * 365 * 24 * 3600 + 999
     nanos = _NANOS_PER_SEC - 1
 
     total = secs * _NANOS_PER_SEC + nanos
-    
+
     entry.st_atime_ns = total
     entry.st_ctime_ns = total
     entry.st_mtime_ns = total
