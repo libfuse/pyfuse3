@@ -66,6 +66,9 @@ async def fuse_lookup_async (_Container c, name):
             c.parent, name, ctx)
     except FUSEError as e:
         ret = fuse_reply_err(c.req, e.errno)
+    except BaseException as e:
+        fuse_reply_err(c.req, errno.EIO)
+        raise
     else:
         ret = fuse_reply_entry(c.req, &entry.fuse_param)
 
@@ -104,6 +107,9 @@ async def fuse_getattr_async (_Container c):
         entry = <EntryAttributes?> await operations.getattr(c.ino, ctx)
     except FUSEError as e:
         ret = fuse_reply_err(c.req, e.errno)
+    except BaseException as e:
+        fuse_reply_err(c.req, errno.EIO)
+        raise
     else:
         ret = fuse_reply_attr(c.req, entry.attr, entry.fuse_param.attr_timeout)
 
@@ -168,6 +174,9 @@ async def fuse_setattr_async (_Container c, fh):
         entry = <EntryAttributes?> await operations.setattr(c.ino, entry, fields, fh, ctx)
     except FUSEError as e:
         ret = fuse_reply_err(c.req, e.errno)
+    except BaseException as e:
+        fuse_reply_err(c.req, errno.EIO)
+        raise
     else:
         ret = fuse_reply_attr(c.req, entry.attr, entry.fuse_param.attr_timeout)
 
@@ -189,6 +198,9 @@ async def fuse_readlink_async (_Container c):
         target = await operations.readlink(c.ino, ctx)
     except FUSEError as e:
         ret = fuse_reply_err(c.req, e.errno)
+    except BaseException as e:
+        fuse_reply_err(c.req, errno.EIO)
+        raise
     else:
         name = PyBytes_AsString(target)
         ret = fuse_reply_readlink(c.req, name)
@@ -216,6 +228,9 @@ async def fuse_mknod_async (_Container c, name):
             c.parent, name, c.mode, c.rdev, ctx)
     except FUSEError as e:
         ret = fuse_reply_err(c.req, e.errno)
+    except BaseException as e:
+        fuse_reply_err(c.req, errno.EIO)
+        raise
     else:
         ret = fuse_reply_entry(c.req, &entry.fuse_param)
 
@@ -244,6 +259,9 @@ async def fuse_mkdir_async (_Container c, name):
             c.parent, name, c.mode, ctx)
     except FUSEError as e:
         ret = fuse_reply_err(c.req, e.errno)
+    except BaseException as e:
+        fuse_reply_err(c.req, errno.EIO)
+        raise
     else:
         ret = fuse_reply_entry(c.req, &entry.fuse_param)
 
@@ -265,6 +283,9 @@ async def fuse_unlink_async (_Container c, name):
         await operations.unlink(c.parent, name, ctx)
     except FUSEError as e:
         ret = fuse_reply_err(c.req, e.errno)
+    except BaseException as e:
+        fuse_reply_err(c.req, errno.EIO)
+        raise
     else:
         ret = fuse_reply_err(c.req, 0)
 
@@ -286,6 +307,9 @@ async def fuse_rmdir_async (_Container c, name):
         await operations.rmdir(c.parent, name, ctx)
     except FUSEError as e:
         ret = fuse_reply_err(c.req, e.errno)
+    except BaseException as e:
+        fuse_reply_err(c.req, errno.EIO)
+        raise
     else:
         ret = fuse_reply_err(c.req, 0)
 
@@ -311,6 +335,9 @@ async def fuse_symlink_async (_Container c, name, link):
             c.parent, name, link, ctx)
     except FUSEError as e:
         ret = fuse_reply_err(c.req, e.errno)
+    except BaseException as e:
+        fuse_reply_err(c.req, errno.EIO)
+        raise
     else:
         ret = fuse_reply_entry(c.req, &entry.fuse_param)
 
@@ -339,6 +366,9 @@ async def fuse_rename_async (_Container c, name, newname):
         await operations.rename(c.parent, name, newparent, newname, flags, ctx)
     except FUSEError as e:
         ret = fuse_reply_err(c.req, e.errno)
+    except BaseException as e:
+        fuse_reply_err(c.req, errno.EIO)
+        raise
     else:
         ret = fuse_reply_err(c.req, 0)
 
@@ -364,6 +394,9 @@ async def fuse_link_async (_Container c, newname):
             c.ino, c.parent, newname, ctx)
     except FUSEError as e:
         ret = fuse_reply_err(c.req, e.errno)
+    except BaseException as e:
+        fuse_reply_err(c.req, errno.EIO)
+        raise
     else:
         ret = fuse_reply_entry(c.req, &entry.fuse_param)
 
@@ -388,6 +421,9 @@ async def fuse_open_async (_Container c):
         fi = <FileInfo?> await operations.open(c.ino, c.fi.flags, ctx)
     except FUSEError as e:
         ret = fuse_reply_err(c.req, e.errno)
+    except BaseException as e:
+        fuse_reply_err(c.req, errno.EIO)
+        raise
     else:
         fi._copy_to_fuse(&c.fi)
         ret = fuse_reply_open(c.req, &c.fi)
@@ -413,6 +449,9 @@ async def fuse_read_async (_Container c):
         buf = await operations.read(c.fh, c.off, c.size)
     except FUSEError as e:
         ret = fuse_reply_err(c.req, e.errno)
+    except BaseException as e:
+        fuse_reply_err(c.req, errno.EIO)
+        raise
     else:
         PyObject_GetBuffer(buf, &pybuf, PyBUF_CONTIG_RO)
         ret = fuse_reply_buf(c.req, <const_char*> pybuf.buf, <size_t> pybuf.len)
@@ -443,6 +482,9 @@ async def fuse_write_async (_Container c, pbuf):
         len_ = await operations.write(c.fh, c.off, pbuf)
     except FUSEError as e:
         ret = fuse_reply_err(c.req, e.errno)
+    except BaseException as e:
+        fuse_reply_err(c.req, errno.EIO)
+        raise
     else:
         ret = fuse_reply_write(c.req, len_)
 
@@ -467,6 +509,9 @@ async def fuse_write_buf_async (_Container c, buf):
         len_ = await operations.write(c.fh, c.off, buf)
     except FUSEError as e:
         ret = fuse_reply_err(c.req, e.errno)
+    except BaseException as e:
+        fuse_reply_err(c.req, errno.EIO)
+        raise
     else:
         ret = fuse_reply_write(c.req, len_)
 
@@ -487,6 +532,9 @@ async def fuse_flush_async (_Container c):
         await operations.flush(c.fh)
     except FUSEError as e:
         ret = fuse_reply_err(c.req, e.errno)
+    except BaseException as e:
+        fuse_reply_err(c.req, errno.EIO)
+        raise
     else:
         ret = fuse_reply_err(c.req, 0)
 
@@ -507,6 +555,9 @@ async def fuse_release_async (_Container c):
         await operations.release(c.fh)
     except FUSEError as e:
         ret = fuse_reply_err(c.req, e.errno)
+    except BaseException as e:
+        fuse_reply_err(c.req, errno.EIO)
+        raise
     else:
         ret = fuse_reply_err(c.req, 0)
 
@@ -529,6 +580,9 @@ async def fuse_fsync_async (_Container c):
         await operations.fsync(c.fh, c.flags != 0)
     except FUSEError as e:
         ret = fuse_reply_err(c.req, e.errno)
+    except BaseException as e:
+        fuse_reply_err(c.req, errno.EIO)
+        raise
     else:
         ret = fuse_reply_err(c.req, 0)
 
@@ -551,6 +605,9 @@ async def fuse_opendir_async (_Container c):
         c.fi.fh = await operations.opendir(c.ino, ctx)
     except FUSEError as e:
         ret = fuse_reply_err(c.req, e.errno)
+    except BaseException as e:
+        fuse_reply_err(c.req, errno.EIO)
+        raise
     else:
         ret = fuse_reply_open(c.req, &c.fi)
 
@@ -586,6 +643,9 @@ async def fuse_readdirplus_async (_Container c):
         await operations.readdir(c.fh, c.off, token)
     except FUSEError as e:
         ret = fuse_reply_err(c.req, e.errno)
+    except BaseException as e:
+        fuse_reply_err(c.req, errno.EIO)
+        raise
     else:
         if token.buf_start == NULL:
             ret = fuse_reply_buf(c.req, NULL, 0)
@@ -611,6 +671,9 @@ async def fuse_releasedir_async (_Container c):
         await operations.releasedir(c.fh)
     except FUSEError as e:
         ret = fuse_reply_err(c.req, e.errno)
+    except BaseException as e:
+        fuse_reply_err(c.req, errno.EIO)
+        raise
     else:
         ret = fuse_reply_err(c.req, 0)
 
@@ -634,6 +697,9 @@ async def fuse_fsyncdir_async (_Container c):
         await operations.fsyncdir(c.fh, c.flags != 0)
     except FUSEError as e:
         ret = fuse_reply_err(c.req, e.errno)
+    except BaseException as e:
+        fuse_reply_err(c.req, errno.EIO)
+        raise
     else:
         ret = fuse_reply_err(c.req, 0)
 
@@ -656,6 +722,9 @@ async def fuse_statfs_async (_Container c):
         stats = <StatvfsData?> await operations.statfs(ctx)
     except FUSEError as e:
         ret = fuse_reply_err(c.req, e.errno)
+    except BaseException as e:
+        fuse_reply_err(c.req, errno.EIO)
+        raise
     else:
         ret = fuse_reply_statfs(c.req, &stats.stat)
 
@@ -708,6 +777,9 @@ async def fuse_setxattr_async (_Container c, name, value):
         await operations.setxattr(c.ino, name, value, ctx)
     except FUSEError as e:
         ret = fuse_reply_err(c.req, e.errno)
+    except BaseException as e:
+        fuse_reply_err(c.req, errno.EIO)
+        raise
     else:
         ret = fuse_reply_err(c.req, 0)
 
@@ -734,6 +806,9 @@ async def fuse_getxattr_async (_Container c, name):
         buf = await operations.getxattr(c.ino, name, ctx)
     except FUSEError as e:
         ret = fuse_reply_err(c.req, e.errno)
+    except BaseException as e:
+        fuse_reply_err(c.req, errno.EIO)
+        raise
     else:
         PyBytes_AsStringAndSize(buf, &cbuf, &len_s)
         len_ = <size_t> len_s # guaranteed positive
@@ -768,6 +843,9 @@ async def fuse_listxattr_async (_Container c):
         res = await operations.listxattr(c.ino, ctx)
     except FUSEError as e:
         ret = fuse_reply_err(c.req, e.errno)
+    except BaseException as e:
+        fuse_reply_err(c.req, errno.EIO)
+        raise
     else:
         buf = b'\0'.join(res) + b'\0'
 
@@ -802,6 +880,9 @@ async def fuse_removexattr_async (_Container c, name):
         await operations.removexattr(c.ino, name, ctx)
     except FUSEError as e:
         ret = fuse_reply_err(c.req, e.errno)
+    except BaseException as e:
+        fuse_reply_err(c.req, errno.EIO)
+        raise
     else:
         ret = fuse_reply_err(c.req, 0)
 
@@ -825,6 +906,9 @@ async def fuse_access_async (_Container c):
         allowed = await operations.access(c.ino, mask, ctx)
     except FUSEError as e:
         ret = fuse_reply_err(c.req, e.errno)
+    except BaseException as e:
+        fuse_reply_err(c.req, errno.EIO)
+        raise
     else:
         if allowed:
             ret = fuse_reply_err(c.req, 0)
@@ -855,6 +939,9 @@ async def fuse_create_async (_Container c, name):
         tmp = await operations.create(c.parent, name, c.mode, c.fi.flags, ctx)
     except FUSEError as e:
         ret = fuse_reply_err(c.req, e.errno)
+    except BaseException as e:
+        fuse_reply_err(c.req, errno.EIO)
+        raise
     else:
         fi = <FileInfo?> tmp[0]
         entry = <EntryAttributes?> tmp[1]
