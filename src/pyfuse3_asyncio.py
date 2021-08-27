@@ -74,7 +74,7 @@ def current_task() -> Optional[asyncio.Task]:
 
 
 class _Nursery:
-    async def __aenter__(self) -> _Nursery:
+    async def __aenter__(self) -> "_Nursery":
         self.tasks: set[asyncio.Task] = set()
         return self
 
