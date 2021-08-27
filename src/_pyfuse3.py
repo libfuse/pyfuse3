@@ -13,7 +13,7 @@ import errno
 import functools
 import logging
 import os
-from typing import Callable, NewType, Optional, Sequence, Tuple
+from typing import TYPE_CHECKING, Callable, NewType, Optional, Sequence, Tuple
 
 # These types are specific instances of builtin types:
 FileHandleT = NewType("FileHandleT", int)
@@ -22,12 +22,13 @@ FlagT = NewType("FlagT", int)
 InodeT = NewType("InodeT", int)
 ModeT = NewType("ModeT", int)
 
-# These types are defined elsewhere in the C code:
-# EntryAttributes, FileInfo, ReaddirToken,
-# RequestContext, SetattrFields, StatvfsData
-
-# Will be injected by pyfuse3 extension module
-FUSEError = None
+if TYPE_CHECKING:
+    # These types are defined elsewhere in the C code
+    from pyfuse3 import (EntryAttributes, FileInfo, FUSEError, ReaddirToken,
+                         RequestContext, SetattrFields, StatvfsData)
+else:
+    # Will be injected by pyfuse3 extension module
+    FUSEError = None
 
 __all__ = [ 'Operations', 'async_wrapper' ]
 
@@ -38,7 +39,7 @@ log = logging.getLogger(__name__)
 # is the case for Cython-defined async functions.
 def async_wrapper(fn: Callable) -> Callable:
     @functools.wraps(fn)
-    async def wrapper(*args, **kwargs):
+    async def wrapper(*args, **kwargs):  # type: ignore
         await fn(*args, **kwargs)
     return wrapper
 
