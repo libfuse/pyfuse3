@@ -604,8 +604,8 @@ class Operations:
     async def setxattr(
         self,
         inode: InodeT,
-        name: FileNameT,
-        value: str,
+        name: bytes,
+        value: bytes,
         ctx: "RequestContext"
     ) -> None:
         '''Set extended attribute *name* of *inode* to *value*.
@@ -622,9 +622,9 @@ class Operations:
     async def getxattr(
         self,
         inode: InodeT,
-        name: FileNameT,
+        name: bytes,
         ctx: "RequestContext"
-    ) -> str:
+    ) -> bytes:
         '''Return extended attribute *name* of *inode*
 
         *ctx* will be a `RequestContext` instance.
@@ -654,7 +654,7 @@ class Operations:
     async def removexattr(
         self,
         inode: InodeT,
-        name: FileNameT,
+        name: bytes,
         ctx: "RequestContext"
     ) -> None:
         '''Remove extended attribute *name* of *inode*
