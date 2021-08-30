@@ -81,7 +81,7 @@ class _Nursery:
             task = asyncio.ensure_future(func(*args))
         else:
             task = asyncio.create_task(func(*args))
-        task.set_name(name)
+        task.name = name  # type: ignore
         self.tasks.add(task)
 
     async def __aexit__(self, exc_type: Optional[Type], exc_value: Optional[BaseException], traceback: Optional[Any]) -> None:
