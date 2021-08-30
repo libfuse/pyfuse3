@@ -12,13 +12,11 @@ the terms of the GNU LGPL.
 
 import asyncio
 import collections
-import pyfuse3
 import sys
-import typing
+from typing import Any, Callable, Iterable, Optional, Type
 
-if typing.TYPE_CHECKING:
-    from _pyfuse3 import FileHandleT
-    from typing import Any, Callable, Iterable, Optional, Type
+import pyfuse3
+from _pyfuse3 import FileHandleT
 
 Lock = asyncio.Lock
 
