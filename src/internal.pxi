@@ -1,5 +1,5 @@
 '''
-misc.pxi
+internal.pxi
 
 This file defines functions and data structures that are used internally by
 pyfuse3. It is included by pyfuse3.pyx.

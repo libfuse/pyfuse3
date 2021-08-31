@@ -41,6 +41,8 @@ def current_trio_token() -> str:
 
 
 _read_futures = collections.defaultdict(set)
+
+
 async def wait_readable(fd: FileHandleT) -> None:
     future: asyncio.Future = asyncio.Future()
     _read_futures[fd].add(future)
@@ -76,7 +78,12 @@ class _Nursery:
         self.tasks: set[asyncio.Task] = set()
         return self
 
-    def start_soon(self, func: Callable, *args: Iterable[Any], name: Optional[str] = None) -> None:
+    def start_soon(
+        self,
+        func: Callable,
+        *args: Iterable[Any],
+        name: Optional[str] = None
+    ) -> None:
         if sys.version_info < (3, 7):
             task = asyncio.ensure_future(func(*args))
         else:
@@ -84,7 +91,12 @@ class _Nursery:
         task.name = name  # type: ignore
         self.tasks.add(task)
 
-    async def __aexit__(self, exc_type: Optional[Type], exc_value: Optional[BaseException], traceback: Optional[Any]) -> None:
+    async def __aexit__(
+        self,
+        exc_type: Optional[Type],
+        exc_value: Optional[BaseException],
+        traceback: Optional[Any]
+    ) -> None:
         # Wait for tasks to finish
         while len(self.tasks):
             # Create a copy of the task list to ensure that it's not a problem

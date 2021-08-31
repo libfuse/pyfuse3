@@ -12,7 +12,6 @@ the terms of the GNU LGPL.
 import errno
 import functools
 import logging
-import os
 from typing import TYPE_CHECKING, Callable, NewType, Optional, Sequence, Tuple
 
 # These types are specific instances of builtin types:
@@ -30,9 +29,10 @@ else:
     # Will be injected by pyfuse3 extension module
     FUSEError = None
 
-__all__ = [ 'Operations', 'async_wrapper' ]
+__all__ = ['Operations', 'async_wrapper']
 
 log = logging.getLogger(__name__)
+
 
 # Any top level trio coroutines (i.e., coroutines that are passed
 # to trio.run) must be pure-Python. This wrapper ensures that this
@@ -42,6 +42,7 @@ def async_wrapper(fn: Callable) -> Callable:
     async def wrapper(*args, **kwargs):  # type: ignore
         await fn(*args, **kwargs)
     return wrapper
+
 
 class Operations:
     '''
@@ -65,7 +66,7 @@ class Operations:
     enable_acl: bool = False
 
     def init(self) -> None:
-        '''Initialize operations
+        '''Initialize operations.
 
         This method will be called just before the file system starts handling
         requests. It must not raise any exceptions (not even `FUSEError`), since
@@ -106,7 +107,7 @@ class Operations:
         self,
         inode_list: Sequence[Tuple[InodeT, int]]
     ) -> None:
-        '''Decrease lookup counts for inodes in *inode_list*
+        '''Decrease lookup counts for inodes in *inode_list*.
 
         *inode_list* is a list of ``(inode, nlookup)`` tuples. This method
         should reduce the lookup count for each *inode* by *nlookup*.
@@ -133,7 +134,7 @@ class Operations:
         inode: InodeT,
         ctx: "RequestContext"
     ) -> "EntryAttributes":
-        '''Get attributes for *inode*
+        '''Get attributes for *inode*.
 
         *ctx* will be a `RequestContext` instance.
 
@@ -152,7 +153,7 @@ class Operations:
         fh: Optional[FileHandleT],
         ctx: "RequestContext"
     ) -> "EntryAttributes":
-        '''Change attributes of *inode*
+        '''Change attributes of *inode*.
 
         *fields* will be an `SetattrFields` instance that specifies which
         attributes are to be updated. *attr* will be an `EntryAttributes`
@@ -198,7 +199,7 @@ class Operations:
         rdev: int,
         ctx: "RequestContext"
     ) -> "EntryAttributes":
-        '''Create (possibly special) file
+        '''Create (possibly special) file.
 
         This method must create a (special or regular) file *name* in the
         directory with inode *parent_inode*. Whether the file is special or
@@ -211,7 +212,7 @@ class Operations:
 
         (Successful) execution of this handler increases the lookup count for
         the returned inode by one.
-       '''
+        '''
 
         raise FUSEError(errno.ENOSYS)
 
@@ -222,7 +223,7 @@ class Operations:
         mode: ModeT,
         ctx: "RequestContext"
     ) -> "EntryAttributes":
-        '''Create a directory
+        '''Create a directory.
 
         This method must create a new directory *name* with mode *mode* in the
         directory with inode *parent_inode*. *ctx* will be a `RequestContext`
@@ -243,7 +244,7 @@ class Operations:
         name: FileNameT,
         ctx: "RequestContext"
     ) -> None:
-        '''Remove a (possibly special) file
+        '''Remove a (possibly special) file.
 
         This method must remove the (special or regular) file *name* from the
         direcory with inode *parent_inode*.  *ctx* will be a `RequestContext`
@@ -259,7 +260,6 @@ class Operations:
         the `forget` method to be carried out when the lookup count reaches zero
         (and of course only if at that point there are no more directory entries
         associated with the inode either).
-
         '''
 
         raise FUSEError(errno.ENOSYS)
@@ -270,7 +270,7 @@ class Operations:
         name: FileNameT,
         ctx: "RequestContext"
     ) -> None:
-        '''Remove directory *name*
+        '''Remove directory *name*.
 
         This method must remove the directory *name* from the direcory with
         inode *parent_inode*. *ctx* will be a `RequestContext` instance. If
@@ -300,7 +300,7 @@ class Operations:
         target: FileNameT,
         ctx: "RequestContext"
     ) -> "EntryAttributes":
-        '''Create a symbolic link
+        '''Create a symbolic link.
 
         This method must create a symbolink link named *name* in the directory
         with inode *parent_inode*, pointing to *target*.  *ctx* will be a
@@ -404,9 +404,9 @@ class Operations:
         off: int,
         size: int
     ) -> int:
-        '''Read *size* bytes from *fh* at position *off*
+        '''Read *size* bytes from *fh* at position *off*.
 
-        *fh* will by an integer filehandle returned by a prior `open` or
+        *fh* will be an integer filehandle returned by a prior `open` or
         `create` call.
 
         This function should return exactly the number of bytes requested except
@@ -422,9 +422,9 @@ class Operations:
         off: int,
         buf: bytes
     ) -> int:
-        '''Write *buf* into *fh* at *off*
+        '''Write *buf* into *fh* at *off*.
 
-        *fh* will by an integer filehandle returned by a prior `open` or
+        *fh* will be an integer filehandle returned by a prior `open` or
         `create` call.
 
         This method must return the number of bytes written. However, unless the
@@ -441,7 +441,7 @@ class Operations:
     ) -> None:
         '''Handle close() syscall.
 
-        *fh* will by an integer filehandle returned by a prior `open` or
+        *fh* will be an integer filehandle returned by a prior `open` or
         `create` call.
 
         This method is called whenever a file descriptor is closed. It may be
@@ -455,13 +455,13 @@ class Operations:
         self,
         fh: FileHandleT
     ) -> None:
-        '''Release open file
+        '''Release open file.
 
         This method will be called when the last file descriptor of *fh* has
         been closed, i.e. when the file is no longer opened by any client
         process.
 
-        *fh* will by an integer filehandle returned by a prior `open` or
+        *fh* will be an integer filehandle returned by a prior `open` or
         `create` call. Once `release` has been called, no future requests for
         *fh* will be received (until the value is re-used in the return value of
         another `open` or `create` call).
@@ -477,12 +477,12 @@ class Operations:
         fh: FileHandleT,
         datasync: bool
     ) -> None:
-        '''Flush buffers for open file *fh*
+        '''Flush buffers for open file *fh*.
 
         If *datasync* is true, only the file contents should be
         flushed (in contrast to the metadata about the file).
 
-        *fh* will by an integer filehandle returned by a prior `open` or
+        *fh* will be an integer filehandle returned by a prior `open` or
         `create` call.
         '''
 
@@ -493,7 +493,7 @@ class Operations:
         inode: InodeT,
         ctx: "RequestContext"
     ) -> FileHandleT:
-        '''Open the directory with inode *inode*
+        '''Open the directory with inode *inode*.
 
         *ctx* will be a `RequestContext` instance.
 
@@ -544,7 +544,7 @@ class Operations:
         self,
         fh: FileHandleT
     ) -> None:
-        '''Release open directory
+        '''Release open directory.
 
         This method will be called exactly once for each `opendir` call. After
         *fh* has been released, no further `readdir` requests will be received
@@ -558,7 +558,7 @@ class Operations:
         fh: FileHandleT,
         datasync: bool
     ) -> None:
-        '''Flush buffers for open directory *fh*
+        '''Flush buffers for open directory *fh*.
 
         If *datasync* is true, only the directory contents should be
         flushed (in contrast to metadata about the directory itself).
@@ -570,7 +570,7 @@ class Operations:
         self,
         ctx: "RequestContext"
     ) -> "StatvfsData":
-        '''Get file system statistics
+        '''Get file system statistics.
 
         *ctx* will be a `RequestContext` instance.
 
@@ -580,7 +580,7 @@ class Operations:
         raise FUSEError(errno.ENOSYS)
 
     def stacktrace(self) -> None:
-        '''Asynchronous debugging
+        '''Asynchronous debugging.
 
         This method will be called when the ``fuse_stacktrace`` extended
         attribute is set on the mountpoint. The default implementation logs the
@@ -590,14 +590,15 @@ class Operations:
 
         import sys
         import traceback
+        from os.path import basename
 
         code = list()
         for threadId, frame in sys._current_frames().items():
-            code.append("\n# ThreadID: %s" % threadId)
+            code.append(f"\n# ThreadID: {threadId}")
             for filename, lineno, name, line in traceback.extract_stack(frame):
-                code.append('%s:%d, in %s' % (os.path.basename(filename), lineno, name))
+                code.append(f'{basename(filename)}:{lineno}, in {name}')
                 if line:
-                    code.append("    %s" % (line.strip()))
+                    code.append(f"    {line.strip()}")
 
         log.error("\n".join(code))
 
@@ -625,7 +626,7 @@ class Operations:
         name: bytes,
         ctx: "RequestContext"
     ) -> bytes:
-        '''Return extended attribute *name* of *inode*
+        '''Return extended attribute *name* of *inode*.
 
         *ctx* will be a `RequestContext` instance.
 
@@ -641,7 +642,7 @@ class Operations:
         inode: InodeT,
         ctx: "RequestContext"
     ) -> Sequence[bytes]:
-        '''Get list of extended attributes for *inode*
+        '''Get list of extended attributes for *inode*.
 
         *ctx* will be a `RequestContext` instance.
 
@@ -657,7 +658,7 @@ class Operations:
         name: bytes,
         ctx: "RequestContext"
     ) -> None:
-        '''Remove extended attribute *name* of *inode*
+        '''Remove extended attribute *name* of *inode*.
 
         *ctx* will be a `RequestContext` instance.
 
@@ -697,7 +698,7 @@ class Operations:
         flags: FlagT,
         ctx: "RequestContext"
     ) -> Tuple["FileInfo", "EntryAttributes"]:
-        '''Create a file with permissions *mode* and open it with *flags*
+        '''Create a file with permissions *mode* and open it with *flags*.
 
         *ctx* will be a `RequestContext` instance.
 
