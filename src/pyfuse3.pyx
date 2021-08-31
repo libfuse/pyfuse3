@@ -1,5 +1,5 @@
 '''
-pyfuse3.pxy
+pyfuse3.pyx
 
 Copyright © 2013 Nikolaus Rath <Nikolaus.org>
 
@@ -166,6 +166,7 @@ cdef class SetattrFields:
 
     def __getstate__(self):
         raise PicklingError("SetattrFields instances can't be pickled")
+
 
 @cython.freelist(30)
 cdef class EntryAttributes:
@@ -387,6 +388,7 @@ cdef class FileInfo:
         else:
             out.nonseekable = 0
 
+
 @cython.freelist(1)
 cdef class StatvfsData:
     '''
@@ -476,6 +478,7 @@ cdef class StatvfsData:
         for (k,v) in state.items():
             setattr(self, k, v)
 
+
 # As of Cython 0.28.1, @cython.freelist cannot be used for
 # classes that derive from a builtin type.
 cdef class FUSEError(Exception):
@@ -501,6 +504,7 @@ cdef class FUSEError(Exception):
 
     def __str__(self):
         return strerror(self.errno_)
+
 
 def listdir(path):
     '''Like `os.listdir`, but releases the GIL.
@@ -828,10 +832,11 @@ def close(unmount=True):
     mountpoint_b = None
     session = NULL
 
+
 def invalidate_inode(fuse_ino_t inode, attr_only=False):
     '''Invalidate cache for *inode*
 
-    Instructs the FUSE kernel module to forgot cached attributes and
+    Instructs the FUSE kernel module to forget cached attributes and
     data (unless *attr_only* is True) for *inode*.
 
     **This operation may block** if writeback caching is active and there is
@@ -991,6 +996,7 @@ def notify_store(inode, offset, data):
     PyBuffer_Release(&pybuf)
     if ret != 0:
         raise OSError(-ret, 'fuse_lowlevel_notify_store returned: ' + strerror(-ret))
+
 
 def get_sup_groups(pid):
     '''Return supplementary group ids of *pid*
