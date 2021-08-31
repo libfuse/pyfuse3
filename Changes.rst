@@ -4,6 +4,12 @@
 
 .. currentmodule:: pyfuse3
 
+Unreleased Changes
+==================
+
+* Add type annotations
+
+
 Release 3.2.0 (2020-12-30)
 ==========================
 

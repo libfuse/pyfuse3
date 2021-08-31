@@ -13,9 +13,22 @@ import errno
 import functools
 import logging
 import os
+from typing import TYPE_CHECKING, Callable, NewType, Optional, Sequence, Tuple
 
-# Will be injected by pyfuse3 extension module
-FUSEError = None
+# These types are specific instances of builtin types:
+FileHandleT = NewType("FileHandleT", int)
+FileNameT = NewType("FileNameT", bytes)
+FlagT = NewType("FlagT", int)
+InodeT = NewType("InodeT", int)
+ModeT = NewType("ModeT", int)
+
+if TYPE_CHECKING:
+    # These types are defined elsewhere in the C code
+    from pyfuse3 import (EntryAttributes, FileInfo, FUSEError, ReaddirToken,
+                         RequestContext, SetattrFields, StatvfsData)
+else:
+    # Will be injected by pyfuse3 extension module
+    FUSEError = None
 
 __all__ = [ 'Operations', 'async_wrapper' ]
 
@@ -24,9 +37,9 @@ log = logging.getLogger(__name__)
 # Any top level trio coroutines (i.e., coroutines that are passed
 # to trio.run) must be pure-Python. This wrapper ensures that this
 # is the case for Cython-defined async functions.
-def async_wrapper(fn):
+def async_wrapper(fn: Callable) -> Callable:
     @functools.wraps(fn)
-    async def wrapper(*args, **kwargs):
+    async def wrapper(*args, **kwargs):  # type: ignore
         await fn(*args, **kwargs)
     return wrapper
 
@@ -47,11 +60,11 @@ class Operations:
     this class all just raise ``FUSEError(ENOSYS)`` or do nothing).
     '''
 
-    supports_dot_lookup = True
-    enable_writeback_cache = False
-    enable_acl = False
+    supports_dot_lookup: bool = True
+    enable_writeback_cache: bool = False
+    enable_acl: bool = False
 
-    def init(self):
+    def init(self) -> None:
         '''Initialize operations
 
         This method will be called just before the file system starts handling
@@ -61,7 +74,12 @@ class Operations:
 
         pass
 
-    async def lookup(self, parent_inode, name, ctx):
+    async def lookup(
+        self,
+        parent_inode: InodeT,
+        name: FileNameT,
+        ctx: "RequestContext"
+    ) -> "EntryAttributes":
         '''Look up a directory entry by name and get its attributes.
 
         This method should return an `EntryAttributes` instance for the
@@ -84,7 +102,10 @@ class Operations:
 
         raise FUSEError(errno.ENOSYS)
 
-    async def forget(self, inode_list):
+    async def forget(
+        self,
+        inode_list: Sequence[Tuple[InodeT, int]]
+    ) -> None:
         '''Decrease lookup counts for inodes in *inode_list*
 
         *inode_list* is a list of ``(inode, nlookup)`` tuples. This method
@@ -107,7 +128,11 @@ class Operations:
 
         pass
 
-    async def getattr(self, inode, ctx):
+    async def getattr(
+        self,
+        inode: InodeT,
+        ctx: "RequestContext"
+    ) -> "EntryAttributes":
         '''Get attributes for *inode*
 
         *ctx* will be a `RequestContext` instance.
@@ -119,8 +144,14 @@ class Operations:
 
         raise FUSEError(errno.ENOSYS)
 
-
-    async def setattr(self, inode, attr, fields, fh, ctx):
+    async def setattr(
+        self,
+        inode: InodeT,
+        attr: "EntryAttributes",
+        fields: "SetattrFields",
+        fh: Optional[FileHandleT],
+        ctx: "RequestContext"
+    ) -> "EntryAttributes":
         '''Change attributes of *inode*
 
         *fields* will be an `SetattrFields` instance that specifies which
@@ -147,7 +178,11 @@ class Operations:
 
         raise FUSEError(errno.ENOSYS)
 
-    async def readlink(self, inode, ctx):
+    async def readlink(
+        self,
+        inode: InodeT,
+        ctx: "RequestContext"
+    ) -> FileNameT:
         '''Return target of symbolic link *inode*.
 
         *ctx* will be a `RequestContext` instance.
@@ -155,8 +190,14 @@ class Operations:
 
         raise FUSEError(errno.ENOSYS)
 
-
-    async def mknod(self, parent_inode, name, mode, rdev, ctx):
+    async def mknod(
+        self,
+        parent_inode: InodeT,
+        name: FileNameT,
+        mode: ModeT,
+        rdev: int,
+        ctx: "RequestContext"
+    ) -> "EntryAttributes":
         '''Create (possibly special) file
 
         This method must create a (special or regular) file *name* in the
@@ -174,7 +215,13 @@ class Operations:
 
         raise FUSEError(errno.ENOSYS)
 
-    async def mkdir(self, parent_inode, name, mode, ctx):
+    async def mkdir(
+        self,
+        parent_inode: InodeT,
+        name: FileNameT,
+        mode: ModeT,
+        ctx: "RequestContext"
+    ) -> "EntryAttributes":
         '''Create a directory
 
         This method must create a new directory *name* with mode *mode* in the
@@ -190,7 +237,12 @@ class Operations:
 
         raise FUSEError(errno.ENOSYS)
 
-    async def unlink(self, parent_inode, name, ctx):
+    async def unlink(
+        self,
+        parent_inode: InodeT,
+        name: FileNameT,
+        ctx: "RequestContext"
+    ) -> None:
         '''Remove a (possibly special) file
 
         This method must remove the (special or regular) file *name* from the
@@ -212,7 +264,12 @@ class Operations:
 
         raise FUSEError(errno.ENOSYS)
 
-    async def rmdir(self, parent_inode, name, ctx):
+    async def rmdir(
+        self,
+        parent_inode: InodeT,
+        name: FileNameT,
+        ctx: "RequestContext"
+    ) -> None:
         '''Remove directory *name*
 
         This method must remove the directory *name* from the direcory with
@@ -236,7 +293,13 @@ class Operations:
 
         raise FUSEError(errno.ENOSYS)
 
-    async def symlink(self, parent_inode, name, target, ctx):
+    async def symlink(
+        self,
+        parent_inode: InodeT,
+        name: FileNameT,
+        target: FileNameT,
+        ctx: "RequestContext"
+    ) -> "EntryAttributes":
         '''Create a symbolic link
 
         This method must create a symbolink link named *name* in the directory
@@ -252,8 +315,15 @@ class Operations:
 
         raise FUSEError(errno.ENOSYS)
 
-    async def rename(self, parent_inode_old, name_old, parent_inode_new,
-               name_new, flags, ctx):
+    async def rename(
+        self,
+        parent_inode_old: InodeT,
+        name_old: str,
+        parent_inode_new: InodeT,
+        name_new: str,
+        flags: FlagT,
+        ctx: "RequestContext"
+    ) -> None:
         '''Rename a directory entry.
 
         This method must rename *name_old* in the directory with inode
@@ -285,7 +355,13 @@ class Operations:
 
         raise FUSEError(errno.ENOSYS)
 
-    async def link(self, inode, new_parent_inode, new_name, ctx):
+    async def link(
+        self,
+        inode: InodeT,
+        new_parent_inode: InodeT,
+        new_name: FileNameT,
+        ctx: "RequestContext"
+    ) -> "EntryAttributes":
         '''Create directory entry *name* in *parent_inode* refering to *inode*.
 
         *ctx* will be a `RequestContext` instance.
@@ -299,7 +375,12 @@ class Operations:
 
         raise FUSEError(errno.ENOSYS)
 
-    async def open(self, inode, flags, ctx):
+    async def open(
+        self,
+        inode: InodeT,
+        flags: FlagT,
+        ctx: "RequestContext"
+    ) -> "FileInfo":
         '''Open a inode *inode* with *flags*.
 
         *ctx* will be a `RequestContext` instance.
@@ -317,7 +398,12 @@ class Operations:
 
         raise FUSEError(errno.ENOSYS)
 
-    async def read(self, fh, off, size):
+    async def read(
+        self,
+        fh: FileHandleT,
+        off: int,
+        size: int
+    ) -> int:
         '''Read *size* bytes from *fh* at position *off*
 
         *fh* will by an integer filehandle returned by a prior `open` or
@@ -330,7 +416,12 @@ class Operations:
 
         raise FUSEError(errno.ENOSYS)
 
-    async def write(self, fh, off, buf):
+    async def write(
+        self,
+        fh: FileHandleT,
+        off: int,
+        buf: bytes
+    ) -> int:
         '''Write *buf* into *fh* at *off*
 
         *fh* will by an integer filehandle returned by a prior `open` or
@@ -344,7 +435,10 @@ class Operations:
 
         raise FUSEError(errno.ENOSYS)
 
-    async def flush(self, fh):
+    async def flush(
+        self,
+        fh: FileHandleT
+    ) -> None:
         '''Handle close() syscall.
 
         *fh* will by an integer filehandle returned by a prior `open` or
@@ -357,7 +451,10 @@ class Operations:
 
         raise FUSEError(errno.ENOSYS)
 
-    async def release(self, fh):
+    async def release(
+        self,
+        fh: FileHandleT
+    ) -> None:
         '''Release open file
 
         This method will be called when the last file descriptor of *fh* has
@@ -375,7 +472,11 @@ class Operations:
 
         raise FUSEError(errno.ENOSYS)
 
-    async def fsync(self, fh, datasync):
+    async def fsync(
+        self,
+        fh: FileHandleT,
+        datasync: bool
+    ) -> None:
         '''Flush buffers for open file *fh*
 
         If *datasync* is true, only the file contents should be
@@ -387,7 +488,11 @@ class Operations:
 
         raise FUSEError(errno.ENOSYS)
 
-    async def opendir(self, inode, ctx):
+    async def opendir(
+        self,
+        inode: InodeT,
+        ctx: "RequestContext"
+    ) -> FileHandleT:
         '''Open the directory with inode *inode*
 
         *ctx* will be a `RequestContext` instance.
@@ -399,8 +504,12 @@ class Operations:
 
         raise FUSEError(errno.ENOSYS)
 
-
-    async def readdir(self, fh, start_id, token):
+    async def readdir(
+        self,
+        fh: FileHandleT,
+        start_id: int,
+        token: "ReaddirToken"
+    ) -> None:
         '''Read entries in open directory *fh*.
 
         This method should list the contents of directory *fh* (as returned by a
@@ -431,7 +540,10 @@ class Operations:
 
         raise FUSEError(errno.ENOSYS)
 
-    async def releasedir(self, fh):
+    async def releasedir(
+        self,
+        fh: FileHandleT
+    ) -> None:
         '''Release open directory
 
         This method will be called exactly once for each `opendir` call. After
@@ -441,7 +553,11 @@ class Operations:
 
         raise FUSEError(errno.ENOSYS)
 
-    async def fsyncdir(self, fh, datasync):
+    async def fsyncdir(
+        self,
+        fh: FileHandleT,
+        datasync: bool
+    ) -> None:
         '''Flush buffers for open directory *fh*
 
         If *datasync* is true, only the directory contents should be
@@ -450,7 +566,10 @@ class Operations:
 
         raise FUSEError(errno.ENOSYS)
 
-    async def statfs(self, ctx):
+    async def statfs(
+        self,
+        ctx: "RequestContext"
+    ) -> "StatvfsData":
         '''Get file system statistics
 
         *ctx* will be a `RequestContext` instance.
@@ -460,7 +579,7 @@ class Operations:
 
         raise FUSEError(errno.ENOSYS)
 
-    def stacktrace(self):
+    def stacktrace(self) -> None:
         '''Asynchronous debugging
 
         This method will be called when the ``fuse_stacktrace`` extended
@@ -482,7 +601,13 @@ class Operations:
 
         log.error("\n".join(code))
 
-    async def setxattr(self, inode, name, value, ctx):
+    async def setxattr(
+        self,
+        inode: InodeT,
+        name: bytes,
+        value: bytes,
+        ctx: "RequestContext"
+    ) -> None:
         '''Set extended attribute *name* of *inode* to *value*.
 
         *ctx* will be a `RequestContext` instance.
@@ -494,7 +619,12 @@ class Operations:
 
         raise FUSEError(errno.ENOSYS)
 
-    async def getxattr(self, inode, name, ctx):
+    async def getxattr(
+        self,
+        inode: InodeT,
+        name: bytes,
+        ctx: "RequestContext"
+    ) -> bytes:
         '''Return extended attribute *name* of *inode*
 
         *ctx* will be a `RequestContext` instance.
@@ -506,7 +636,11 @@ class Operations:
 
         raise FUSEError(errno.ENOSYS)
 
-    async def listxattr(self, inode, ctx):
+    async def listxattr(
+        self,
+        inode: InodeT,
+        ctx: "RequestContext"
+    ) -> Sequence[bytes]:
         '''Get list of extended attributes for *inode*
 
         *ctx* will be a `RequestContext` instance.
@@ -517,7 +651,12 @@ class Operations:
 
         raise FUSEError(errno.ENOSYS)
 
-    async def removexattr(self, inode, name, ctx):
+    async def removexattr(
+        self,
+        inode: InodeT,
+        name: bytes,
+        ctx: "RequestContext"
+    ) -> None:
         '''Remove extended attribute *name* of *inode*
 
         *ctx* will be a `RequestContext` instance.
@@ -529,8 +668,12 @@ class Operations:
 
         raise FUSEError(errno.ENOSYS)
 
-
-    async def access(self, inode, mode, ctx):
+    async def access(
+        self,
+        inode: InodeT,
+        mode: ModeT,
+        ctx: "RequestContext"
+    ) -> bool:
         '''Check if requesting process has *mode* rights on *inode*.
 
         *ctx* will be a `RequestContext` instance.
@@ -546,7 +689,14 @@ class Operations:
 
         raise FUSEError(errno.ENOSYS)
 
-    async def create(self, parent_inode, name, mode, flags, ctx):
+    async def create(
+        self,
+        parent_inode: InodeT,
+        name: FileNameT,
+        mode: ModeT,
+        flags: FlagT,
+        ctx: "RequestContext"
+    ) -> Tuple["FileInfo", "EntryAttributes"]:
         '''Create a file with permissions *mode* and open it with *flags*
 
         *ctx* will be a `RequestContext` instance.

@@ -11,35 +11,38 @@ the terms of the GNU LGPL.
 '''
 
 import asyncio
-import pyfuse3
-import sys
 import collections
+import sys
+from typing import Any, Callable, Iterable, Optional, Type
+
+import pyfuse3
+from _pyfuse3 import FileHandleT
 
 Lock = asyncio.Lock
 
 
-def enable():
+def enable() -> None:
     '''Switch pyfuse3 to asyncio mode.'''
 
     fake_trio = sys.modules['pyfuse3_asyncio']
-    fake_trio.lowlevel = fake_trio
-    fake_trio.from_thread = fake_trio
-    pyfuse3.trio = fake_trio
+    fake_trio.lowlevel = fake_trio  # type: ignore
+    fake_trio.from_thread = fake_trio  # type: ignore
+    pyfuse3.trio = fake_trio  # type: ignore
 
 
-def disable():
+def disable() -> None:
     '''Switch pyfuse3 to default (trio) mode.'''
 
-    pyfuse3.trio = sys.modules['trio']
+    pyfuse3.trio = sys.modules['trio']  # type: ignore
 
 
-def current_trio_token():
+def current_trio_token() -> str:
     return 'asyncio'
 
 
 _read_futures = collections.defaultdict(set)
-async def wait_readable(fd):
-    future = asyncio.Future()
+async def wait_readable(fd: FileHandleT) -> None:
+    future: asyncio.Future = asyncio.Future()
     _read_futures[fd].add(future)
     try:
         loop = asyncio.get_event_loop()
@@ -52,7 +55,7 @@ async def wait_readable(fd):
             del _read_futures[fd]
 
 
-def notify_closing(fd):
+def notify_closing(fd: FileHandleT) -> None:
     for f in _read_futures[fd]:
         f.set_exception(ClosedResourceError())
 
@@ -61,7 +64,7 @@ class ClosedResourceError(Exception):
     pass
 
 
-def current_task():
+def current_task() -> Optional[asyncio.Task]:
     if sys.version_info < (3, 7):
         return asyncio.Task.current_task()
     else:
@@ -69,19 +72,19 @@ def current_task():
 
 
 class _Nursery:
-    async def __aenter__(self):
-        self.tasks = set()
+    async def __aenter__(self) -> "_Nursery":
+        self.tasks: set[asyncio.Task] = set()
         return self
 
-    def start_soon(self, func, *args, name = None):
+    def start_soon(self, func: Callable, *args: Iterable[Any], name: Optional[str] = None) -> None:
         if sys.version_info < (3, 7):
             task = asyncio.ensure_future(func(*args))
         else:
             task = asyncio.create_task(func(*args))
-        task.name = name
+        task.name = name  # type: ignore
         self.tasks.add(task)
 
-    async def __aexit__(self, exc_type, exc_value, traceback):
+    async def __aexit__(self, exc_type: Optional[Type], exc_value: Optional[BaseException], traceback: Optional[Any]) -> None:
         # Wait for tasks to finish
         while len(self.tasks):
             # Create a copy of the task list to ensure that it's not a problem
@@ -96,5 +99,5 @@ class _Nursery:
             assert len(pending) == 0
 
 
-def open_nursery():
+def open_nursery() -> _Nursery:
     return _Nursery()
