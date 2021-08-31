@@ -67,11 +67,15 @@ import os.path
 import sys
 import trio
 import threading
+import typing
 
 import _pyfuse3
 _pyfuse3.FUSEError = FUSEError
 
 from _pyfuse3 import Operations, async_wrapper
+
+if typing.TYPE_CHECKING:
+    from _pyfuse3 import FileHandleT, FileNameT, FlagT, InodeT, ModeT
 
 
 ##################
