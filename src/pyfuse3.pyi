@@ -1,4 +1,13 @@
-"""Type annotation stubs for the external API in pyfuse3.pyx."""
+'''
+pyfuse3.pyi
+
+Type annotation stubs for the external API in pyfuse3.pyx.
+
+Copyright © 2021 Oliver Galvin
+
+This file is part of pyfuse3. This work may be distributed under
+the terms of the GNU LGPL.
+'''
 
 from _pyfuse3 import Operations, async_wrapper, FileHandleT, FileNameT, FlagT, InodeT, ModeT
 from typing import List, Literal, Mapping
