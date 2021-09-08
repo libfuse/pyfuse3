@@ -695,7 +695,7 @@ async def fuse_setxattr_async (_Container c, name, value):
     try:
         if c.flags & libc_extra.XATTR_CREATE: # Attribute must not exist
             try:
-                await operations.getxattr(c.ino, name)
+                await operations.getxattr(c.ino, name, ctx)
             except FUSEError as e:
                 if e.errno != ENOATTR:
                     raise
@@ -703,7 +703,7 @@ async def fuse_setxattr_async (_Container c, name, value):
                 raise FUSEError(errno.EEXIST)
 
         elif c.flags & libc_extra.XATTR_REPLACE: # Attribute must exist
-            await operations.getxattr(c.ino, name)
+            await operations.getxattr(c.ino, name, ctx)
 
         await operations.setxattr(c.ino, name, value, ctx)
     except FUSEError as e:

@@ -9,6 +9,8 @@ Unreleased Changes
 
 * Add type annotations
 
+* Passing a XATTR_CREATE or XATTR_REPLACE to setxattr() is now working
+  correctly.
 
 Release 3.2.0 (2020-12-30)
 ==========================
