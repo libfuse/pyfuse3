@@ -10,7 +10,8 @@ Steps for Releasing a New Version
     * Run tests under valgrind. Build python `--with-valgrind --with-pydebug`, then `valgrind --trace-children=yes "--trace-children-skip=*mount*" python-dbg -m pytest test/`
     * `./setup.py build_sphinx`
  * `./setup.py build_ext --inplace build_sphinx`
- * `./setup.py sdist upload --sign`
+ * `./setup.py sdist --sign`
+ * `python3 -m twine upload dist/<file>.gz`
  * `./setup.py upload_docs`
  * Git commit, git tag
  * Send announcement to mailing list
