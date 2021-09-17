@@ -4,8 +4,8 @@
 
 .. currentmodule:: pyfuse3
 
-Unreleased Changes
-==================
+Release 3.2.1 (2021-09-17)
+==========================
 
 * Add type annotations
 
