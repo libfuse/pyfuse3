@@ -268,6 +268,7 @@ def run_fs(mountpoint, cross_process):
     testfs = Fs(cross_process)
     fuse_options = set(pyfuse3.default_options)
     fuse_options.add('fsname=pyfuse3_testfs')
+    fuse_options.add('max_read=4096')
     pyfuse3.init(testfs, mountpoint, fuse_options)
     try:
         trio.run(pyfuse3.main)
