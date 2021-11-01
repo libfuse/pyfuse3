@@ -65,7 +65,7 @@ class Operations:
     enable_writeback_cache: bool = False
     enable_acl: bool = False
 
-    def init(self) -> None:
+    def init(self, conn_info) -> None:
         '''Initialize operations.
 
         This method will be called just before the file system starts handling

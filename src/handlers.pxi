@@ -45,9 +45,11 @@ cdef void fuse_init (void *userdata, fuse_conn_info *conn):
         conn.capable & FUSE_CAP_POSIX_ACL):
         conn.want |= FUSE_CAP_POSIX_ACL
 
-    # Blocking rather than async, in case we decide to let the
-    # init hander modify `conn` in the future.
-    operations.init()
+    # Blocking rather than async, to let the init hander modify `conn`.
+    cdef ConnInfo conn_obj
+    conn_obj = ConnInfo.__new__(ConnInfo)
+    conn_obj.conn = conn
+    operations.init(conn_obj)
 
 cdef void fuse_lookup (fuse_req_t req, fuse_ino_t parent,
                        const_char *name):

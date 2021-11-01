@@ -393,6 +393,17 @@ cdef class FileInfo:
             out.nonseekable = 0
 
 
+cdef class ConnInfo:
+    cdef fuse_conn_info *conn
+
+    @property
+    def max_read(self):
+        return self.conn.max_read
+    @max_read.setter
+    def max_read(self, val):
+        self.conn.max_read = val
+
+
 @cython.freelist(1)
 cdef class StatvfsData:
     '''

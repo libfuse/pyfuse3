@@ -166,6 +166,9 @@ class Fs(pyfuse3.Operations):
         self.status.entry_timeout = 99999
         self.status.attr_timeout = 99999
 
+    def init(self, conn_info):
+        conn_info.max_read = 4096
+
     async def getattr(self, inode, ctx=None):
         entry = pyfuse3.EntryAttributes()
         if inode == pyfuse3.ROOT_INODE:

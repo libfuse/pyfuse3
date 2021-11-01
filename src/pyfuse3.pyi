@@ -72,6 +72,11 @@ class FileInfo:
     def __cinit__(self, fh: FileHandleT, direct_io: bool, keep_cache: bool, nonseekable: bool) -> None: ...
 #    def _copy_to_fuse(self, fuse_file_info *out) -> None: ...
 
+
+class ConnInfo:
+    max_read: int
+
+
 class StatvfsData:
     f_bsize: int
     f_frsize: int
