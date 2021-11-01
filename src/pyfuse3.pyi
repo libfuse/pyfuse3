@@ -76,6 +76,10 @@ class FileInfo:
 class ConnInfo:
     max_read: int
 
+    def __cinit__(self) -> None: ...
+    def __getstate__(self) -> StatDict: ...
+    def __setstate__(self, state: StatDict) -> None: ...
+
 
 class StatvfsData:
     f_bsize: int

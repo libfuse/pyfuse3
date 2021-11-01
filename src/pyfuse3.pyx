@@ -393,8 +393,17 @@ cdef class FileInfo:
             out.nonseekable = 0
 
 
+@cython.freelist(1)
 cdef class ConnInfo:
-    cdef fuse_conn_info *conn
+    '''
+    Instances of this class store information about the fuse connection.
+    The attributes correspond to the elements of the ``fuse_conn_info`` struct.
+    '''
+
+    cdef fuse_conn_info conn
+
+    def __cinit__(self):
+        string.memset(&self.conn, 0, sizeof(fuse_conn_info))
 
     @property
     def max_read(self):
@@ -402,6 +411,17 @@ cdef class ConnInfo:
     @max_read.setter
     def max_read(self, val):
         self.conn.max_read = val
+
+    # Pickling and copy support
+    def __getstate__(self):
+        state = dict()
+        for k in ('max_read',):
+            state[k] = getattr(self, k)
+        return state
+
+    def __setstate__(self, state):
+        for (k,v) in state.items():
+            setattr(self, k, v)
 
 
 @cython.freelist(1)
