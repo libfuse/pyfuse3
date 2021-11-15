@@ -15,6 +15,7 @@ Steps for Releasing a New Version
  * `./setup.py upload_docs`
  * Git commit, git tag
  * Send announcement to mailing list
+  * Get contributors: `git log --pretty="format:%an <%aE>" "${PREV_TAG}..${TAG}" | sort -u`
 
 
 Announcement template:
@@ -31,6 +32,10 @@ to easily write a full-featured Linux filesystem in Python.
 From the changelog:
 
 <paste here>
+
+The following people have contributed code to this release:
+
+[PASTE HERE]
 
 As usual, the newest release can be downloaded from PyPi at
 https://pypi.python.org/pypi/pyfuse3/.
