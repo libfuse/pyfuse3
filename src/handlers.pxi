@@ -45,12 +45,10 @@ cdef void fuse_init (void *userdata, fuse_conn_info *conn):
         conn.capable & FUSE_CAP_POSIX_ACL):
         conn.want |= FUSE_CAP_POSIX_ACL
 
-    cdef ConnInfo conn_obj
-    conn_obj = ConnInfo.__new__(ConnInfo)
-    string.memcpy(&conn_obj.conn, conn, sizeof(fuse_conn_info))
-    # Blocking rather than async, to let the init hander modify `conn`.
+    cdef object conn_obj = ConnInfo(max_read=conn.max_read)
+    # Blocking rather than async, to let the init hander modify `conn_obj`.
     operations.init(conn_obj)
-    string.memcpy(conn, &conn_obj.conn, sizeof(fuse_conn_info))
+    conn.max_read = conn_obj.max_read
 
 
 cdef void fuse_lookup (fuse_req_t req, fuse_ino_t parent,

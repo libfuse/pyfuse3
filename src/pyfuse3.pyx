@@ -72,7 +72,7 @@ import typing
 import _pyfuse3
 _pyfuse3.FUSEError = FUSEError
 
-from _pyfuse3 import Operations, async_wrapper
+from _pyfuse3 import Operations, async_wrapper, ConnInfo
 
 if typing.TYPE_CHECKING:
     from _pyfuse3 import FileHandleT, FileNameT, FlagT, InodeT, ModeT
@@ -391,37 +391,6 @@ cdef class FileInfo:
             out.nonseekable = 1
         else:
             out.nonseekable = 0
-
-
-@cython.freelist(1)
-cdef class ConnInfo:
-    '''
-    Instances of this class store information about the fuse connection.
-    The attributes correspond to the elements of the ``fuse_conn_info`` struct.
-    '''
-
-    cdef fuse_conn_info conn
-
-    def __cinit__(self):
-        string.memset(&self.conn, 0, sizeof(fuse_conn_info))
-
-    @property
-    def max_read(self):
-        return self.conn.max_read
-    @max_read.setter
-    def max_read(self, val):
-        self.conn.max_read = val
-
-    # Pickling and copy support
-    def __getstate__(self):
-        state = dict()
-        for k in ('max_read',):
-            state[k] = getattr(self, k)
-        return state
-
-    def __setstate__(self, state):
-        for (k,v) in state.items():
-            setattr(self, k, v)
 
 
 @cython.freelist(1)

@@ -9,6 +9,7 @@ This file is part of pyfuse3. This work may be distributed under
 the terms of the GNU LGPL.
 '''
 
+from dataclasses import dataclass
 import errno
 import functools
 import logging
@@ -44,6 +45,15 @@ def async_wrapper(fn: Callable) -> Callable:
     return wrapper
 
 
+@dataclass
+class ConnInfo:
+    '''
+    Instances of this class store information about the fuse connection.
+    The attributes correspond to the elements of the ``fuse_conn_info`` struct.
+    '''
+    max_read: int
+
+
 class Operations:
     '''
     This class defines the request handler methods that an pyfuse3 file system
@@ -65,7 +75,7 @@ class Operations:
     enable_writeback_cache: bool = False
     enable_acl: bool = False
 
-    def init(self, conn_info) -> None:
+    def init(self, conn_info: ConnInfo) -> None:
         '''Initialize operations.
 
         This method will be called just before the file system starts handling
