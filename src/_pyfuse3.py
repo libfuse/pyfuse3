@@ -81,6 +81,11 @@ class Operations:
         This method will be called just before the file system starts handling
         requests. It must not raise any exceptions (not even `FUSEError`), since
         it is not handling a particular client request.
+
+        *conn_info* will be an instance of `ConnInfo`, containing fuse connection information.
+        Handler may modify some of its members in place. After the handler finishes
+        values stored will be read by libfuse. See `fuse_conn_info` struct reference.
+        Currently only `max_read` is supported.
         '''
 
         pass
