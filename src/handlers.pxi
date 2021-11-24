@@ -45,8 +45,7 @@ cdef void fuse_init (void *userdata, fuse_conn_info *conn):
         conn.capable & FUSE_CAP_POSIX_ACL):
         conn.want |= FUSE_CAP_POSIX_ACL
 
-    cdef object conn_obj = ConnInfo(max_read=conn.max_read)
-    # Blocking rather than async, to let the init hander modify `conn_obj`.
+    conn_obj = ConnInfo(max_read=conn.max_read)
     operations.init(conn_obj)
     conn.max_read = conn_obj.max_read
 
