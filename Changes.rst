@@ -4,6 +4,23 @@
 
 .. currentmodule:: pyfuse3
 
+Release 3.2.2 (2022-09-28)
+==========================
+
+* remove support for python 3.5 (broken, out of support by python devs)
+
+* cythonize with latest Cython 0.29.x (brings Python 3.11 support)
+
+* use github actions for CI, remove travis-ci
+
+* update README: minimal maintenance, not developed
+
+* update setup.py with tested python versions
+
+* examples/tmpfs.py: work around strange kernel behaviour (calling SETATTR after
+  UNLINK of a (not open) file): respond with ENOENT instead of crashing.
+
+
 Release 3.2.1 (2021-09-17)
 ==========================
 
