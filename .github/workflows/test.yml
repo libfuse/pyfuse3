@@ -27,7 +27,7 @@ jobs:
           sudo apt-get install -y libattr1-dev
           sudo apt-get install -y pkg-config
           sudo apt-get install -y gcc
-          sudo apt-get install -y libfuse3-dev
+          sudo apt-get install -y libfuse3-dev fuse3
           sudo apt-get install -y ninja-build
           sudo apt-get install -y meson
           sudo apt-get install -y python3-sphinx
