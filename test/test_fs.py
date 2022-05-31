@@ -44,7 +44,7 @@ def get_mp():
     return mp
 
 
-@pytest.yield_fixture()
+@pytest.fixture()
 def testfs(tmpdir):
     mnt_dir = str(tmpdir)
     mp = get_mp()
