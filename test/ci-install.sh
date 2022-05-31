@@ -9,4 +9,5 @@ pip install \
     "trio == 0.15" \
     "pytest >= 4.6.5, < 5.0.0" \
     "pytest_trio == 0.6.0" \
-    sphinxcontrib-asyncio
+    sphinxcontrib-asyncio \
+    Cython

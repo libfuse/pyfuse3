@@ -31,7 +31,6 @@ jobs:
           sudo apt-get install -y ninja-build
           sudo apt-get install -y meson
           sudo apt-get install -y python3-sphinx
-          sudo apt-get install -y cython3
 
       - name: Install Python dependencies
         run: |
