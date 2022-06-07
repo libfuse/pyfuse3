@@ -147,7 +147,10 @@ class Operations(pyfuse3.Operations):
 
 
     async def getattr(self, inode, ctx=None):
-        row = self.get_row('SELECT * FROM inodes WHERE id=?', (inode,))
+        try:
+            row = self.get_row("SELECT * FROM inodes WHERE id=?", (inode,))
+        except NoSuchRowError:
+            raise(pyfuse3.FUSEError(errno.ENOENT))
 
         entry = pyfuse3.EntryAttributes()
         entry.st_ino = inode
