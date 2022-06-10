@@ -267,8 +267,8 @@ class Operations(pyfuse3.Operations):
     async def link(self, inode, new_inode_p, new_name, ctx):
         entry_p = await self.getattr(new_inode_p)
         if entry_p.st_nlink == 0:
-            log.warn('Attempted to create entry %s with unlinked parent %d',
-                     new_name, new_inode_p)
+            log.warning('Attempted to create entry %s with unlinked parent %d',
+                        new_name, new_inode_p)
             raise FUSEError(errno.EINVAL)
 
         self.cursor.execute("INSERT INTO contents (name, inode, parent_inode) VALUES(?,?,?)",
@@ -362,8 +362,8 @@ class Operations(pyfuse3.Operations):
 
     async def _create(self, inode_p, name, mode, ctx, rdev=0, target=None):
         if (await self.getattr(inode_p)).st_nlink == 0:
-            log.warn('Attempted to create entry %s with unlinked parent %d',
-                     name, inode_p)
+            log.warning('Attempted to create entry %s with unlinked parent %d',
+                        name, inode_p)
             raise FUSEError(errno.EINVAL)
 
         now_ns = int(time() * 1e9)
