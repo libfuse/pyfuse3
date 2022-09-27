@@ -57,7 +57,7 @@ if DEVELOPER_MODE:
 # to work properly
 sys.path.insert(0, os.path.join(basedir, 'src'))
 
-PYFUSE3_VERSION = '3.2.1'
+PYFUSE3_VERSION = '3.2.2'
 
 def main():
 
@@ -127,6 +127,13 @@ def main():
           classifiers=['Development Status :: 4 - Beta',
                        'Intended Audience :: Developers',
                        'Programming Language :: Python',
+                       'Programming Language :: Python :: 3',
+                       'Programming Language :: Python :: 3.6',
+                       'Programming Language :: Python :: 3.7',
+                       'Programming Language :: Python :: 3.8',
+                       'Programming Language :: Python :: 3.9',
+                       'Programming Language :: Python :: 3.10',
+                       'Programming Language :: Python :: 3.11',
                        'Topic :: Software Development :: Libraries :: Python Modules',
                        'Topic :: System :: Filesystems',
                        'License :: OSI Approved :: GNU Library or Lesser General Public License (LGPL)',
@@ -134,11 +141,11 @@ def main():
                        'Operating System :: MacOS :: MacOS X',
                        'Operating System :: POSIX :: BSD :: FreeBSD',
                        'Typing :: Typed'],
-          platforms=[ 'Linux' ],
+          platforms=[ 'Linux', 'FreeBSD', 'OS X' ],
           keywords=['FUSE', 'python' ],
           install_requires=['trio >= 0.15'],
           tests_require=['pytest >= 3.4.0', 'pytest-trio'],
-          python_requires='>=3.5',
+          python_requires='>=3.6',
           package_dir={'': 'src'},
           py_modules=['_pyfuse3', 'pyfuse3_asyncio'],
           provides=['pyfuse3'],
