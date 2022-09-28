@@ -12,6 +12,7 @@ the terms of the GNU LGPL.
 import os
 import platform
 import pytest
+import shutil
 import stat
 import subprocess
 import time
@@ -29,11 +30,8 @@ def fuse_test_marker():
         return
     skip = lambda x: pytest.mark.skip(reason=x)
 
-    with subprocess.Popen(['which', 'fusermount'], stdout=subprocess.PIPE,
-                           universal_newlines=True) as which:
-        fusermount_path = which.communicate()[0].strip()
-
-    if not fusermount_path or which.returncode != 0:
+    fusermount_path = shutil.which('fusermount')
+    if fusermount_path is None:
         return skip("Can't find fusermount executable")
 
     if not os.path.exists('/dev/fuse'):
