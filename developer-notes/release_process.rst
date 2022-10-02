@@ -1,19 +1,22 @@
 Steps for Releasing a New Version
 ---------------------------------
 
+ * pip install twine sphinx sphinxcontrib-asyncio
+ * pip install -U Cython  # important: use latest/best Cython!
  * Bump version in `setup.py`
- * Add release date to `Changes.txt`
+ * Add release date to `Changes.rst`
  * `./setup.py build_cython`
  * `./setup.py sdist`
  * Extract tarball in temporary directory,
     * `python3 setup.py build_ext --inplace && python3 -m pytest test`
     * Run tests under valgrind. Build python `--with-valgrind --with-pydebug`, then `valgrind --trace-children=yes "--trace-children-skip=*mount*" python-dbg -m pytest test/`
-    * `./setup.py build_sphinx`
+ * `./setup.py build_sphinx`
  * `./setup.py build_ext --inplace build_sphinx`
- * `./setup.py sdist --sign`
- * `python3 -m twine upload dist/<file>.gz`
- * `./setup.py upload_docs`
- * Git commit, git tag
+ * `./setup.py sdist`
+ * Git commit / tag & sign
+ * `gpg --detach-sign --local-user "Thomas Waldmann" --armor --output dist/<file>.tar.gz.asc dist/<file>.tar.gz`
+ * `twine upload dist/<file>.tar.gz.asc dist/<file>.tar.gz`
+ * (`./setup.py upload_docs` - tries to upload to ebox.rath.org)
  * Send announcement to mailing list
   * Get contributors: `git log --pretty="format:%an <%aE>" "${PREV_TAG}..${TAG}" | sort -u`
 
