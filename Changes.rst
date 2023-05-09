@@ -4,6 +4,26 @@
 
 .. currentmodule:: pyfuse3
 
+Release 3.2.3 (2023-05-09)
+==========================
+
+* cythonize with latest Cython 0.29.34 (brings Python 3.12 support)
+
+* add a minimal pyproject.toml, require setuptools
+
+* tests: fix integer overflow on 32-bit arches, fixes #47
+
+* test: Use shutil.which() instead of external which(1) program
+
+* setup.py: catch more generic OSError when searching Cython, fixes #63
+
+* setup.py: require Cython >= 0.29
+
+* fix basedir computation in setup.py (fix pip install -e .)
+
+* use sphinx < 6.0 due to compatibility issues with more recent versions
+
+
 Release 3.2.2 (2022-09-28)
 ==========================
 
