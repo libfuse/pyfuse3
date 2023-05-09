@@ -9,5 +9,6 @@ pip install \
     trio \
     pytest \
     pytest_trio \
+    "sphinx<6.0" \
     sphinxcontrib-asyncio \
     Cython

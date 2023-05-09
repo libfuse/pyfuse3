@@ -32,16 +32,11 @@ else:
     module = sys.modules['Cython.Distutils.build_ext']
     del module.build_ext
 
-try:
-    import setuptools
-except ImportError:
-    raise SystemExit('Setuptools package not found. Please install from '
-                     'https://pypi.python.org/pypi/setuptools')
+import setuptools
 from setuptools import Extension
 from distutils.version import LooseVersion
 
-# Add util to load path
-basedir = os.path.abspath(os.path.dirname(sys.argv[0]))
+basedir = os.path.abspath(os.path.dirname(__file__))
 sys.path.insert(0, os.path.join(basedir, 'util'))
 
 # When running from Git repo, enable all warnings
@@ -134,6 +129,7 @@ def main():
                        'Programming Language :: Python :: 3.9',
                        'Programming Language :: Python :: 3.10',
                        'Programming Language :: Python :: 3.11',
+                       'Programming Language :: Python :: 3.12',
                        'Topic :: Software Development :: Libraries :: Python Modules',
                        'Topic :: System :: Filesystems',
                        'License :: OSI Approved :: GNU Library or Lesser General Public License (LGPL)',
@@ -226,14 +222,15 @@ class build_cython(setuptools.Command):
                 version = subprocess.check_output([c, '--version'],
                                               universal_newlines=True, stderr=subprocess.STDOUT)
                 cython = c
-            except FileNotFoundError:
+            except OSError:  # file not found, permission denied, ..., see issue #63
                 pass
         if cython is None:
             raise SystemExit('Cython needs to be installed for this command') from None
 
         hit = re.match('^Cython version (.+)$', version)
-        if not hit or LooseVersion(hit.group(1)) < "0.24":
-            raise SystemExit('Need Cython 0.24 or newer, found ' + version)
+        if not hit or LooseVersion(hit.group(1)) < "0.29":
+            # in fact we need a very recent Cython 0.29.x to support recent Pythons
+            raise SystemExit('Need Cython 0.29 or newer, found ' + version)
 
         cmd = [cython, '-Wextra', '--force', '-3', '--fast-fail',
                '--directive', 'embedsignature=True', '--include-dir',
