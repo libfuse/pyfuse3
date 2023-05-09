@@ -1,7 +1,7 @@
 Steps for Releasing a New Version
 ---------------------------------
 
- * pip install twine sphinx sphinxcontrib-asyncio
+ * pip install twine "sphinx<6.0" sphinxcontrib-asyncio
  * pip install -U Cython  # important: use latest/best Cython!
  * Bump version in `setup.py`
  * Add release date to `Changes.rst`
