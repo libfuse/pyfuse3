@@ -362,8 +362,10 @@ def tst_rounding(mnt_dir, ns_tol=0):
     os.mkdir(filename)
     fstat = os.lstat(filename)
 
-    # Approximately 100 years
-    secs = 100 * 365 * 24 * 3600 + 999
+    # Approximately 67 years, ending in 999.
+    # Note: 67 years were chosen to avoid y2038 issues (1970 + 67 = 2037).
+    #       Testing these is **not** in scope of this test.
+    secs = 67 * 365 * 24 * 3600 + 999
     # Max nanos
     nanos = _NANOS_PER_SEC - 1
 
