@@ -228,8 +228,9 @@ class build_cython(setuptools.Command):
             raise SystemExit('Cython needs to be installed for this command') from None
 
         hit = re.match('^Cython version (.+)$', version)
-        if not hit or LooseVersion(hit.group(1)) < "0.24":
-            raise SystemExit('Need Cython 0.24 or newer, found ' + version)
+        if not hit or LooseVersion(hit.group(1)) < "0.29":
+            # in fact we need a very recent Cython 0.29.x to support recent Pythons
+            raise SystemExit('Need Cython 0.29 or newer, found ' + version)
 
         cmd = [cython, '-Wextra', '--force', '-3', '--fast-fail',
                '--directive', 'embedsignature=True', '--include-dir',
