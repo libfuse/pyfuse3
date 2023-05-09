@@ -32,11 +32,7 @@ else:
     module = sys.modules['Cython.Distutils.build_ext']
     del module.build_ext
 
-try:
-    import setuptools
-except ImportError:
-    raise SystemExit('Setuptools package not found. Please install from '
-                     'https://pypi.python.org/pypi/setuptools')
+import setuptools
 from setuptools import Extension
 from distutils.version import LooseVersion
 
