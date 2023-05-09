@@ -222,7 +222,7 @@ class build_cython(setuptools.Command):
                 version = subprocess.check_output([c, '--version'],
                                               universal_newlines=True, stderr=subprocess.STDOUT)
                 cython = c
-            except FileNotFoundError:
+            except OSError:  # file not found, permission denied, ..., see issue #63
                 pass
         if cython is None:
             raise SystemExit('Cython needs to be installed for this command') from None
