@@ -33,9 +33,16 @@ jobs:
           sudo apt-get install -y python3-sphinx
 
       - name: Install Python dependencies
+        if: ${{ matrix.python-version != '3.11' }}
         run: |
-          test/ci-install.sh
+          pip install trio pytest pytest_trio "sphinx<6.0" sphinxcontrib-asyncio "Cython<3"
+
+      - name: Install Python dependencies
+        if: ${{ matrix.python-version == '3.11' }}
+        run: |
+          pip install trio pytest pytest_trio "sphinx<6.0" sphinxcontrib-asyncio "Cython==3.0.0b2"
 
       - name: Test
         run: |
+          cython --version
           test/ci-test.sh
