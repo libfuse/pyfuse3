@@ -43,24 +43,12 @@ DEVELOPER_MODE = os.path.exists(os.path.join(basedir, 'MANIFEST.in'))
 if DEVELOPER_MODE:
     print('found MANIFEST.in, running in developer mode')
     warnings.resetwarnings()
-    # We can't use `error`, because e.g. Sphinx triggers a
-    # DeprecationWarning.
     warnings.simplefilter('default')
 
-# Add src to load path, important for Sphinx autodoc
-# to work properly
-sys.path.insert(0, os.path.join(basedir, 'src'))
 
 PYFUSE3_VERSION = '3.2.3'
 
 def main():
-
-    try:
-        from sphinx.application import Sphinx #pylint: disable-msg=W0612
-    except ImportError:
-        pass
-    else:
-        fix_docutils()
 
     with open(os.path.join(basedir, 'README.rst'), 'r') as fh:
         long_desc = fh.read()
@@ -145,13 +133,7 @@ def main():
           ext_modules=[Extension('pyfuse3', c_sources,
                                   extra_compile_args=compile_args,
                                   extra_link_args=link_args)],
-        cmdclass={'upload_docs': upload_docs,
-                  'build_cython': build_cython },
-          command_options={
-            'build_sphinx': {
-                'version': ('setup.py', PYFUSE3_VERSION),
-                'release': ('setup.py', PYFUSE3_VERSION),
-            }},
+          cmdclass={'build_cython': build_cython},
           )
 
 
@@ -185,21 +167,6 @@ def pkg_config(pkg, cflags=True, ldflags=False, min_ver=None):
 
     return cflags.decode('us-ascii').split()
 
-
-class upload_docs(setuptools.Command):
-    user_options = []
-    boolean_options = []
-    description = "Upload documentation"
-
-    def initialize_options(self):
-        pass
-
-    def finalize_options(self):
-        pass
-
-    def run(self):
-        subprocess.check_call(['rsync', '-aHv', '--del', os.path.join(basedir, 'doc', 'html') + '/',
-                               'ebox.rath.org:/srv/www.rath.org/pyfuse3-docs/'])
 
 class build_cython(setuptools.Command):
     user_options = []
@@ -245,30 +212,6 @@ class build_cython(setuptools.Command):
                     if subprocess.call(cmd + [path + '.pyx']) != 0:
                         raise SystemExit('Cython compilation failed')
 
-def fix_docutils():
-    '''Work around https://bitbucket.org/birkenfeld/sphinx/issue/1154/'''
-
-    import docutils.parsers
-    from docutils.parsers import rst
-    old_getclass = docutils.parsers.get_parser_class
-
-    # Check if bug is there
-    try:
-        old_getclass('rst')
-    except AttributeError:
-        pass
-    else:
-        return
-
-    def get_parser_class(parser_name):
-        """Return the Parser class from the `parser_name` module."""
-        if parser_name in ('rst', 'restructuredtext'):
-            return rst.Parser
-        else:
-            return old_getclass(parser_name)
-    docutils.parsers.get_parser_class = get_parser_class
-
-    assert docutils.parsers.get_parser_class('rst') is rst.Parser
 
 if __name__ == '__main__':
     main()
