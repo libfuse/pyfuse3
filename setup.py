@@ -34,7 +34,6 @@ else:
 
 import setuptools
 from setuptools import Extension
-from distutils.version import LooseVersion
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 sys.path.insert(0, os.path.join(basedir, 'util'))
@@ -215,6 +214,7 @@ class build_cython(setuptools.Command):
 
     def run(self):
         cython = None
+        version = None
         for c in ('cython3', 'cython'):
             try:
                 version = subprocess.check_output([c, '--version'],
@@ -224,11 +224,7 @@ class build_cython(setuptools.Command):
                 pass
         if cython is None:
             raise SystemExit('Cython needs to be installed for this command') from None
-
-        hit = re.match('^Cython version (.+)$', version)
-        if not hit or LooseVersion(hit.group(1)) < "0.29":
-            # in fact we need a very recent Cython 0.29.x to support recent Pythons
-            raise SystemExit('Need Cython 0.29 or newer, found ' + version)
+        print(f"Using {version.strip()}.")
 
         cmd = [cython, '-Wextra', '--force', '-3', '--fast-fail',
                '--directive', 'embedsignature=True', '--include-dir',

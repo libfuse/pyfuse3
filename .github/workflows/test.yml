@@ -48,6 +48,4 @@ jobs:
         run: pip install "Cython==3.0.0b2"
 
       - name: Test
-        run: |
-          cython --version
-          test/ci-test.sh
+        run: test/ci-test.sh
