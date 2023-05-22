@@ -14,9 +14,12 @@
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-import sys, os
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'util'))
+import os, sys
+basedir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+# we need util/ so the sphinx_cython extension is found:
+sys.path.insert(0, os.path.join(basedir, 'util'))
+# we need src/ also, it is needed so llfuse can be imported to generate api docs:
+sys.path.insert(0, os.path.join(basedir, 'src'))
 
 #pylint: disable-all
 #@PydevCodeAnalysisIgnore
