@@ -11,7 +11,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.6", "3.7", "3.8", "3.9", "3.10", "3.11", "3.12-dev"]
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12-dev"]
         cython-version: ["0.29", "3.0"]
         os: [ubuntu-20.04]
         exclude:
@@ -28,13 +28,9 @@ jobs:
 
       - name: Install Linux dependencies
         run: |
-          sudo apt-get install -y libattr1-dev
-          sudo apt-get install -y pkg-config
-          sudo apt-get install -y gcc
-          sudo apt-get install -y libfuse3-dev fuse3
-          sudo apt-get install -y ninja-build
-          sudo apt-get install -y meson
-          sudo apt-get install -y python3-sphinx
+          sudo apt-get update
+          sudo apt-get install -y libattr1-dev libfuse3-dev fuse3
+          sudo apt-get install -y pkg-config gcc ninja-build meson
 
       - name: Install Python dependencies (misc)
         run: pip install trio pytest pytest_trio "sphinx<6.0" sphinxcontrib-asyncio
@@ -48,6 +44,4 @@ jobs:
         run: pip install "Cython==3.0.0b2"
 
       - name: Test
-        run: |
-          cython --version
-          test/ci-test.sh
+        run: test/ci-test.sh

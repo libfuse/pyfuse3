@@ -34,7 +34,6 @@ else:
 
 import setuptools
 from setuptools import Extension
-from distutils.version import LooseVersion
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 sys.path.insert(0, os.path.join(basedir, 'util'))
@@ -44,24 +43,12 @@ DEVELOPER_MODE = os.path.exists(os.path.join(basedir, 'MANIFEST.in'))
 if DEVELOPER_MODE:
     print('found MANIFEST.in, running in developer mode')
     warnings.resetwarnings()
-    # We can't use `error`, because e.g. Sphinx triggers a
-    # DeprecationWarning.
     warnings.simplefilter('default')
 
-# Add src to load path, important for Sphinx autodoc
-# to work properly
-sys.path.insert(0, os.path.join(basedir, 'src'))
 
 PYFUSE3_VERSION = '3.2.3'
 
 def main():
-
-    try:
-        from sphinx.application import Sphinx #pylint: disable-msg=W0612
-    except ImportError:
-        pass
-    else:
-        fix_docutils()
 
     with open(os.path.join(basedir, 'README.rst'), 'r') as fh:
         long_desc = fh.read()
@@ -123,8 +110,6 @@ def main():
                        'Intended Audience :: Developers',
                        'Programming Language :: Python',
                        'Programming Language :: Python :: 3',
-                       'Programming Language :: Python :: 3.6',
-                       'Programming Language :: Python :: 3.7',
                        'Programming Language :: Python :: 3.8',
                        'Programming Language :: Python :: 3.9',
                        'Programming Language :: Python :: 3.10',
@@ -141,20 +126,14 @@ def main():
           keywords=['FUSE', 'python' ],
           install_requires=['trio >= 0.15'],
           tests_require=['pytest >= 3.4.0', 'pytest-trio'],
-          python_requires='>=3.6',
+          python_requires='>=3.8',
           package_dir={'': 'src'},
           py_modules=['_pyfuse3', 'pyfuse3_asyncio'],
           provides=['pyfuse3'],
           ext_modules=[Extension('pyfuse3', c_sources,
                                   extra_compile_args=compile_args,
                                   extra_link_args=link_args)],
-        cmdclass={'upload_docs': upload_docs,
-                  'build_cython': build_cython },
-          command_options={
-            'build_sphinx': {
-                'version': ('setup.py', PYFUSE3_VERSION),
-                'release': ('setup.py', PYFUSE3_VERSION),
-            }},
+          cmdclass={'build_cython': build_cython},
           )
 
 
@@ -189,21 +168,6 @@ def pkg_config(pkg, cflags=True, ldflags=False, min_ver=None):
     return cflags.decode('us-ascii').split()
 
 
-class upload_docs(setuptools.Command):
-    user_options = []
-    boolean_options = []
-    description = "Upload documentation"
-
-    def initialize_options(self):
-        pass
-
-    def finalize_options(self):
-        pass
-
-    def run(self):
-        subprocess.check_call(['rsync', '-aHv', '--del', os.path.join(basedir, 'doc', 'html') + '/',
-                               'ebox.rath.org:/srv/www.rath.org/pyfuse3-docs/'])
-
 class build_cython(setuptools.Command):
     user_options = []
     boolean_options = []
@@ -217,6 +181,7 @@ class build_cython(setuptools.Command):
 
     def run(self):
         cython = None
+        version = None
         for c in ('cython3', 'cython'):
             try:
                 version = subprocess.check_output([c, '--version'],
@@ -226,11 +191,7 @@ class build_cython(setuptools.Command):
                 pass
         if cython is None:
             raise SystemExit('Cython needs to be installed for this command') from None
-
-        hit = re.match('^Cython version (.+)$', version)
-        if not hit or LooseVersion(hit.group(1)) < "0.29":
-            # in fact we need a very recent Cython 0.29.x to support recent Pythons
-            raise SystemExit('Need Cython 0.29 or newer, found ' + version)
+        print(f"Using {version.strip()}.")
 
         cmd = [cython, '-Wextra', '--force', '-3', '--fast-fail',
                '--directive', 'embedsignature=True', '--include-dir',
@@ -251,30 +212,6 @@ class build_cython(setuptools.Command):
                     if subprocess.call(cmd + [path + '.pyx']) != 0:
                         raise SystemExit('Cython compilation failed')
 
-def fix_docutils():
-    '''Work around https://bitbucket.org/birkenfeld/sphinx/issue/1154/'''
-
-    import docutils.parsers
-    from docutils.parsers import rst
-    old_getclass = docutils.parsers.get_parser_class
-
-    # Check if bug is there
-    try:
-        old_getclass('rst')
-    except AttributeError:
-        pass
-    else:
-        return
-
-    def get_parser_class(parser_name):
-        """Return the Parser class from the `parser_name` module."""
-        if parser_name in ('rst', 'restructuredtext'):
-            return rst.Parser
-        else:
-            return old_getclass(parser_name)
-    docutils.parsers.get_parser_class = get_parser_class
-
-    assert docutils.parsers.get_parser_class('rst') is rst.Parser
 
 if __name__ == '__main__':
     main()

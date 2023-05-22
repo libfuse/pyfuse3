@@ -14,7 +14,7 @@ In order to build and run pyfuse3 you need the following software:
 * Version 3.3.0 or newer of the libfuse_ library, including development
   headers (typically distributions provide them in a *libfuse3-devel*
   or *libfuse3-dev* package).
-* Python_ 3.5 or newer installed with development headers
+* Python_ 3.8 or newer installed with development headers
 * The Trio_ Python module, version 0.7 or newer.
 * The `setuptools`_ Python module, version 1.0 or newer.
 * the `pkg-config`_ tool
@@ -45,13 +45,13 @@ Development Version
 ===================
 
 If you have checked out the unstable development version, a bit more
-effort is required. You need to also have Cython_ (0.28.1 or newer) and
-Sphinx_ (1.1 or newer) installed, and the necessary commands are::
+effort is required. You need to also have Cython_ (0.29 or newer) and
+Sphinx_ (<6.0) installed, and the necessary commands are::
 
   python3 setup.py build_cython
   python3 setup.py build_ext --inplace
   python3 -m pytest test/
-  python3 setup.py build_sphinx
+  sphinx-build -b html rst doc/html
   python3 setup.py install
 
 

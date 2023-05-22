@@ -38,7 +38,7 @@ def pytest_addoption(parser):
 # example, if a request handler raises an exception, the server first signals an
 # error to FUSE (causing the test to fail), and then logs the exception. Without
 # the extra delay, the exception will go into nowhere.
-@pytest.mark.hookwrapper
+@pytest.hookimpl(hookwrapper=True)
 def pytest_pyfunc_call(pyfuncitem):
     outcome = yield
     failed = outcome.excinfo is not None
