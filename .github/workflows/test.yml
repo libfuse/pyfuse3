@@ -41,7 +41,7 @@ jobs:
 
       - name: Install Python dependencies (Cython 3.0)
         if: ${{ matrix.cython-version == '3.0' }}
-        run: pip install "Cython==3.0.0b2"
+        run: pip install "Cython>=3"
 
       - name: Test
         run: test/ci-test.sh
