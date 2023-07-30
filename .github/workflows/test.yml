@@ -30,7 +30,7 @@ jobs:
           sudo apt-get install -y pkg-config gcc ninja-build meson
 
       - name: Install Python dependencies (misc)
-        run: pip install trio pytest pytest_trio "sphinx<6.0" sphinxcontrib-asyncio
+        run: pip install setuptools trio pytest pytest_trio "sphinx<6.0" sphinxcontrib-asyncio
 
       - name: Install Python dependencies (Cython 0.29)
         if: ${{ matrix.cython-version == '0.29' }}
