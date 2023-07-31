@@ -31,8 +31,6 @@ cdef class _Container:
     cdef uint64_t fh
 
 cdef void fuse_init (void *userdata, fuse_conn_info *conn) noexcept:
-    if not conn.capable & FUSE_CAP_READDIRPLUS:
-        raise RuntimeError('Kernel too old, pyfuse3 requires kernel 3.9 or newer!')
     conn.want &= ~(<unsigned> FUSE_CAP_READDIRPLUS_AUTO)
 
     if (operations.supports_dot_lookup and

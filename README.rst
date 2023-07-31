@@ -24,6 +24,7 @@ pyfuse3 releases can be downloaded from PyPi_. The documentation
 can be `read online`__ and is also included in the ``doc/html``
 directory of the pyfuse3 tarball.
 
+pyfuse3 requires FUSE_CAP_READDIRPLUS (Linux Kernel >= 3.9).
 
 Getting Help
 ------------
