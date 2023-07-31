@@ -422,6 +422,7 @@ async def fuse_read_async (_Container c):
 
 cdef void fuse_write (fuse_req_t req, fuse_ino_t ino, const_char *buf,
                       size_t size, off_t off, fuse_file_info *fi) noexcept:
+    cdef int ret
     cdef _Container c = _Container()
     c.req = req
     c.size = size
@@ -429,8 +430,13 @@ cdef void fuse_write (fuse_req_t req, fuse_ino_t ino, const_char *buf,
     c.fh = fi.fh
 
     if size > PY_SSIZE_T_MAX:
-        raise OverflowError('Value too long to convert to Python')
+        log.error('fuse_write(): size > PY_SSIZE_T_MAX')
+        ret = fuse_reply_err(req, errno.EINVAL)
+        if ret != 0:
+            log.error('fuse_write(): fuse_reply_* failed with %s', strerror(-ret))
+        return
     pbuf = PyBytes_FromStringAndSize(buf, <ssize_t> size)
+
     save_retval(fuse_write_async(c, pbuf))
 
 async def fuse_write_async (_Container c, pbuf):
@@ -663,6 +669,7 @@ async def fuse_statfs_async (_Container c):
 
 cdef void fuse_setxattr (fuse_req_t req, fuse_ino_t ino, const_char *cname,
                          const_char *cvalue, size_t size, int flags) noexcept:
+    cdef int ret
     cdef _Container c = _Container()
     c.req = req
     c.ino = ino
@@ -670,8 +677,13 @@ cdef void fuse_setxattr (fuse_req_t req, fuse_ino_t ino, const_char *cname,
     c.flags = flags
 
     name = PyBytes_FromString(cname)
-    if c.size > PY_SSIZE_T_MAX:
-        raise OverflowError('Value too long to convert to Python')
+
+    if size > PY_SSIZE_T_MAX:
+        log.error('fuse_setxattr(): size > PY_SSIZE_T_MAX')
+        ret = fuse_reply_err(req, errno.EINVAL)
+        if ret != 0:
+            log.error('fuse_setxattr(): fuse_reply_* failed with %s', strerror(-ret))
+        return
     value = PyBytes_FromStringAndSize(cvalue, <ssize_t> c.size)
 
     save_retval(fuse_setxattr_async(c, name, value))
