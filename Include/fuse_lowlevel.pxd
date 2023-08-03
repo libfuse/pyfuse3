@@ -55,68 +55,70 @@ cdef extern from "<fuse_lowlevel.h>" nogil:
     int FUSE_SET_ATTR_CTIME
 
     # Request handlers
+    # We allow these functions to raise exceptions because we will catch them
+    # when checking exception status on return from fuse_session_process_buf().
     struct fuse_lowlevel_ops:
-        void (*init) (void *userdata, fuse_conn_info *conn)
-        void (*destroy) (void *userdata)
-        void (*lookup) (fuse_req_t req, fuse_ino_t parent, const_char *name)
-        void (*forget) (fuse_req_t req, fuse_ino_t ino, uint64_t nlookup)
+        void (*init) (void *userdata, fuse_conn_info *conn) except *
+        void (*destroy) (void *userdata) except *
+        void (*lookup) (fuse_req_t req, fuse_ino_t parent, const_char *name) except *
+        void (*forget) (fuse_req_t req, fuse_ino_t ino, uint64_t nlookup) except *
         void (*getattr) (fuse_req_t req, fuse_ino_t ino,
-                         fuse_file_info *fi)
+                         fuse_file_info *fi) except *
         void (*setattr) (fuse_req_t req, fuse_ino_t ino, struct_stat *attr,
-                         int to_set, fuse_file_info *fi)
-        void (*readlink) (fuse_req_t req, fuse_ino_t ino)
+                         int to_set, fuse_file_info *fi) except *
+        void (*readlink) (fuse_req_t req, fuse_ino_t ino) except *
         void (*mknod) (fuse_req_t req, fuse_ino_t parent, const_char *name,
-                       mode_t mode, dev_t rdev)
+                       mode_t mode, dev_t rdev) except *
         void (*mkdir) (fuse_req_t req, fuse_ino_t parent, const_char *name,
-                       mode_t mode)
-        void (*unlink) (fuse_req_t req, fuse_ino_t parent, const_char *name)
-        void (*rmdir) (fuse_req_t req, fuse_ino_t parent, const_char *name)
+                       mode_t mode) except *
+        void (*unlink) (fuse_req_t req, fuse_ino_t parent, const_char *name) except *
+        void (*rmdir) (fuse_req_t req, fuse_ino_t parent, const_char *name) except *
         void (*symlink) (fuse_req_t req, const_char *link, fuse_ino_t parent,
-                         const_char *name)
+                         const_char *name) except *
         void (*rename) (fuse_req_t req, fuse_ino_t parent, const_char *name,
-                        fuse_ino_t newparent, const_char *newname, unsigned flags)
+                        fuse_ino_t newparent, const_char *newname, unsigned flags) except *
         void (*link) (fuse_req_t req, fuse_ino_t ino, fuse_ino_t newparent,
-                      const_char *newname)
+                      const_char *newname) except *
         void (*open) (fuse_req_t req, fuse_ino_t ino,
-                      fuse_file_info *fi)
+                      fuse_file_info *fi) except *
         void (*read) (fuse_req_t req, fuse_ino_t ino, size_t size, off_t off,
-                      fuse_file_info *fi)
+                      fuse_file_info *fi) except *
         void (*write) (fuse_req_t req, fuse_ino_t ino, const_char *buf,
-                       size_t size, off_t off, fuse_file_info *fi)
+                       size_t size, off_t off, fuse_file_info *fi) except *
         void (*flush) (fuse_req_t req, fuse_ino_t ino,
-                       fuse_file_info *fi)
+                       fuse_file_info *fi) except *
         void (*release) (fuse_req_t req, fuse_ino_t ino,
-                         fuse_file_info *fi)
+                         fuse_file_info *fi) except *
         void (*fsync) (fuse_req_t req, fuse_ino_t ino, int datasync,
-                       fuse_file_info *fi)
+                       fuse_file_info *fi) except *
         void (*opendir) (fuse_req_t req, fuse_ino_t ino,
-                         fuse_file_info *fi)
+                         fuse_file_info *fi) except *
         void (*readdir) (fuse_req_t req, fuse_ino_t ino, size_t size, off_t off,
-                         fuse_file_info *fi)
+                         fuse_file_info *fi) except *
         void (*releasedir) (fuse_req_t req, fuse_ino_t ino,
-                            fuse_file_info *fi)
+                            fuse_file_info *fi) except *
         void (*fsyncdir) (fuse_req_t req, fuse_ino_t ino, int datasync,
-                          fuse_file_info *fi)
-        void (*statfs) (fuse_req_t req, fuse_ino_t ino)
+                          fuse_file_info *fi) except *
+        void (*statfs) (fuse_req_t req, fuse_ino_t ino) except *
         void (*setxattr) (fuse_req_t req, fuse_ino_t ino, const_char *name,
-                          const_char *value, size_t size, int flags)
+                          const_char *value, size_t size, int flags) except *
         void (*getxattr) (fuse_req_t req, fuse_ino_t ino, const_char *name,
-                          size_t size)
-        void (*listxattr) (fuse_req_t req, fuse_ino_t ino, size_t size)
-        void (*removexattr) (fuse_req_t req, fuse_ino_t ino, const_char *name)
-        void (*access) (fuse_req_t req, fuse_ino_t ino, int mask)
+                          size_t size) except *
+        void (*listxattr) (fuse_req_t req, fuse_ino_t ino, size_t size) except *
+        void (*removexattr) (fuse_req_t req, fuse_ino_t ino, const_char *name) except *
+        void (*access) (fuse_req_t req, fuse_ino_t ino, int mask) except *
         void (*create) (fuse_req_t req, fuse_ino_t parent, const_char *name,
-                        mode_t mode, fuse_file_info *fi)
+                        mode_t mode, fuse_file_info *fi) except *
         void (*write_buf) (fuse_req_t req, fuse_ino_t ino, fuse_bufvec *bufv,
-                           off_t off, fuse_file_info *fi)
+                           off_t off, fuse_file_info *fi) except *
         void (*retrieve_reply) (fuse_req_t req, void *cookie, fuse_ino_t ino,
-                                off_t offset, fuse_bufvec *bufv)
+                                off_t offset, fuse_bufvec *bufv) except *
         void (*forget_multi) (fuse_req_t req, size_t count,
-                              fuse_forget_data *forgets)
+                              fuse_forget_data *forgets) except *
         void (*fallocate) (fuse_req_t req, fuse_ino_t ino, int mode,
-                           off_t offset, off_t length, fuse_file_info *fi)
+                           off_t offset, off_t length, fuse_file_info *fi) except *
         void (*readdirplus) (fuse_req_t req, fuse_ino_t ino, size_t size, off_t off,
-                             fuse_file_info *fi)
+                             fuse_file_info *fi) except *
 
 
     # Reply functions
@@ -181,4 +183,4 @@ cdef extern from "<fuse_lowlevel.h>" nogil:
     # Custom event loop support
     int fuse_session_fd(fuse_session *se)
     int fuse_session_receive_buf(fuse_session *se, fuse_buf *buf)
-    void fuse_session_process_buf(fuse_session *se, fuse_buf *buf)
+    void fuse_session_process_buf(fuse_session *se, fuse_buf *buf) except *
