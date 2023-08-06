@@ -61,7 +61,7 @@ copyright = u'2010-2023, Nikolaus Rath'
 # built documents.
 #
 # The short X.Y version.
-version = '3.2.3'
+version = '3.3.0'
 # The full version, including alpha/beta/rc tags.
 release = version + ''
 
