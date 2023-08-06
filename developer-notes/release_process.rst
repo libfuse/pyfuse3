@@ -11,11 +11,11 @@ Steps for Releasing a New Version
     * `python3 setup.py build_ext --inplace && python3 -m pytest test`
     * Run tests under valgrind. Build python `--with-valgrind --with-pydebug`, then `valgrind --trace-children=yes "--trace-children-skip=*mount*" python-dbg -m pytest test/`
  * `sphinx-build -b html rst doc/html`
- * `./setup.py build_ext --inplace build_sphinx`
+ * `./setup.py build_ext --inplace`
  * `./setup.py sdist`
  * Git commit / tag & sign
  * `gpg --detach-sign --local-user "Thomas Waldmann" --armor --output dist/<file>.tar.gz.asc dist/<file>.tar.gz`
- * `twine upload dist/<file>.tar.gz.asc dist/<file>.tar.gz`
+ * `twine upload dist/<file>.tar.gz`
  * Send announcement to mailing list
   * Get contributors: `git log --pretty="format:%an <%aE>" "${PREV_TAG}..${TAG}" | sort -u`
 
