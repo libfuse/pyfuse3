@@ -30,7 +30,7 @@ cdef class _Container:
     cdef struct_stat stat
     cdef uint64_t fh
 
-cdef void fuse_init (void *userdata, fuse_conn_info *conn) noexcept:
+cdef void fuse_init (void *userdata, fuse_conn_info *conn):
     if not conn.capable & FUSE_CAP_READDIRPLUS:
         raise RuntimeError('Kernel too old, pyfuse3 requires kernel 3.9 or newer!')
     conn.want &= ~(<unsigned> FUSE_CAP_READDIRPLUS_AUTO)
@@ -46,11 +46,11 @@ cdef void fuse_init (void *userdata, fuse_conn_info *conn) noexcept:
         conn.want |= FUSE_CAP_POSIX_ACL
 
     # Blocking rather than async, in case we decide to let the
-    # init hander modify `conn` in the future.
+    # init handler modify `conn` in the future.
     operations.init()
 
 cdef void fuse_lookup (fuse_req_t req, fuse_ino_t parent,
-                       const_char *name) noexcept:
+                       const_char *name):
     cdef _Container c = _Container()
     c.req = req
     c.parent = parent
@@ -74,13 +74,13 @@ async def fuse_lookup_async (_Container c, name):
 
 
 cdef void fuse_forget (fuse_req_t req, fuse_ino_t ino,
-                       uint64_t nlookup) noexcept:
+                       uint64_t nlookup):
     save_retval(operations.forget([(ino, nlookup)]))
     fuse_reply_none(req)
 
 
 cdef void fuse_forget_multi(fuse_req_t req, size_t count,
-                            fuse_forget_data *forgets) noexcept:
+                            fuse_forget_data *forgets):
     forget_list = list()
     for el in forgets[:count]:
         forget_list.append((el.ino, el.nlookup))
@@ -89,7 +89,7 @@ cdef void fuse_forget_multi(fuse_req_t req, size_t count,
 
 
 cdef void fuse_getattr (fuse_req_t req, fuse_ino_t ino,
-                        fuse_file_info *fi) noexcept:
+                        fuse_file_info *fi):
     cdef _Container c = _Container()
     c.req = req
     c.ino = ino
@@ -112,7 +112,7 @@ async def fuse_getattr_async (_Container c):
 
 
 cdef void fuse_setattr (fuse_req_t req, fuse_ino_t ino, struct_stat *stat,
-                        int to_set, fuse_file_info *fi) noexcept:
+                        int to_set, fuse_file_info *fi):
     cdef _Container c = _Container()
     c.req = req
     c.ino = ino
@@ -175,7 +175,7 @@ async def fuse_setattr_async (_Container c, fh):
         log.error('fuse_setattr(): fuse_reply_* failed with %s', strerror(-ret))
 
 
-cdef void fuse_readlink (fuse_req_t req, fuse_ino_t ino) noexcept:
+cdef void fuse_readlink (fuse_req_t req, fuse_ino_t ino):
     cdef _Container c = _Container()
     c.req = req
     c.ino = ino
@@ -198,7 +198,7 @@ async def fuse_readlink_async (_Container c):
 
 
 cdef void fuse_mknod (fuse_req_t req, fuse_ino_t parent, const_char *name,
-                      mode_t mode, dev_t rdev) noexcept:
+                      mode_t mode, dev_t rdev):
     cdef _Container c = _Container()
     c.req = req
     c.parent = parent
@@ -224,7 +224,7 @@ async def fuse_mknod_async (_Container c, name):
 
 
 cdef void fuse_mkdir (fuse_req_t req, fuse_ino_t parent, const_char *name,
-                      mode_t mode) noexcept:
+                      mode_t mode):
     cdef _Container c = _Container()
     c.req = req
     c.parent = parent
@@ -251,7 +251,7 @@ async def fuse_mkdir_async (_Container c, name):
         log.error('fuse_mkdir(): fuse_reply_* failed with %s', strerror(-ret))
 
 
-cdef void fuse_unlink (fuse_req_t req, fuse_ino_t parent, const_char *name) noexcept:
+cdef void fuse_unlink (fuse_req_t req, fuse_ino_t parent, const_char *name):
     cdef _Container c = _Container()
     c.req = req
     c.parent = parent
@@ -272,7 +272,7 @@ async def fuse_unlink_async (_Container c, name):
         log.error('fuse_unlink(): fuse_reply_* failed with %s', strerror(-ret))
 
 
-cdef void fuse_rmdir (fuse_req_t req, fuse_ino_t parent, const_char *name) noexcept:
+cdef void fuse_rmdir (fuse_req_t req, fuse_ino_t parent, const_char *name):
     cdef _Container c = _Container()
     c.req = req
     c.parent = parent
@@ -294,7 +294,7 @@ async def fuse_rmdir_async (_Container c, name):
 
 
 cdef void fuse_symlink (fuse_req_t req, const_char *link, fuse_ino_t parent,
-                        const_char *name) noexcept:
+                        const_char *name):
     cdef _Container c = _Container()
     c.req = req
     c.parent = parent
@@ -319,7 +319,7 @@ async def fuse_symlink_async (_Container c, name, link):
 
 
 cdef void fuse_rename (fuse_req_t req, fuse_ino_t parent, const_char *name,
-                       fuse_ino_t newparent, const_char *newname, unsigned flags) noexcept:
+                       fuse_ino_t newparent, const_char *newname, unsigned flags):
     cdef _Container c = _Container()
     c.req = req
     c.parent = parent
@@ -347,7 +347,7 @@ async def fuse_rename_async (_Container c, name, newname):
 
 
 cdef void fuse_link (fuse_req_t req, fuse_ino_t ino, fuse_ino_t newparent,
-                     const_char *newname) noexcept:
+                     const_char *newname):
     cdef _Container c = _Container()
     c.req = req
     c.ino = ino
@@ -371,7 +371,7 @@ async def fuse_link_async (_Container c, newname):
         log.error('fuse_link(): fuse_reply_* failed with %s', strerror(-ret))
 
 
-cdef void fuse_open (fuse_req_t req, fuse_ino_t ino, fuse_file_info *fi) noexcept:
+cdef void fuse_open (fuse_req_t req, fuse_ino_t ino, fuse_file_info *fi):
     cdef _Container c = _Container()
     c.req = req
     c.ino = ino
@@ -397,7 +397,7 @@ async def fuse_open_async (_Container c):
 
 
 cdef void fuse_read (fuse_req_t req, fuse_ino_t ino, size_t size, off_t off,
-                     fuse_file_info *fi) noexcept:
+                     fuse_file_info *fi):
     cdef _Container c = _Container()
     c.req = req
     c.size = size
@@ -423,7 +423,7 @@ async def fuse_read_async (_Container c):
 
 
 cdef void fuse_write (fuse_req_t req, fuse_ino_t ino, const_char *buf,
-                      size_t size, off_t off, fuse_file_info *fi) noexcept:
+                      size_t size, off_t off, fuse_file_info *fi):
     cdef _Container c = _Container()
     c.req = req
     c.size = size
@@ -451,7 +451,7 @@ async def fuse_write_async (_Container c, pbuf):
 
 
 cdef void fuse_write_buf(fuse_req_t req, fuse_ino_t ino, fuse_bufvec *bufv,
-                         off_t off, fuse_file_info *fi) noexcept:
+                         off_t off, fuse_file_info *fi):
     cdef _Container c = _Container()
     c.req = req
     c.off = off
@@ -474,7 +474,7 @@ async def fuse_write_buf_async (_Container c, buf):
         log.error('fuse_write_buf(): fuse_reply_* failed with %s', strerror(-ret))
 
 
-cdef void fuse_flush (fuse_req_t req, fuse_ino_t ino, fuse_file_info *fi) noexcept:
+cdef void fuse_flush (fuse_req_t req, fuse_ino_t ino, fuse_file_info *fi):
     cdef _Container c = _Container()
     c.req = req
     c.fh = fi.fh
@@ -494,7 +494,7 @@ async def fuse_flush_async (_Container c):
         log.error('fuse_flush(): fuse_reply_* failed with %s', strerror(-ret))
 
 
-cdef void fuse_release (fuse_req_t req, fuse_ino_t ino, fuse_file_info *fi) noexcept:
+cdef void fuse_release (fuse_req_t req, fuse_ino_t ino, fuse_file_info *fi):
     cdef _Container c = _Container()
     c.req = req
     c.fh = fi.fh
@@ -515,7 +515,7 @@ async def fuse_release_async (_Container c):
 
 
 cdef void fuse_fsync (fuse_req_t req, fuse_ino_t ino, int datasync,
-                      fuse_file_info *fi) noexcept:
+                      fuse_file_info *fi):
     cdef _Container c = _Container()
     c.req = req
     c.flags = datasync
@@ -536,7 +536,7 @@ async def fuse_fsync_async (_Container c):
         log.error('fuse_fsync(): fuse_reply_* failed with %s', strerror(-ret))
 
 
-cdef void fuse_opendir (fuse_req_t req, fuse_ino_t ino, fuse_file_info *fi) noexcept:
+cdef void fuse_opendir (fuse_req_t req, fuse_ino_t ino, fuse_file_info *fi):
     cdef _Container c = _Container()
     c.req = req
     c.ino = ino
@@ -566,7 +566,7 @@ cdef class ReaddirToken:
     cdef size_t size
 
 cdef void fuse_readdirplus (fuse_req_t req, fuse_ino_t ino, size_t size, off_t off,
-                            fuse_file_info *fi) noexcept:
+                            fuse_file_info *fi):
     global py_retval
     cdef _Container c = _Container()
     c.req = req
@@ -598,7 +598,7 @@ async def fuse_readdirplus_async (_Container c):
         log.error('fuse_readdirplus(): fuse_reply_* failed with %s', strerror(-ret))
 
 
-cdef void fuse_releasedir (fuse_req_t req, fuse_ino_t ino, fuse_file_info *fi) noexcept:
+cdef void fuse_releasedir (fuse_req_t req, fuse_ino_t ino, fuse_file_info *fi):
     cdef _Container c = _Container()
     c.req = req
     c.fh = fi.fh
@@ -620,7 +620,7 @@ async def fuse_releasedir_async (_Container c):
 
 
 cdef void fuse_fsyncdir (fuse_req_t req, fuse_ino_t ino, int datasync,
-                         fuse_file_info *fi) noexcept:
+                         fuse_file_info *fi):
     cdef _Container c = _Container()
     c.req = req
     c.flags = datasync
@@ -642,7 +642,7 @@ async def fuse_fsyncdir_async (_Container c):
 
 
 
-cdef void fuse_statfs (fuse_req_t req, fuse_ino_t ino) noexcept:
+cdef void fuse_statfs (fuse_req_t req, fuse_ino_t ino):
     cdef _Container c = _Container()
     c.req = req
     save_retval(fuse_statfs_async(c))
@@ -664,7 +664,7 @@ async def fuse_statfs_async (_Container c):
 
 
 cdef void fuse_setxattr (fuse_req_t req, fuse_ino_t ino, const_char *cname,
-                         const_char *cvalue, size_t size, int flags) noexcept:
+                         const_char *cvalue, size_t size, int flags):
     cdef _Container c = _Container()
     c.req = req
     c.ino = ino
@@ -716,7 +716,7 @@ async def fuse_setxattr_async (_Container c, name, value):
 
 
 cdef void fuse_getxattr (fuse_req_t req, fuse_ino_t ino, const_char *name,
-                         size_t size) noexcept:
+                         size_t size):
     cdef _Container c = _Container()
     c.req = req
     c.ino = ino
@@ -749,7 +749,7 @@ async def fuse_getxattr_async (_Container c, name):
         log.error('fuse_getxattr(): fuse_reply_* failed with %s', strerror(-ret))
 
 
-cdef void fuse_listxattr (fuse_req_t req, fuse_ino_t ino, size_t size) noexcept:
+cdef void fuse_listxattr (fuse_req_t req, fuse_ino_t ino, size_t size):
     cdef _Container c = _Container()
     c.req = req
     c.ino = ino
@@ -788,7 +788,7 @@ async def fuse_listxattr_async (_Container c):
         log.error('fuse_listxattr(): fuse_reply_* failed with %s', strerror(-ret))
 
 
-cdef void fuse_removexattr (fuse_req_t req, fuse_ino_t ino, const_char *name) noexcept:
+cdef void fuse_removexattr (fuse_req_t req, fuse_ino_t ino, const_char *name):
     cdef _Container c = _Container()
     c.req = req
     c.ino = ino
@@ -809,7 +809,7 @@ async def fuse_removexattr_async (_Container c, name):
         log.error('fuse_removexattr(): fuse_reply_* failed with %s', strerror(-ret))
 
 
-cdef void fuse_access (fuse_req_t req, fuse_ino_t ino, int mask) noexcept:
+cdef void fuse_access (fuse_req_t req, fuse_ino_t ino, int mask):
     cdef _Container c = _Container()
     c.req = req
     c.ino = ino
@@ -837,7 +837,7 @@ async def fuse_access_async (_Container c):
 
 
 cdef void fuse_create (fuse_req_t req, fuse_ino_t parent, const_char *name,
-                       mode_t mode, fuse_file_info *fi) noexcept:
+                       mode_t mode, fuse_file_info *fi):
     cdef _Container c = _Container()
     c.req = req
     c.parent = parent
