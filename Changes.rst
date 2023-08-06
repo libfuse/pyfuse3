@@ -4,6 +4,28 @@
 
 .. currentmodule:: pyfuse3
 
+Release 3.3.0 (2023-08-06)
+==========================
+
+* Note: This is the first pyfuse3 release compatible with Cython 3.0.0 release.
+  Cython 0.29.x is also still supported.
+
+* Cythonized with latest Cython 3.0.0.
+
+* Drop Python 3.6 and 3.7 support and testing, #71.
+
+* CI: also test python 3.12. test on cython 0.29 and cython 3.0.
+
+* Tell Cython that callbacks may raise exceptions, #80.
+
+* Fix lookup in examples/hello.py, similar to #16.
+
+* Misc. CI, testing, build and sphinx related fixes.
+
+
+
+
+
 Release 3.2.3 (2023-05-09)
 ==========================
 
