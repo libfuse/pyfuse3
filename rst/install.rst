@@ -46,7 +46,7 @@ Development Version
 
 If you have checked out the unstable development version, a bit more
 effort is required. You need to also have Cython_ (0.29 or newer) and
-Sphinx_ (<6.0) installed, and the necessary commands are::
+Sphinx_ installed, and the necessary commands are::
 
   python3 setup.py build_cython
   python3 setup.py build_ext --inplace
