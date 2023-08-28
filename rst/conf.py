@@ -28,8 +28,7 @@ sys.path.insert(0, os.path.join(basedir, 'src'))
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.intersphinx',
-              'sphinx_cython', 'sphinxcontrib.asyncio' ]
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.intersphinx', 'sphinx_cython']
 
 # Link to Python standard library
 intersphinx_mapping = {'python': ('https://docs.python.org/3/', None),
