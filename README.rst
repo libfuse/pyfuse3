@@ -49,7 +49,7 @@ Contributing
 The pyfuse3 source code is available on GitHub_.
 
 
-.. __: http://www.rath.org/pyfuse3-docs/
+.. __: https://pyfuse3.readthedocs.io/
 .. _libfuse 3: http://github.com/libfuse/libfuse
 .. _FUSE mailing list: https://lists.sourceforge.net/lists/listinfo/fuse-devel
 .. _issue tracker: https://github.com/libfuse/pyfuse3/issues
