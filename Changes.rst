@@ -4,6 +4,12 @@
 
 .. currentmodule:: pyfuse3
 
+Unreleased Changes
+==================
+
+* Expose primitive subclasses (e.g. ``InodeT``) even when not type-checking.
+
+
 Release 3.3.0 (2023-08-06)
 ==========================
 
