@@ -130,6 +130,7 @@ def main():
           package_dir={'': 'src'},
           packages=['pyfuse3'],
           py_modules=['_pyfuse3', 'pyfuse3_asyncio'],
+          package_data={'pyfuse3': ['py.typed']},
           provides=['pyfuse3'],
           ext_modules=[Extension('pyfuse3.__init__', c_sources,
                                   extra_compile_args=compile_args,

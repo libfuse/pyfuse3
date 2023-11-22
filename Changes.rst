@@ -17,6 +17,8 @@ Unreleased Changes
 
 * Various fixes to type annotations.
 
+* Add ``py.typed`` marker to enable external use of type annotations.
+
 
 Release 3.3.0 (2023-08-06)
 ==========================
