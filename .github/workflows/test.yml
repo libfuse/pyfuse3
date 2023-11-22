@@ -40,15 +40,16 @@ jobs:
         if: ${{ matrix.cython-version == '3.0' }}
         run: pip install "Cython>=3"
 
-      - name: Test
+      - name: Build
         run: |
-          set -e
           # Disable developer mode, so that build does not suddenly break if
           # e.g. a newer compiler version results in new warning messages.
           rm MANIFEST.in
           python setup.py build_cython
           python setup.py build_ext --inplace
 
-          pytest -v -rs test/
+      - name: Test
+        run: pytest -v -rs test/
 
-          sphinx-build -b html rst doc/html
+      - name: Build docs
+        run: sphinx-build -b html rst doc/html
