@@ -89,12 +89,12 @@ def main():
 
     link_args = pkg_config('fuse3', cflags=False, ldflags=True, min_ver='3.2.0')
     link_args.append('-lpthread')
-    c_sources = ['src/pyfuse3.c']
+    c_sources = ['src/pyfuse3/pyfuse3.c']
 
     if os.uname()[0] in ('Linux', 'GNU/kFreeBSD'):
         link_args.append('-lrt')
     elif os.uname()[0] == 'Darwin':
-        c_sources.append('src/darwin_compat.c')
+        c_sources.append('src/pyfuse3/darwin_compat.c')
 
     setuptools.setup(
           name='pyfuse3',
@@ -127,7 +127,7 @@ def main():
           install_requires=['trio >= 0.15'],
           tests_require=['pytest >= 3.4.0', 'pytest-trio'],
           python_requires='>=3.8',
-          package_dir={'': 'src'},
+          package_dir={'': 'src/pyfuse3'},
           py_modules=['_pyfuse3', 'pyfuse3_asyncio'],
           provides=['pyfuse3'],
           ext_modules=[Extension('pyfuse3', c_sources,
