@@ -70,7 +70,6 @@ class FileInfo:
     nonseekable: bool
 
     def __cinit__(self, fh: FileHandleT, direct_io: bool, keep_cache: bool, nonseekable: bool) -> None: ...
-#    def _copy_to_fuse(self, fuse_file_info *out) -> None: ...
 
 class StatvfsData:
     f_bsize: int
