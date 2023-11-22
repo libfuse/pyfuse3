@@ -13,7 +13,7 @@ the terms of the GNU LGPL.
 import asyncio
 import collections
 import sys
-from typing import Any, Callable, Iterable, Optional, Type
+from typing import Any, Callable, Iterable, Optional, Set, Type
 
 import pyfuse3
 from ._pyfuse3 import FileHandleT
@@ -44,7 +44,7 @@ _read_futures = collections.defaultdict(set)
 
 
 async def wait_readable(fd: FileHandleT) -> None:
-    future: asyncio.Future = asyncio.Future()
+    future: 'asyncio.Future[Any]' = asyncio.Future()
     _read_futures[fd].add(future)
     try:
         loop = asyncio.get_event_loop()
@@ -66,7 +66,7 @@ class ClosedResourceError(Exception):
     pass
 
 
-def current_task() -> Optional[asyncio.Task]:
+def current_task() -> 'Optional[asyncio.Task[Any]]':
     if sys.version_info < (3, 7):
         return asyncio.Task.current_task()
     else:
@@ -75,12 +75,12 @@ def current_task() -> Optional[asyncio.Task]:
 
 class _Nursery:
     async def __aenter__(self) -> "_Nursery":
-        self.tasks: set[asyncio.Task] = set()
+        self.tasks: 'Set[asyncio.Task[Any]]' = set()
         return self
 
     def start_soon(
         self,
-        func: Callable,
+        func: Callable[..., Any],
         *args: Iterable[Any],
         name: Optional[str] = None
     ) -> None:
@@ -93,7 +93,7 @@ class _Nursery:
 
     async def __aexit__(
         self,
-        exc_type: Optional[Type],
+        exc_type: Optional[Type[BaseException]],
         exc_value: Optional[BaseException],
         traceback: Optional[Any]
     ) -> None:
