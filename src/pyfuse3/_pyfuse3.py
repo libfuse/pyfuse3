@@ -404,7 +404,7 @@ class Operations:
         fh: FileHandleT,
         off: int,
         size: int
-    ) -> int:
+    ) -> bytes:
         '''Read *size* bytes from *fh* at position *off*.
 
         *fh* will be an integer filehandle returned by a prior `open` or
