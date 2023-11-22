@@ -12,7 +12,8 @@ the terms of the GNU LGPL.
 import errno
 import functools
 import logging
-from typing import TYPE_CHECKING, Callable, NewType, Optional, Sequence, Tuple
+from typing import (TYPE_CHECKING, Any, Callable, NewType, Optional, Sequence,
+                    Tuple)
 
 # These types are specific instances of builtin types:
 FileHandleT = NewType("FileHandleT", int)
@@ -37,7 +38,7 @@ log = logging.getLogger(__name__)
 # Any top level trio coroutines (i.e., coroutines that are passed
 # to trio.run) must be pure-Python. This wrapper ensures that this
 # is the case for Cython-defined async functions.
-def async_wrapper(fn: Callable) -> Callable:
+def async_wrapper(fn: Callable[..., Any]) -> Callable[..., Any]:
     @functools.wraps(fn)
     async def wrapper(*args, **kwargs):  # type: ignore
         await fn(*args, **kwargs)
