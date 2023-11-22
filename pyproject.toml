@@ -1,3 +1,10 @@
 [build-system]
 requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
+
+[tool.mypy]
+mypy_path = ["$MYPY_CONFIG_FILE_DIR/src"]
+packages = ["pyfuse3"]
+modules = ["_pyfuse3", "pyfuse3_asyncio"]
+namespace_packages = false
+strict = true
