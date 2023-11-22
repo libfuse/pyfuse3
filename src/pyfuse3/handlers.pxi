@@ -2,7 +2,7 @@
 handlers.pxi
 
 This file defines the FUSE request handlers. It is included
-by pyfuse3.pyx.
+by __init__.pyx.
 
 Copyright © 2013 Nikolaus Rath <Nikolaus.org>
 

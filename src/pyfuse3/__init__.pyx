@@ -1,5 +1,5 @@
 '''
-pyfuse3.pyx
+__init__.pyx
 
 Copyright © 2013 Nikolaus Rath <Nikolaus.org>
 
@@ -19,7 +19,7 @@ cdef extern from "pyfuse3.h":
 ###########
 
 from fuse_lowlevel cimport *
-from macros cimport *
+from .macros cimport *
 from posix.stat cimport struct_stat, S_IFMT, S_IFDIR, S_IFREG
 from posix.types cimport mode_t, dev_t, off_t
 from libc.stdint cimport uint32_t
@@ -69,13 +69,13 @@ import trio
 import threading
 import typing
 
-import _pyfuse3
+from . import _pyfuse3
 _pyfuse3.FUSEError = FUSEError
 
-from _pyfuse3 import Operations, async_wrapper
+from ._pyfuse3 import Operations, async_wrapper
 
 if typing.TYPE_CHECKING:
-    from _pyfuse3 import FileHandleT, FileNameT, FlagT, InodeT, ModeT
+    from ._pyfuse3 import FileHandleT, FileNameT, FlagT, InodeT, ModeT
 
 
 ##################

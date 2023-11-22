@@ -4,6 +4,16 @@
 
 .. currentmodule:: pyfuse3
 
+Unreleased Changes
+==================
+
+* Move ``_pyfuse3`` to ``pyfuse3._pyfuse3`` and add a compatibility wrapper
+  for the old name.
+
+* Move ``pyfuse3_asyncio`` to ``pyfuse3.asyncio`` and add a compatibility
+  wrapper for the old name.
+
+
 Release 3.3.0 (2023-08-06)
 ==========================
 

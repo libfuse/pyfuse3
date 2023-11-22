@@ -46,8 +46,8 @@ import sys
 # to load the module from there first.
 basedir = os.path.abspath(os.path.join(os.path.dirname(sys.argv[0]), '..'))
 if (os.path.exists(os.path.join(basedir, 'setup.py')) and
-    os.path.exists(os.path.join(basedir, 'src', 'pyfuse3', 'pyfuse3.pyx'))):
-    sys.path.insert(0, os.path.join(basedir, 'src', 'pyfuse3'))
+    os.path.exists(os.path.join(basedir, 'src', 'pyfuse3', '__init__.pyx'))):
+    sys.path.insert(0, os.path.join(basedir, 'src'))
 
 import pyfuse3
 from argparse import ArgumentParser

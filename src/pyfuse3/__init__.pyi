@@ -1,7 +1,7 @@
 '''
-pyfuse3.pyi
+__init__.pyi
 
-Type annotation stubs for the external API in pyfuse3.pyx.
+Type annotation stubs for the external API in __init__.pyx.
 
 Copyright © 2021 Oliver Galvin
 
@@ -9,7 +9,7 @@ This file is part of pyfuse3. This work may be distributed under
 the terms of the GNU LGPL.
 '''
 
-from _pyfuse3 import Operations, async_wrapper, FileHandleT, FileNameT, FlagT, InodeT, ModeT
+from ._pyfuse3 import Operations, async_wrapper, FileHandleT, FileNameT, FlagT, InodeT, ModeT
 from typing import List, Literal, Mapping
 
 NamespaceT = Literal["system", "user"]
