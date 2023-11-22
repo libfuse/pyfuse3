@@ -16,7 +16,8 @@ from ._pyfuse3 import (
     FileNameT as FileNameT,
     FlagT as FlagT,
     InodeT as InodeT,
-    ModeT as ModeT
+    ModeT as ModeT,
+    XAttrNameT as XAttrNameT
 )
 from trio.lowlevel import TrioToken
 from typing import List, Literal, Mapping, Optional, Union
