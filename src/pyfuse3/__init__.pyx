@@ -73,7 +73,7 @@ from . import _pyfuse3
 _pyfuse3.FUSEError = FUSEError
 
 from ._pyfuse3 import (Operations, async_wrapper, FileHandleT, FileNameT,
-                       FlagT, InodeT, ModeT)
+                       FlagT, InodeT, ModeT, XAttrNameT)
 
 
 ##################

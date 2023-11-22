@@ -21,6 +21,7 @@ FileNameT = NewType("FileNameT", bytes)
 FlagT = NewType("FlagT", int)
 InodeT = NewType("InodeT", int)
 ModeT = NewType("ModeT", int)
+XAttrNameT = NewType("XAttrNameT", bytes)
 
 if TYPE_CHECKING:
     # These types are defined elsewhere in the C code
@@ -606,7 +607,7 @@ class Operations:
     async def setxattr(
         self,
         inode: InodeT,
-        name: bytes,
+        name: XAttrNameT,
         value: bytes,
         ctx: "RequestContext"
     ) -> None:
@@ -624,7 +625,7 @@ class Operations:
     async def getxattr(
         self,
         inode: InodeT,
-        name: bytes,
+        name: XAttrNameT,
         ctx: "RequestContext"
     ) -> bytes:
         '''Return extended attribute *name* of *inode*.
@@ -642,7 +643,7 @@ class Operations:
         self,
         inode: InodeT,
         ctx: "RequestContext"
-    ) -> Sequence[bytes]:
+    ) -> Sequence[XAttrNameT]:
         '''Get list of extended attributes for *inode*.
 
         *ctx* will be a `RequestContext` instance.
@@ -656,7 +657,7 @@ class Operations:
     async def removexattr(
         self,
         inode: InodeT,
-        name: bytes,
+        name: XAttrNameT,
         ctx: "RequestContext"
     ) -> None:
         '''Remove extended attribute *name* of *inode*.

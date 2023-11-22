@@ -13,6 +13,8 @@ Unreleased Changes
 * Move ``pyfuse3_asyncio`` to ``pyfuse3.asyncio`` and add a compatibility
   wrapper for the old name.
 
+* Add `bytes` subclass `XAttrNameT` as the type of extended attribute names.
+
 * Various fixes to type annotations.
 
 
