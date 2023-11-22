@@ -9,7 +9,15 @@ This file is part of pyfuse3. This work may be distributed under
 the terms of the GNU LGPL.
 '''
 
-from ._pyfuse3 import Operations, async_wrapper, FileHandleT, FileNameT, FlagT, InodeT, ModeT
+# re-exports
+from ._pyfuse3 import (
+    Operations as Operations,
+    FileHandleT as FileHandleT,
+    FileNameT as FileNameT,
+    FlagT as FlagT,
+    InodeT as InodeT,
+    ModeT as ModeT
+)
 from trio.lowlevel import TrioToken
 from typing import List, Literal, Mapping, Optional, Union
 
