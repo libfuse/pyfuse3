@@ -13,6 +13,8 @@ Unreleased Changes
 * Move ``pyfuse3_asyncio`` to ``pyfuse3.asyncio`` and add a compatibility
   wrapper for the old name.
 
+* Various fixes to type annotations.
+
 
 Release 3.3.0 (2023-08-06)
 ==========================
