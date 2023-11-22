@@ -10,7 +10,15 @@ the terms of the GNU LGPL.
 '''
 
 from ._pyfuse3 import Operations, async_wrapper, FileHandleT, FileNameT, FlagT, InodeT, ModeT
-from typing import List, Literal, Mapping, Union
+from trio.lowlevel import TrioToken
+from typing import List, Literal, Mapping, Optional, Union
+
+ENOATTR: int
+RENAME_EXCHANGE: FlagT
+RENAME_NOREPLACE: FlagT
+ROOT_INODE: InodeT
+trio_token: Optional[TrioToken]
+__version__: str
 
 NamespaceT = Literal["system", "user"]
 StatDict = Mapping[str, int]
