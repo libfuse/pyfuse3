@@ -50,9 +50,9 @@ def pytest_configure(config):
     # modules from here
     basedir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
     if not config.getoption('installed'):
-        pyfuse3_path = os.path.join(basedir, 'src', 'pyfuse3')
+        pyfuse3_path = os.path.join(basedir, 'src')
         if (os.path.exists(os.path.join(basedir, 'setup.py')) and
-            os.path.exists(os.path.join(basedir, 'src', 'pyfuse3', 'pyfuse3.pyx'))):
+            os.path.exists(os.path.join(basedir, 'src', 'pyfuse3', '__init__.pyx'))):
             sys.path.insert(0, pyfuse3_path)
 
         # Make sure that called processes use the same path

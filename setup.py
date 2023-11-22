@@ -89,7 +89,7 @@ def main():
 
     link_args = pkg_config('fuse3', cflags=False, ldflags=True, min_ver='3.2.0')
     link_args.append('-lpthread')
-    c_sources = ['src/pyfuse3/pyfuse3.c']
+    c_sources = ['src/pyfuse3/__init__.c']
 
     if os.uname()[0] in ('Linux', 'GNU/kFreeBSD'):
         link_args.append('-lrt')
@@ -127,10 +127,11 @@ def main():
           install_requires=['trio >= 0.15'],
           tests_require=['pytest >= 3.4.0', 'pytest-trio'],
           python_requires='>=3.8',
-          package_dir={'': 'src/pyfuse3'},
+          package_dir={'': 'src'},
+          packages=['pyfuse3'],
           py_modules=['_pyfuse3', 'pyfuse3_asyncio'],
           provides=['pyfuse3'],
-          ext_modules=[Extension('pyfuse3', c_sources,
+          ext_modules=[Extension('pyfuse3.__init__', c_sources,
                                   extra_compile_args=compile_args,
                                   extra_link_args=link_args)],
           cmdclass={'build_cython': build_cython},

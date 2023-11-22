@@ -1,5 +1,5 @@
 '''
-pyfuse3_asyncio.py
+asyncio.py
 
 asyncio compatibility layer for pyfuse3
 
@@ -16,7 +16,7 @@ import sys
 from typing import Any, Callable, Iterable, Optional, Type
 
 import pyfuse3
-from _pyfuse3 import FileHandleT
+from ._pyfuse3 import FileHandleT
 
 Lock = asyncio.Lock
 
@@ -24,7 +24,7 @@ Lock = asyncio.Lock
 def enable() -> None:
     '''Switch pyfuse3 to asyncio mode.'''
 
-    fake_trio = sys.modules['pyfuse3_asyncio']
+    fake_trio = sys.modules['pyfuse3.asyncio']
     fake_trio.lowlevel = fake_trio  # type: ignore
     fake_trio.from_thread = fake_trio  # type: ignore
     pyfuse3.trio = fake_trio  # type: ignore

@@ -3,8 +3,8 @@ build/
 dist/
 doc/html/
 doc/doctrees/
-src/pyfuse3/pyfuse3.c
-src/pyfuse3/pyfuse3*.so
+src/pyfuse3/__init__.c
+src/pyfuse3/__init__*.so
 test/.cache/
 __pycache__
 test/.pytest_cache/

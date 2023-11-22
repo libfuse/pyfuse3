@@ -2,7 +2,7 @@
 internal.pxi
 
 This file defines functions and data structures that are used internally by
-pyfuse3. It is included by pyfuse3.pyx.
+pyfuse3. It is included by __init__.pyx.
 
 Copyright © 2013 Nikolaus Rath <Nikolaus.org>
 
@@ -194,7 +194,7 @@ cdef class _WorkerData:
         self.task_serial += 1
         return 'pyfuse-%02d' % self.task_serial
 
-# Delay initialization so that pyfuse3_asyncio can replace
+# Delay initialization so that pyfuse3.asyncio can replace
 # the trio module.
 cdef _WorkerData worker_data
 
