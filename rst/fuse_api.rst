@@ -16,6 +16,6 @@
 
 .. py:data:: trio_token
 
-   Set to the value returned by `trio.lowlevel.current_trio_token()` while `main()` is
+   Set to the value returned by `trio.lowlevel.current_trio_token` while `main` is
    running. Can be used by other threads to run code in the main loop through
    `trio.from_thread.run`.
