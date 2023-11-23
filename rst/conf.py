@@ -104,6 +104,14 @@ highlight_language = 'python'
 # A list of ignored prefixes for module index sorting.
 #modindex_common_prefix = []
 
+def setup(app):
+    # Mangle NewTypes re-exported from pyfuse3._pyfuse3 so they appear to
+    # come from their canonical location at the top of the package
+    import pyfuse3
+    for name in ('FileHandleT', 'FileNameT', 'FlagT', 'InodeT', 'ModeT',
+                 'XAttrNameT'):
+        getattr(pyfuse3, name).__module__ = 'pyfuse3'
+
 
 # -- Options for HTML output ---------------------------------------------------
 
