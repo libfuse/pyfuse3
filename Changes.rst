@@ -84,7 +84,7 @@ Release 3.2.1 (2021-09-17)
 
 * Add type annotations
 
-* Passing a XATTR_CREATE or XATTR_REPLACE to setxattr() is now working
+* Passing a XATTR_CREATE or XATTR_REPLACE to `setxattr` is now working
   correctly.
 
 Release 3.2.0 (2020-12-30)
@@ -113,8 +113,8 @@ Release 3.1.0 (2020-05-31)
 Release 3.0.0 (2020-05-08)
 ==========================
 
-* Changed `create` handler to return a `FileInfo` struct to allow for
-  modification of certain kernel file attributes, e.g. ``direct_io``.
+* Changed `~Operations.create` handler to return a `FileInfo` struct to allow
+  for modification of certain kernel file attributes, e.g. ``direct_io``.
 
   Note that this change breaks backwards compatibility, code that depends
   on the old behavior needs to be changed.
@@ -123,8 +123,8 @@ Release 3.0.0 (2020-05-08)
 Release 2.0.0
 =============
 
-* Changed `open` handler to return the new `FileInfo` struct to allow for
-  modification of certain kernel file attributes, e.g. ``direct_io``.
+* Changed `~Operations.open` handler to return the new `FileInfo` struct to
+  allow for modification of certain kernel file attributes, e.g. ``direct_io``.
 
   Note that this change breaks backwards compatibility, code that depends on the old
   behavior needs to be changed.
