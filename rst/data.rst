@@ -43,6 +43,37 @@
 
 .. autoexception:: FUSEError
 
+.. autoclass currently doesn't work for NewTypes
+.. https://github.com/sphinx-doc/sphinx/issues/11552
+
+.. class:: FileHandleT
+
+   A subclass of `int`, representing an integer file handle produced by a
+   `~Operations.create`, `~Operations.open`, or `~Operations.opendir` call.
+
+.. class:: FileNameT
+
+   A subclass of `bytes`, representing a file name, with no embedded
+   zero-bytes (``\0``).
+
+.. class:: FlagT
+
+   A subclass of `int`, representing flags modifying the behavior of an
+   operation.
+
+.. class:: InodeT
+
+   A subclass of `int`, representing an inode number.
+
+.. class:: ModeT
+
+   A subclass of `int`, representing a file mode.
+
+.. class:: XAttrNameT
+
+   A subclass of `bytes`, representing an extended attribute name, with no
+   embedded zero-bytes (``\0``).
+
 .. autoclass:: RequestContext
 
    .. attribute:: pid
@@ -163,3 +194,7 @@
       If this attribute is true, it signals the `Operations.setattr`
       method that the `~EntryAttributes.st_size` field contains an
       updated value.
+
+.. autoclass:: ReaddirToken
+
+   An identifier for a particular `~Operations.readdir` invocation.
