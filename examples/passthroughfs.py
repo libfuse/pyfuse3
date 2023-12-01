@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 '''
+ext filesystem compatibility checked by https://github.com/zfsonlinux/fstest.git
 passthroughfs.py - Example file system for pyfuse3
 
 This file system mirrors the contents of a specified directory tree.
@@ -312,6 +313,14 @@ class Operations(pyfuse3.Operations):
             if fields.update_gid:
                 chown(path_or_fh, -1, attr.st_gid, follow_symlinks=False)
 
+            if fields.update_mode is False and \
+               fields.update_uid is False and \
+               fields.update_gid is False:
+                if chown == os.chown:
+                    chown(path_or_fh, -1, -1, follow_symlinks=False)
+                if chown == os.fchown:
+                    chown(path_or_fh, -1, -1)
+
             if fields.update_atime and fields.update_mtime:
                 if fh is None:
                     os.utime(path_or_fh, None, follow_symlinks=False,
@@ -393,6 +402,8 @@ class Operations(pyfuse3.Operations):
         path = os.path.join(self._inode_to_path(inode_p), fsdecode(name))
         try:
             fd = os.open(path, flags | os.O_CREAT | os.O_TRUNC)
+            os.fchmod(fd, mode)
+            os.fchown(fd, ctx.uid, ctx.gid)
         except OSError as exc:
             raise FUSEError(exc.errno)
         attr = self._getattr(fd=fd)
@@ -463,6 +474,9 @@ def main():
     log.debug('Mounting...')
     fuse_options = set(pyfuse3.default_options)
     fuse_options.add('fsname=passthroughfs')
+    fuse_options.add('allow_other')
+    fuse_options.add('suid')
+    fuse_options.add('dev')
     if options.debug_fuse:
         fuse_options.add('debug')
     pyfuse3.init(operations, options.mountpoint, fuse_options)
@@ -479,3 +493,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
