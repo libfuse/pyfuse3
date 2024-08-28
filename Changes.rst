@@ -4,8 +4,12 @@
 
 .. currentmodule:: pyfuse3
 
-Unreleased Changes
-==================
+Release 3.4.0 (2024-08-28)
+==========================
+
+* Cythonized with latest Cython 3.0.11 to support Python 3.13.
+
+* CI: also test python 3.13, run mypy.
 
 * Move ``_pyfuse3`` to ``pyfuse3._pyfuse3`` and add a compatibility wrapper
   for the old name.
