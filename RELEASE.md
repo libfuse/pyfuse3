@@ -16,7 +16,6 @@ The project uses GitHub Actions to automatically build wheels and publish to PyP
 ### 1. Build and Publish (`build-and-publish.yml`)
 
 This workflow runs on:
-- Push to `main` branch → Publishes to TestPyPI
 - GitHub releases → Publishes to PyPI
 - Pull requests → Builds wheels for testing
 
