@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools"]
+requires = ["setuptools", "cython"]
 build-backend = "setuptools.build_meta"
 
 [tool.mypy]
@@ -8,3 +8,29 @@ packages = ["pyfuse3"]
 modules = ["_pyfuse3", "pyfuse3_asyncio"]
 namespace_packages = false
 strict = true
+
+[tool.cibuildwheel]
+build = "cp38-* cp39-* cp310-* cp311-* cp312-* cp313-*"
+skip = "*-win32 *-manylinux_i686 *-musllinux*"
+
+# Use newer manylinux images to avoid CentOS 7 mirror issues
+manylinux-x86_64-image = "manylinux_2_28"
+manylinux-aarch64-image = "manylinux_2_28"
+
+before-build = [
+    "pip install setuptools cython",
+    "python setup.py build_cython"
+]
+
+test-requires = ["pytest", "pytest-trio", "trio"]
+test-command = "python -c \"import pyfuse3; print('pyfuse3 imported successfully')\""
+
+[tool.cibuildwheel.linux]
+before-all = [
+    "dnf install -y fuse3-devel pkgconfig"
+]
+environment = { PKG_CONFIG_PATH = "/usr/lib/x86_64-linux-gnu/pkgconfig:/usr/lib/pkgconfig:/usr/share/pkgconfig" }
+
+[tool.cibuildwheel.macos]
+before-all = ["brew install macfuse pkg-config"]
+environment = { PKG_CONFIG_PATH = "/usr/local/lib/pkgconfig:/opt/homebrew/lib/pkgconfig" }

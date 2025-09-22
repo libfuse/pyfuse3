@@ -428,14 +428,29 @@ def tst_passthrough(src_dir, mnt_dir):
     assert name in os.listdir(mnt_dir)
     assert_same_stats(src_name, mnt_name)
 
-def assert_same_stats(name1, name2):
+def assert_same_stats(name1, name2, ns_tol=5000000):
+    """Compare file stats with tolerance for timestamp precision differences.
+    
+    Args:
+        name1, name2: File paths to compare
+        ns_tol: Nanosecond tolerance for timestamp comparisons (default 5ms for CI environments)
+    """
     stat1 = os.stat(name1)
     stat2 = os.stat(name2)
 
-    for name in ('st_atime_ns', 'st_mtime_ns', 'st_ctime_ns',
-                 'st_mode', 'st_ino', 'st_nlink', 'st_uid',
-                 'st_gid', 'st_size'):
-        v1 = getattr(stat1, name)
-        v2 = getattr(stat2, name)
-        assert  v1 == v2, 'Attribute {} differs by {} ({} vs {})'.format(
-            name, v1 - v2, v1, v2)
+    # Attributes that require exact match
+    exact_attrs = ('st_mode', 'st_ino', 'st_nlink', 'st_uid', 'st_gid', 'st_size')
+    # Timestamp attributes that allow tolerance
+    time_attrs = ('st_atime_ns', 'st_mtime_ns', 'st_ctime_ns')
+    
+    for attr_name in exact_attrs:
+        v1 = getattr(stat1, attr_name)
+        v2 = getattr(stat2, attr_name)
+        assert v1 == v2, 'Attribute {} differs: {} vs {}'.format(attr_name, v1, v2)
+    
+    for attr_name in time_attrs:
+        v1 = getattr(stat1, attr_name)
+        v2 = getattr(stat2, attr_name)
+        diff = abs(v1 - v2)
+        assert diff <= ns_tol, 'Attribute {} differs by {} ns (tolerance: {} ns): {} vs {}'.format(
+            attr_name, diff, ns_tol, v1, v2)

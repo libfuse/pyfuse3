@@ -1,0 +1,49 @@
+name: Create Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  create-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract version from tag
+        id: version
+        run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Extract changelog
+        id: changelog
+        run: |
+          # Extract changelog for this version from Changes.rst
+          if [ -f "Changes.rst" ]; then
+            # Try to extract the section for this version
+            awk '/^pyfuse3 '"${{ steps.version.outputs.version }}"'/{flag=1; next} /^pyfuse3 [0-9]/{flag=0} flag' Changes.rst > changelog.txt
+            if [ -s changelog.txt ]; then
+              echo "changelog<<EOF" >> $GITHUB_OUTPUT
+              cat changelog.txt >> $GITHUB_OUTPUT
+              echo "EOF" >> $GITHUB_OUTPUT
+            else
+              echo "changelog=Release ${{ steps.version.outputs.version }}" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "changelog=Release ${{ steps.version.outputs.version }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: pyfuse3 ${{ steps.version.outputs.version }}
+          body: ${{ steps.changelog.outputs.changelog }}
+          draft: false
+          prerelease: ${{ contains(steps.version.outputs.version, 'rc') || contains(steps.version.outputs.version, 'beta') || contains(steps.version.outputs.version, 'alpha') }}
