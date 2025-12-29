@@ -11,7 +11,7 @@ by hand as follows:
 $ python3 -m venv .venv   # create the venv
 $ . .venv/bin/activate    # activate it
 $ pip install --upgrade pip # upgrade pip
-$ pip install .[dev] # install build dependencies
+$ pip install ".[dev]"  # install build dependencies
 $ pip install --no-build-isolation --editable .  # install pyfuse3 in editable mode
 ```
 
