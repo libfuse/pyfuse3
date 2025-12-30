@@ -1,7 +1,11 @@
 [build-system]
-requires = ["setuptools>=78.1.1", "setuptools_scm>=8.0", "Cython"]
-build-backend = "build_backend"
-backend-path = ["util"]
+requires = [
+    "meson-python>=0.16.0",
+    "meson>=1.1.0",
+    "setuptools_scm>=8.0",
+    "Cython>=3.0",
+]
+build-backend = "mesonpy"
 
 [project]
 name = "pyfuse3"
@@ -40,12 +44,7 @@ dev = [
 
 [tool.setuptools_scm]
 
-[tool.setuptools]
-include-package-data = true
-
-[tool.setuptools.packages.find]
-where = ["src"]
-
-[tool.setuptools.package-data]
-pyfuse3 = ["py.typed"]
+# Meson-python configuration
+[tool.meson-python.args]
+# Add any meson-specific build arguments if needed
 
