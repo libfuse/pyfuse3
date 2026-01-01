@@ -44,20 +44,21 @@ else:
 log = logging.getLogger(__name__)
 pyfuse3.asyncio.enable()
 
+
 class TestFs(pyfuse3.Operations):
     def __init__(self):
         super(TestFs, self).__init__()
         self.hello_name = b"message"
-        self.hello_inode = cast(InodeT, pyfuse3.ROOT_INODE+1)
+        self.hello_inode = cast(InodeT, pyfuse3.ROOT_INODE + 1)
         self.hello_data = b"hello world\n"
 
     async def getattr(self, inode, ctx=None):
         entry = pyfuse3.EntryAttributes()
         if inode == pyfuse3.ROOT_INODE:
-            entry.st_mode = (stat.S_IFDIR | 0o755)
+            entry.st_mode = stat.S_IFDIR | 0o755
             entry.st_size = 0
         elif inode == self.hello_inode:
-            entry.st_mode = (stat.S_IFREG | 0o644)
+            entry.st_mode = stat.S_IFREG | 0o644
             entry.st_size = len(self.hello_data)
         else:
             raise pyfuse3.FUSEError(errno.ENOENT)
@@ -88,8 +89,7 @@ class TestFs(pyfuse3.Operations):
 
         # only one entry
         if start_id == 0:
-            pyfuse3.readdir_reply(
-                token, self.hello_name, await self.getattr(self.hello_inode), 1)
+            pyfuse3.readdir_reply(token, self.hello_name, await self.getattr(self.hello_inode), 1)
         return
 
     async def setxattr(self, inode, name, value, ctx):
@@ -111,11 +111,14 @@ class TestFs(pyfuse3.Operations):
 
     async def read(self, fh, off, size):
         assert fh == self.hello_inode
-        return self.hello_data[off:off+size]
+        return self.hello_data[off : off + size]
+
 
 def init_logging(debug=False):
-    formatter = logging.Formatter('%(asctime)s.%(msecs)03d %(threadName)s: '
-                                  '[%(name)s] %(message)s', datefmt="%Y-%m-%d %H:%M:%S")
+    formatter = logging.Formatter(
+        '%(asctime)s.%(msecs)03d %(threadName)s: [%(name)s] %(message)s',
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
     handler = logging.StreamHandler()
     handler.setFormatter(formatter)
     root_logger = logging.getLogger()
@@ -127,17 +130,19 @@ def init_logging(debug=False):
         root_logger.setLevel(logging.INFO)
     root_logger.addHandler(handler)
 
+
 def parse_args():
     '''Parse command line'''
 
     parser = ArgumentParser()
 
-    parser.add_argument('mountpoint', type=str,
-                        help='Where to mount the file system')
-    parser.add_argument('--debug', action='store_true', default=False,
-                        help='Enable debugging output')
-    parser.add_argument('--debug-fuse', action='store_true', default=False,
-                        help='Enable FUSE debugging output')
+    parser.add_argument('mountpoint', type=str, help='Where to mount the file system')
+    parser.add_argument(
+        '--debug', action='store_true', default=False, help='Enable debugging output'
+    )
+    parser.add_argument(
+        '--debug-fuse', action='store_true', default=False, help='Enable FUSE debugging output'
+    )
     return parser.parse_args()
 
 

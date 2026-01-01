@@ -13,6 +13,7 @@ if __name__ == '__main__':
     import sys
 
     import pytest
+
     sys.exit(pytest.main([__file__] + sys.argv[1:]))
 
 import errno
@@ -33,13 +34,16 @@ def test_listdir():
     list2 = set(pyfuse3.listdir('/usr/bin'))
     assert list1 == list2
 
+
 def test_sup_groups():
     gids = pyfuse3.get_sup_groups(os.getpid())
     gids2 = set(os.getgroups())
     assert gids == gids2
 
+
 def test_syncfs():
     pyfuse3.syncfs('.')
+
 
 def _getxattr_helper(path, name):
     errno = None
@@ -62,11 +66,13 @@ def _getxattr_helper(path, name):
 
     return value
 
+
 def test_entry_res():
     a = pyfuse3.EntryAttributes()
     val = 1000.2735
-    a.st_atime_ns = int(val*1e9)
+    a.st_atime_ns = int(val * 1e9)
     assert a.st_atime_ns / 1e9 == val
+
 
 def test_xattr():
     with tempfile.NamedTemporaryFile() as fh:
@@ -91,14 +97,12 @@ def test_xattr():
         os.setxattr(fh.name, key, value)
         assert _getxattr_helper(fh.name, key) == value
 
-def test_copy():
 
-    for obj in (pyfuse3.SetattrFields(),
-                pyfuse3.RequestContext()):
+def test_copy():
+    for obj in (pyfuse3.SetattrFields(), pyfuse3.RequestContext()):
         pytest.raises(PicklingError, copy, obj)
 
-    for (inst, attr) in ((pyfuse3.EntryAttributes(), 'st_mode'),
-                         (pyfuse3.StatvfsData(), 'f_files')):
+    for inst, attr in ((pyfuse3.EntryAttributes(), 'st_mode'), (pyfuse3.StatvfsData(), 'f_files')):
         setattr(inst, attr, 42)
         inst_copy = copy(inst)
         assert getattr(inst, attr) == getattr(inst_copy, attr)

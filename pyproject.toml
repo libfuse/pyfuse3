@@ -53,6 +53,7 @@ where = ["src"]
 pyfuse3 = ["py.typed"]
 
 [tool.ruff]
+line-length = 100
 extend-exclude = [
     "developer-notes/",
 ]
@@ -89,3 +90,6 @@ exclude = [ "**/__pycache__",
 # Need for pyright to resolve tests importing tests/util.py (when pytest runs the
 # test, it adds the tests/ directory to sys.path)
 extraPaths = ['test']
+
+[tool.ruff.format]
+quote-style = "preserve"

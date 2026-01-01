@@ -45,6 +45,7 @@ else:
 
 log = logging.getLogger()
 
+
 class Operations(pyfuse3.Operations):
     '''An example filesystem that stores all data in memory
 
@@ -100,14 +101,30 @@ class Operations(pyfuse3.Operations):
 
         # Insert root directory
         now_ns = int(time() * 1e9)
-        self.cursor.execute("INSERT INTO inodes (id,mode,uid,gid,mtime_ns,atime_ns,ctime_ns) "
-                            "VALUES (?,?,?,?,?,?,?)",
-                            (pyfuse3.ROOT_INODE, stat.S_IFDIR | stat.S_IRUSR | stat.S_IWUSR
-                              | stat.S_IXUSR | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH
-                              | stat.S_IXOTH, os.getuid(), os.getgid(), now_ns, now_ns, now_ns))
-        self.cursor.execute("INSERT INTO contents (name, parent_inode, inode) VALUES (?,?,?)",
-                            (b'..', pyfuse3.ROOT_INODE, pyfuse3.ROOT_INODE))
-
+        self.cursor.execute(
+            "INSERT INTO inodes (id,mode,uid,gid,mtime_ns,atime_ns,ctime_ns) "
+            "VALUES (?,?,?,?,?,?,?)",
+            (
+                pyfuse3.ROOT_INODE,
+                stat.S_IFDIR
+                | stat.S_IRUSR
+                | stat.S_IWUSR
+                | stat.S_IXUSR
+                | stat.S_IRGRP
+                | stat.S_IXGRP
+                | stat.S_IROTH
+                | stat.S_IXOTH,
+                os.getuid(),
+                os.getgid(),
+                now_ns,
+                now_ns,
+                now_ns,
+            ),
+        )
+        self.cursor.execute(
+            "INSERT INTO contents (name, parent_inode, inode) VALUES (?,?,?)",
+            (b'..', pyfuse3.ROOT_INODE, pyfuse3.ROOT_INODE),
+        )
 
     def get_row(self, *a, **kw):
         self.cursor.execute(*a, **kw)
@@ -128,23 +145,24 @@ class Operations(pyfuse3.Operations):
         if name == b'.':
             inode = parent_inode
         elif name == b'..':
-            inode = self.get_row("SELECT * FROM contents WHERE inode=?",
-                                 (parent_inode,))['parent_inode']
+            inode = self.get_row("SELECT * FROM contents WHERE inode=?", (parent_inode,))[
+                'parent_inode'
+            ]
         else:
             try:
-                inode = self.get_row("SELECT * FROM contents WHERE name=? AND parent_inode=?",
-                                     (name, parent_inode))['inode']
+                inode = self.get_row(
+                    "SELECT * FROM contents WHERE name=? AND parent_inode=?", (name, parent_inode)
+                )['inode']
             except NoSuchRowError:
-                raise(pyfuse3.FUSEError(errno.ENOENT))
+                raise (pyfuse3.FUSEError(errno.ENOENT))
 
         return await self.getattr(InodeT(inode), ctx)
-
 
     async def getattr(self, inode, ctx=None):
         try:
             row = self.get_row("SELECT * FROM inodes WHERE id=?", (inode,))
         except NoSuchRowError:
-            raise(pyfuse3.FUSEError(errno.ENOENT))
+            raise (pyfuse3.FUSEError(errno.ENOENT))
 
         entry = pyfuse3.EntryAttributes()
         entry.st_ino = inode
@@ -152,8 +170,9 @@ class Operations(pyfuse3.Operations):
         entry.entry_timeout = 300
         entry.attr_timeout = 300
         entry.st_mode = row['mode']
-        entry.st_nlink = self.get_row("SELECT COUNT(inode) FROM contents WHERE inode=?",
-                                     (inode,))[0]
+        entry.st_nlink = self.get_row("SELECT COUNT(inode) FROM contents WHERE inode=?", (inode,))[
+            0
+        ]
         entry.st_uid = row['uid']
         entry.st_gid = row['gid']
         entry.st_rdev = row['rdev']
@@ -181,12 +200,14 @@ class Operations(pyfuse3.Operations):
             off = start_id
 
         cursor2 = self.db.cursor()
-        cursor2.execute("SELECT * FROM contents WHERE parent_inode=? "
-                        'AND rowid > ? ORDER BY rowid', (fh, off))
+        cursor2.execute(
+            "SELECT * FROM contents WHERE parent_inode=? AND rowid > ? ORDER BY rowid", (fh, off)
+        )
 
         for row in cursor2:
             pyfuse3.readdir_reply(
-                token, row['name'], await self.getattr(InodeT(row['inode'])), row['rowid'])
+                token, row['name'], await self.getattr(InodeT(row['inode'])), row['rowid']
+            )
 
     async def unlink(self, parent_inode, name, ctx):
         entry = await self.lookup(parent_inode, name)
@@ -205,24 +226,37 @@ class Operations(pyfuse3.Operations):
         self._remove(parent_inode, name, entry)
 
     def _remove(self, parent_inode, name, entry):
-        if self.get_row("SELECT COUNT(inode) FROM contents WHERE parent_inode=?",
-                        (entry.st_ino,))[0] > 0:
+        if (
+            self.get_row("SELECT COUNT(inode) FROM contents WHERE parent_inode=?", (entry.st_ino,))[
+                0
+            ]
+            > 0
+        ):
             raise pyfuse3.FUSEError(errno.ENOTEMPTY)
 
-        self.cursor.execute("DELETE FROM contents WHERE name=? AND parent_inode=?",
-                        (name, parent_inode))
+        self.cursor.execute(
+            "DELETE FROM contents WHERE name=? AND parent_inode=?", (name, parent_inode)
+        )
 
         if entry.st_nlink == 1 and entry.st_ino not in self.inode_open_count:
             self.cursor.execute("DELETE FROM inodes WHERE id=?", (entry.st_ino,))
 
     async def symlink(self, parent_inode, name, target, ctx):
-        mode = (stat.S_IFLNK | stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR |
-                stat.S_IRGRP | stat.S_IWGRP | stat.S_IXGRP |
-                stat.S_IROTH | stat.S_IWOTH | stat.S_IXOTH)
+        mode = (
+            stat.S_IFLNK
+            | stat.S_IRUSR
+            | stat.S_IWUSR
+            | stat.S_IXUSR
+            | stat.S_IRGRP
+            | stat.S_IWGRP
+            | stat.S_IXGRP
+            | stat.S_IROTH
+            | stat.S_IWOTH
+            | stat.S_IXOTH
+        )
         return await self._create(parent_inode, name, mode, ctx, target=target)
 
-    async def rename(self, parent_inode_old, name_old, parent_inode_new, name_new,
-                     flags, ctx):
+    async def rename(self, parent_inode_old, name_old, parent_inode_new, name_new, flags, ctx):
         if flags != 0:
             raise FUSEError(errno.EINVAL)
 
@@ -230,49 +264,61 @@ class Operations(pyfuse3.Operations):
 
         entry_new = None
         try:
-            entry_new = await self.lookup(parent_inode_new, name_new if isinstance(name_new, bytes) else name_new.encode())
+            entry_new = await self.lookup(
+                parent_inode_new, name_new if isinstance(name_new, bytes) else name_new.encode()
+            )
         except pyfuse3.FUSEError as exc:
             if exc.errno != errno.ENOENT:
                 raise
 
         if entry_new is not None:
-            self._replace(parent_inode_old, name_old, parent_inode_new, name_new,
-                          entry_old, entry_new)
+            self._replace(
+                parent_inode_old, name_old, parent_inode_new, name_new, entry_old, entry_new
+            )
         else:
-            self.cursor.execute("UPDATE contents SET name=?, parent_inode=? WHERE name=? "
-                                "AND parent_inode=?", (name_new, parent_inode_new,
-                                                       name_old, parent_inode_old))
+            self.cursor.execute(
+                "UPDATE contents SET name=?, parent_inode=? WHERE name=? AND parent_inode=?",
+                (name_new, parent_inode_new, name_old, parent_inode_old),
+            )
 
-    def _replace(self, parent_inode_old, name_old, parent_inode_new, name_new,
-                 entry_old, entry_new):
-
-        if self.get_row("SELECT COUNT(inode) FROM contents WHERE parent_inode=?",
-                        (entry_new.st_ino,))[0] > 0:
+    def _replace(
+        self, parent_inode_old, name_old, parent_inode_new, name_new, entry_old, entry_new
+    ):
+        if (
+            self.get_row(
+                "SELECT COUNT(inode) FROM contents WHERE parent_inode=?", (entry_new.st_ino,)
+            )[0]
+            > 0
+        ):
             raise pyfuse3.FUSEError(errno.ENOTEMPTY)
 
-        self.cursor.execute("UPDATE contents SET inode=? WHERE name=? AND parent_inode=?",
-                            (entry_old.st_ino, name_new, parent_inode_new))
-        self.db.execute('DELETE FROM contents WHERE name=? AND parent_inode=?',
-                        (name_old, parent_inode_old))
+        self.cursor.execute(
+            "UPDATE contents SET inode=? WHERE name=? AND parent_inode=?",
+            (entry_old.st_ino, name_new, parent_inode_new),
+        )
+        self.db.execute(
+            'DELETE FROM contents WHERE name=? AND parent_inode=?', (name_old, parent_inode_old)
+        )
 
         if entry_new.st_nlink == 1 and entry_new.st_ino not in self.inode_open_count:
             self.cursor.execute("DELETE FROM inodes WHERE id=?", (entry_new.st_ino,))
 
-
     async def link(self, inode, new_parent_inode, new_name, ctx):
         entry_p = await self.getattr(new_parent_inode)
         if entry_p.st_nlink == 0:
-            log.warning('Attempted to create entry %s with unlinked parent %d',
-                        new_name, new_parent_inode)
+            log.warning(
+                'Attempted to create entry %s with unlinked parent %d', new_name, new_parent_inode
+            )
             raise FUSEError(errno.EINVAL)
 
-        self.cursor.execute("INSERT INTO contents (name, inode, parent_inode) VALUES(?,?,?)",
-                            (new_name, inode, new_parent_inode))
+        self.cursor.execute(
+            "INSERT INTO contents (name, inode, parent_inode) VALUES(?,?,?)",
+            (new_name, inode, new_parent_inode),
+        )
 
         return await self.getattr(inode)
 
     async def setattr(self, inode, attr, fields, fh, ctx):
-
         if fields.update_size:
             data = self.get_row('SELECT data FROM inodes WHERE id=?', (inode,))[0]
             if data is None:
@@ -280,35 +326,38 @@ class Operations(pyfuse3.Operations):
             if len(data) < attr.st_size:
                 data = data + b'\0' * (attr.st_size - len(data))
             else:
-                data = data[:attr.st_size]
-            self.cursor.execute('UPDATE inodes SET data=?, size=? WHERE id=?',
-                                (memoryview(data), attr.st_size, inode))
+                data = data[: attr.st_size]
+            self.cursor.execute(
+                'UPDATE inodes SET data=?, size=? WHERE id=?',
+                (memoryview(data), attr.st_size, inode),
+            )
         if fields.update_mode:
-            self.cursor.execute('UPDATE inodes SET mode=? WHERE id=?',
-                                (attr.st_mode, inode))
+            self.cursor.execute('UPDATE inodes SET mode=? WHERE id=?', (attr.st_mode, inode))
 
         if fields.update_uid:
-            self.cursor.execute('UPDATE inodes SET uid=? WHERE id=?',
-                                (attr.st_uid, inode))
+            self.cursor.execute('UPDATE inodes SET uid=? WHERE id=?', (attr.st_uid, inode))
 
         if fields.update_gid:
-            self.cursor.execute('UPDATE inodes SET gid=? WHERE id=?',
-                                (attr.st_gid, inode))
+            self.cursor.execute('UPDATE inodes SET gid=? WHERE id=?', (attr.st_gid, inode))
 
         if fields.update_atime:
-            self.cursor.execute('UPDATE inodes SET atime_ns=? WHERE id=?',
-                                (attr.st_atime_ns, inode))
+            self.cursor.execute(
+                'UPDATE inodes SET atime_ns=? WHERE id=?', (attr.st_atime_ns, inode)
+            )
 
         if fields.update_mtime:
-            self.cursor.execute('UPDATE inodes SET mtime_ns=? WHERE id=?',
-                                (attr.st_mtime_ns, inode))
+            self.cursor.execute(
+                'UPDATE inodes SET mtime_ns=? WHERE id=?', (attr.st_mtime_ns, inode)
+            )
 
         if fields.update_ctime:
-            self.cursor.execute('UPDATE inodes SET ctime_ns=? WHERE id=?',
-                                (attr.st_ctime_ns, inode))
+            self.cursor.execute(
+                'UPDATE inodes SET ctime_ns=? WHERE id=?', (attr.st_ctime_ns, inode)
+            )
         else:
-            self.cursor.execute('UPDATE inodes SET ctime_ns=? WHERE id=?',
-                                (int(time()*1e9), inode))
+            self.cursor.execute(
+                'UPDATE inodes SET ctime_ns=? WHERE id=?', (int(time() * 1e9), inode)
+            )
 
         return await self.getattr(inode)
 
@@ -331,7 +380,7 @@ class Operations(pyfuse3.Operations):
 
         inodes = self.get_row('SELECT COUNT(id) FROM inodes')[0]
         stat_.f_files = inodes
-        stat_.f_ffree = max(inodes , 100)
+        stat_.f_ffree = max(inodes, 100)
         stat_.f_favail = stat_.f_ffree
 
         return stat_
@@ -344,11 +393,11 @@ class Operations(pyfuse3.Operations):
 
     async def access(self, inode, mode, ctx):
         # Yeah, could be a function and has unused arguments
-        #pylint: disable=R0201,W0613
+        # pylint: disable=R0201,W0613
         return True
 
     async def create(self, parent_inode, name, mode, flags, ctx):
-        #pylint: disable=W0612
+        # pylint: disable=W0612
         entry = await self._create(parent_inode, name, mode, ctx)
         self.inode_open_count[entry.st_ino] += 1
         # For simplicity, we use the inode as file handle
@@ -356,34 +405,38 @@ class Operations(pyfuse3.Operations):
 
     async def _create(self, parent_inode, name, mode, ctx, rdev=0, target=None):
         if (await self.getattr(parent_inode)).st_nlink == 0:
-            log.warning('Attempted to create entry %s with unlinked parent %d',
-                        name, parent_inode)
+            log.warning('Attempted to create entry %s with unlinked parent %d', name, parent_inode)
             raise FUSEError(errno.EINVAL)
 
         now_ns = int(time() * 1e9)
-        self.cursor.execute('INSERT INTO inodes (uid, gid, mode, mtime_ns, atime_ns, '
-                            'ctime_ns, target, rdev) VALUES(?, ?, ?, ?, ?, ?, ?, ?)',
-                            (ctx.uid, ctx.gid, mode, now_ns, now_ns, now_ns, target, rdev))
+        self.cursor.execute(
+            'INSERT INTO inodes (uid, gid, mode, mtime_ns, atime_ns, '
+            'ctime_ns, target, rdev) VALUES(?, ?, ?, ?, ?, ?, ?, ?)',
+            (ctx.uid, ctx.gid, mode, now_ns, now_ns, now_ns, target, rdev),
+        )
 
         inode = cast(InodeT, self.cursor.lastrowid)
-        self.db.execute("INSERT INTO contents(name, inode, parent_inode) VALUES(?,?,?)",
-                        (name, inode, parent_inode))
+        self.db.execute(
+            "INSERT INTO contents(name, inode, parent_inode) VALUES(?,?,?)",
+            (name, inode, parent_inode),
+        )
         return await self.getattr(inode)
 
     async def read(self, fh, off, size):
         data = self.get_row('SELECT data FROM inodes WHERE id=?', (fh,))[0]
         if data is None:
             data = b''
-        return data[off:off+size]
+        return data[off : off + size]
 
     async def write(self, fh, off, buf):
         data = self.get_row('SELECT data FROM inodes WHERE id=?', (fh,))[0]
         if data is None:
             data = b''
-        data = data[:off] + buf + data[off+len(buf):]
+        data = data[:off] + buf + data[off + len(buf) :]
 
-        self.cursor.execute('UPDATE inodes SET data=?, size=? WHERE id=?',
-                            (memoryview(data), len(data), fh))
+        self.cursor.execute(
+            'UPDATE inodes SET data=?, size=? WHERE id=?', (memoryview(data), len(data), fh)
+        )
         return len(buf)
 
     async def release(self, fh):
@@ -395,6 +448,7 @@ class Operations(pyfuse3.Operations):
             if (await self.getattr(inode)).st_nlink == 0:
                 self.cursor.execute("DELETE FROM inodes WHERE id=?", (inode,))
 
+
 class NoUniqueValueError(Exception):
     def __str__(self):
         return 'Query generated more than 1 result row'
@@ -404,9 +458,12 @@ class NoSuchRowError(Exception):
     def __str__(self):
         return 'Query produced 0 result rows'
 
+
 def init_logging(debug=False):
-    formatter = logging.Formatter('%(asctime)s.%(msecs)03d %(threadName)s: '
-                                  '[%(name)s] %(message)s', datefmt="%Y-%m-%d %H:%M:%S")
+    formatter = logging.Formatter(
+        '%(asctime)s.%(msecs)03d %(threadName)s: [%(name)s] %(message)s',
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
     handler = logging.StreamHandler()
     handler.setFormatter(formatter)
     root_logger = logging.getLogger()
@@ -418,22 +475,24 @@ def init_logging(debug=False):
         root_logger.setLevel(logging.INFO)
     root_logger.addHandler(handler)
 
+
 def parse_args():
     '''Parse command line'''
 
     parser = ArgumentParser()
 
-    parser.add_argument('mountpoint', type=str,
-                        help='Where to mount the file system')
-    parser.add_argument('--debug', action='store_true', default=False,
-                        help='Enable debugging output')
-    parser.add_argument('--debug-fuse', action='store_true', default=False,
-                        help='Enable FUSE debugging output')
+    parser.add_argument('mountpoint', type=str, help='Where to mount the file system')
+    parser.add_argument(
+        '--debug', action='store_true', default=False, help='Enable debugging output'
+    )
+    parser.add_argument(
+        '--debug-fuse', action='store_true', default=False, help='Enable FUSE debugging output'
+    )
 
     return parser.parse_args()
 
-if __name__ == '__main__':
 
+if __name__ == '__main__':
     options = parse_args()
     init_logging(options.debug)
     operations = Operations()

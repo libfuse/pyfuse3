@@ -13,6 +13,7 @@ if __name__ == '__main__':
     import sys
 
     import pytest
+
     sys.exit(pytest.main([__file__] + sys.argv[1:]))
 
 import pyfuse3
@@ -36,10 +37,10 @@ def test_rounding():
     entry.st_ctime_ns = total
     entry.st_mtime_ns = total
     # Birthtime skipped -- only valid under BSD and OSX
-    #entry.st_birthtime_ns = total
+    # entry.st_birthtime_ns = total
 
     assert entry.st_atime_ns == total
     assert entry.st_ctime_ns == total
     assert entry.st_mtime_ns == total
     # Birthtime skipped -- only valid under BSD and OSX
-    #assert entry.st_birthtime_ns == total
+    # assert entry.st_birthtime_ns == total

@@ -55,6 +55,7 @@ def fuse_test_marker():
 
     return pytest.mark.uses_fuse()
 
+
 def exitcode(process):
     if isinstance(process, subprocess.Popen):
         return process.poll()
@@ -63,6 +64,7 @@ def exitcode(process):
             return None
         else:
             return process.exitcode
+
 
 def wait_for(callable, timeout=10, interval=0.1):
     '''Wait until *callable* returns something True and return it
@@ -80,6 +82,7 @@ def wait_for(callable, timeout=10, interval=0.1):
         waited += interval
         time.sleep(interval)
 
+
 def wait_for_mount(mount_process, mnt_dir):
     elapsed = 0.0
     while elapsed < 30:
@@ -91,13 +94,16 @@ def wait_for_mount(mount_process, mnt_dir):
         elapsed += 0.1
     pytest.fail("mountpoint failed to come up")
 
+
 def cleanup(mount_process, mnt_dir):
     if platform.system() == 'Darwin':
-        subprocess.call(['umount', '-l', mnt_dir], stdout=subprocess.DEVNULL,
-                        stderr=subprocess.STDOUT)
+        subprocess.call(
+            ['umount', '-l', mnt_dir], stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT
+        )
     else:
-        subprocess.call(['fusermount', '-z', '-u', mnt_dir], stdout=subprocess.DEVNULL,
-                        stderr=subprocess.STDOUT)
+        subprocess.call(
+            ['fusermount', '-z', '-u', mnt_dir], stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT
+        )
 
     mount_process.terminate()
     if isinstance(mount_process, subprocess.Popen):

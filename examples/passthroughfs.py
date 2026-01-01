@@ -59,14 +59,14 @@ faulthandler.enable()
 
 log = logging.getLogger(__name__)
 
-class Operations(pyfuse3.Operations):
 
+class Operations(pyfuse3.Operations):
     enable_writeback_cache = True
 
     def __init__(self, source):
         super().__init__()
-        self._inode_path_map = { pyfuse3.ROOT_INODE: source }
-        self._lookup_cnt = defaultdict(lambda : 0)
+        self._inode_path_map = {pyfuse3.ROOT_INODE: source}
+        self._lookup_cnt = defaultdict(lambda: 0)
         self._fd_inode_map = dict()
         self._inode_fd_map = dict()
         self._fd_open_count = dict()
@@ -95,10 +95,10 @@ class Operations(pyfuse3.Operations):
         if isinstance(val, set):
             val.add(path)
         elif val != path:
-            self._inode_path_map[inode] = { path, val }
+            self._inode_path_map[inode] = {path, val}
 
     async def forget(self, inode_list):
-        for (inode, nlookup) in inode_list:
+        for inode, nlookup in inode_list:
             if self._lookup_cnt[inode] > nlookup:
                 self._lookup_cnt[inode] -= nlookup
                 continue
@@ -107,7 +107,7 @@ class Operations(pyfuse3.Operations):
             del self._lookup_cnt[inode]
             try:
                 del self._inode_path_map[inode]
-            except KeyError: # may have been deleted
+            except KeyError:  # may have been deleted
                 pass
 
     async def lookup(self, parent_inode, name, ctx=None):
@@ -127,7 +127,7 @@ class Operations(pyfuse3.Operations):
 
     def _getattr(self, path=None, fd=None):
         assert fd is None or path is None
-        assert not(fd is None and path is None)
+        assert not (fd is None and path is None)
         try:
             if fd is None:
                 assert path is not None
@@ -139,15 +139,24 @@ class Operations(pyfuse3.Operations):
             raise FUSEError(exc.errno)
 
         entry = pyfuse3.EntryAttributes()
-        for attr in ('st_ino', 'st_mode', 'st_nlink', 'st_uid', 'st_gid',
-                     'st_rdev', 'st_size', 'st_atime_ns', 'st_mtime_ns',
-                     'st_ctime_ns'):
+        for attr in (
+            'st_ino',
+            'st_mode',
+            'st_nlink',
+            'st_uid',
+            'st_gid',
+            'st_rdev',
+            'st_size',
+            'st_atime_ns',
+            'st_mtime_ns',
+            'st_ctime_ns',
+        ):
             setattr(entry, attr, getattr(stat, attr))
         entry.generation = 0
         entry.entry_timeout = 0
         entry.attr_timeout = 0
         entry.st_blksize = 512
-        entry.st_blocks = ((entry.st_size+entry.st_blksize-1) // entry.st_blksize)
+        entry.st_blocks = (entry.st_size + entry.st_blksize - 1) // entry.st_blksize
 
         return entry
 
@@ -182,11 +191,10 @@ class Operations(pyfuse3.Operations):
         # count entries, because then we would skip over entries
         # (or return them more than once) if the number of directory
         # entries changes between two calls to readdir().
-        for (ino, name, attr) in sorted(entries):
+        for ino, name, attr in sorted(entries):
             if ino <= start_id:
                 continue
-            if not pyfuse3.readdir_reply(
-                token, fsencode(name), attr, ino):
+            if not pyfuse3.readdir_reply(token, fsencode(name), attr, ino):
                 break
             self._add_path(attr.st_ino, os.path.join(path, name))
 
@@ -241,8 +249,7 @@ class Operations(pyfuse3.Operations):
         self._add_path(stat.st_ino, path)
         return await self.getattr(InodeT(stat.st_ino))
 
-    async def rename(self, parent_inode_old, name_old, parent_inode_new, name_new,
-                     flags, ctx):
+    async def rename(self, parent_inode_old, name_old, parent_inode_new, name_new, flags, ctx):
         if flags != 0:
             raise FUSEError(errno.EINVAL)
 
@@ -302,32 +309,34 @@ class Operations(pyfuse3.Operations):
 
             if fields.update_uid and fields.update_gid:
                 if fh is None:
-                    os.chown(self._inode_to_path(inode), attr.st_uid, attr.st_gid,
-                             follow_symlinks=False)
+                    os.chown(
+                        self._inode_to_path(inode), attr.st_uid, attr.st_gid, follow_symlinks=False
+                    )
                 else:
                     os.fchown(fh, attr.st_uid, attr.st_gid)
 
             elif fields.update_uid:
                 if fh is None:
-                    os.chown(self._inode_to_path(inode), attr.st_uid, -1,
-                             follow_symlinks=False)
+                    os.chown(self._inode_to_path(inode), attr.st_uid, -1, follow_symlinks=False)
                 else:
                     os.fchown(fh, attr.st_uid, -1)
 
             elif fields.update_gid:
                 if fh is None:
-                    os.chown(self._inode_to_path(inode), -1, attr.st_gid,
-                             follow_symlinks=False)
+                    os.chown(self._inode_to_path(inode), -1, attr.st_gid, follow_symlinks=False)
                 else:
                     os.fchown(fh, -1, attr.st_gid)
 
             if fields.update_atime and fields.update_mtime:
                 if fh is None:
-                    os.utime(self._inode_to_path(inode), None, follow_symlinks=False,
-                             ns=(attr.st_atime_ns, attr.st_mtime_ns))
+                    os.utime(
+                        self._inode_to_path(inode),
+                        None,
+                        follow_symlinks=False,
+                        ns=(attr.st_atime_ns, attr.st_mtime_ns),
+                    )
                 else:
-                    os.utime(fh, None,
-                             ns=(attr.st_atime_ns, attr.st_mtime_ns))
+                    os.utime(fh, None, ns=(attr.st_atime_ns, attr.st_mtime_ns))
             elif fields.update_atime or fields.update_mtime:
                 # We can only set both values, so we first need to retrieve the
                 # one that we shouldn't be changing.
@@ -341,11 +350,14 @@ class Operations(pyfuse3.Operations):
                 else:
                     attr.st_mtime_ns = oldstat.st_mtime_ns
                 if fh is None:
-                    os.utime(path, None, follow_symlinks=False, # pyright: ignore[reportPossiblyUnboundVariable]
-                             ns=(attr.st_atime_ns, attr.st_mtime_ns))
+                    os.utime(
+                        path,  # pyright: ignore[reportPossiblyUnboundVariable]
+                        None,
+                        follow_symlinks=False,
+                        ns=(attr.st_atime_ns, attr.st_mtime_ns),
+                    )
                 else:
-                    os.utime(fh, None,
-                             ns=(attr.st_atime_ns, attr.st_mtime_ns))
+                    os.utime(fh, None, ns=(attr.st_atime_ns, attr.st_mtime_ns))
 
         except OSError as exc:
             assert exc.errno is not None
@@ -385,10 +397,18 @@ class Operations(pyfuse3.Operations):
         except OSError as exc:
             assert exc.errno is not None
             raise FUSEError(exc.errno)
-        for attr in ('f_bsize', 'f_frsize', 'f_blocks', 'f_bfree', 'f_bavail',
-                     'f_files', 'f_ffree', 'f_favail'):
+        for attr in (
+            'f_bsize',
+            'f_frsize',
+            'f_blocks',
+            'f_bfree',
+            'f_bavail',
+            'f_files',
+            'f_ffree',
+            'f_favail',
+        ):
             setattr(stat_, attr, getattr(statfs, attr))
-        stat_.f_namemax = statfs.f_namemax - (len(root)+1)
+        stat_.f_namemax = statfs.f_namemax - (len(root) + 1)
         return stat_
 
     async def open(self, inode, flags, ctx):
@@ -444,9 +464,12 @@ class Operations(pyfuse3.Operations):
             assert exc.errno is not None
             raise FUSEError(exc.errno)
 
+
 def init_logging(debug=False):
-    formatter = logging.Formatter('%(asctime)s.%(msecs)03d %(threadName)s: '
-                                  '[%(name)s] %(message)s', datefmt="%Y-%m-%d %H:%M:%S")
+    formatter = logging.Formatter(
+        '%(asctime)s.%(msecs)03d %(threadName)s: [%(name)s] %(message)s',
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
     handler = logging.StreamHandler()
     handler.setFormatter(formatter)
     root_logger = logging.getLogger()
@@ -464,16 +487,17 @@ def parse_args(args):
 
     parser = ArgumentParser()
 
-    parser.add_argument('source', type=str,
-                        help='Directory tree to mirror')
-    parser.add_argument('mountpoint', type=str,
-                        help='Where to mount the file system')
-    parser.add_argument('--debug', action='store_true', default=False,
-                        help='Enable debugging output')
-    parser.add_argument('--debug-fuse', action='store_true', default=False,
-                        help='Enable FUSE debugging output')
+    parser.add_argument('source', type=str, help='Directory tree to mirror')
+    parser.add_argument('mountpoint', type=str, help='Where to mount the file system')
+    parser.add_argument(
+        '--debug', action='store_true', default=False, help='Enable debugging output'
+    )
+    parser.add_argument(
+        '--debug-fuse', action='store_true', default=False, help='Enable FUSE debugging output'
+    )
 
     return parser.parse_args(args)
+
 
 def main():
     options = parse_args(sys.argv[1:])
@@ -496,6 +520,7 @@ def main():
 
     log.debug('Unmounting..')
     pyfuse3.close()
+
 
 if __name__ == '__main__':
     main()

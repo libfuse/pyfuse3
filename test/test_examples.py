@@ -13,6 +13,7 @@ if __name__ == '__main__':
     import sys
 
     import pytest
+
     sys.exit(pytest.main([__file__] + sys.argv[1:]))
 
 import errno
@@ -37,21 +38,20 @@ pytestmark = fuse_test_marker()
 with open(TEST_FILE, 'rb') as fh:
     TEST_DATA = fh.read()
 
+
 def name_generator(__ctr=[0]):
     __ctr[0] += 1
     return 'testfile_%d' % __ctr[0]
 
+
 @pytest.mark.parametrize('filename', ('hello.py', 'hello_asyncio.py'))
 def test_hello(tmpdir, filename):
     mnt_dir = str(tmpdir)
-    cmdline = [sys.executable,
-               os.path.join(basename, 'examples', filename),
-               mnt_dir ]
-    mount_process = subprocess.Popen(cmdline, stdin=subprocess.DEVNULL,
-                                     universal_newlines=True)
+    cmdline = [sys.executable, os.path.join(basename, 'examples', filename), mnt_dir]
+    mount_process = subprocess.Popen(cmdline, stdin=subprocess.DEVNULL, universal_newlines=True)
     try:
         wait_for_mount(mount_process, mnt_dir)
-        assert os.listdir(mnt_dir) == [ 'message' ]
+        assert os.listdir(mnt_dir) == ['message']
         filename = os.path.join(mnt_dir, 'message')
         with open(filename, 'r') as fh:
             assert fh.read() == 'hello world\n'
@@ -67,13 +67,11 @@ def test_hello(tmpdir, filename):
     else:
         umount(mount_process, mnt_dir)
 
+
 def test_tmpfs(tmpdir):
     mnt_dir = str(tmpdir)
-    cmdline = [sys.executable,
-               os.path.join(basename, 'examples', 'tmpfs.py'),
-               mnt_dir ]
-    mount_process = subprocess.Popen(cmdline, stdin=subprocess.DEVNULL,
-                                     universal_newlines=True)
+    cmdline = [sys.executable, os.path.join(basename, 'examples', 'tmpfs.py'), mnt_dir]
+    mount_process = subprocess.Popen(cmdline, stdin=subprocess.DEVNULL, universal_newlines=True)
     try:
         wait_for_mount(mount_process, mnt_dir)
         tst_write(mnt_dir)
@@ -97,14 +95,17 @@ def test_tmpfs(tmpdir):
     else:
         umount(mount_process, mnt_dir)
 
+
 def test_passthroughfs(tmpdir):
     mnt_dir = str(tmpdir.mkdir('mnt'))
     src_dir = str(tmpdir.mkdir('src'))
-    cmdline = [sys.executable,
-               os.path.join(basename, 'examples', 'passthroughfs.py'),
-               src_dir, mnt_dir ]
-    mount_process = subprocess.Popen(cmdline, stdin=subprocess.DEVNULL,
-                                     universal_newlines=True)
+    cmdline = [
+        sys.executable,
+        os.path.join(basename, 'examples', 'passthroughfs.py'),
+        src_dir,
+        mnt_dir,
+    ]
+    mount_process = subprocess.Popen(cmdline, stdin=subprocess.DEVNULL, universal_newlines=True)
     try:
         wait_for_mount(mount_process, mnt_dir)
         tst_write(mnt_dir)
@@ -131,6 +132,7 @@ def test_passthroughfs(tmpdir):
     else:
         umount(mount_process, mnt_dir)
 
+
 def checked_unlink(filename, path, isdir=False):
     fullname = os.path.join(path, filename)
     if isdir:
@@ -142,16 +144,18 @@ def checked_unlink(filename, path, isdir=False):
     assert exc_info.value.errno == errno.ENOENT
     assert filename not in os.listdir(path)
 
+
 def tst_mkdir(mnt_dir):
     dirname = name_generator()
     fullname = mnt_dir + "/" + dirname
     os.mkdir(fullname)
     fstat = os.stat(fullname)
     assert stat.S_ISDIR(fstat.st_mode)
-    assert os.listdir(fullname) ==  []
-    assert fstat.st_nlink in (1,2)
+    assert os.listdir(fullname) == []
+    assert fstat.st_nlink in (1, 2)
     assert dirname in os.listdir(mnt_dir)
     checked_unlink(dirname, mnt_dir, isdir=True)
+
 
 def tst_symlink(mnt_dir):
     linkname = name_generator()
@@ -164,6 +168,7 @@ def tst_symlink(mnt_dir):
     assert linkname in os.listdir(mnt_dir)
     checked_unlink(linkname, mnt_dir)
 
+
 def tst_mknod(mnt_dir):
     filename = os.path.join(mnt_dir, name_generator())
     shutil.copyfile(TEST_FILE, filename)
@@ -173,6 +178,7 @@ def tst_mknod(mnt_dir):
     assert os.path.basename(filename) in os.listdir(mnt_dir)
     assert filecmp.cmp(TEST_FILE, filename, False)
     checked_unlink(filename, mnt_dir)
+
 
 def tst_chown(mnt_dir):
     filename = os.path.join(mnt_dir, name_generator())
@@ -195,6 +201,7 @@ def tst_chown(mnt_dir):
 
     checked_unlink(filename, mnt_dir, isdir=True)
 
+
 def tst_chmod(mnt_dir):
     filename = os.path.join(mnt_dir, name_generator())
     os.mkdir(filename)
@@ -209,11 +216,13 @@ def tst_chmod(mnt_dir):
 
     checked_unlink(filename, mnt_dir, isdir=True)
 
+
 def tst_write(mnt_dir):
     name = os.path.join(mnt_dir, name_generator())
     shutil.copyfile(TEST_FILE, name)
     assert filecmp.cmp(name, TEST_FILE, False)
     checked_unlink(name, mnt_dir)
+
 
 def tst_unlink(mnt_dir):
     name = os.path.join(mnt_dir, name_generator())
@@ -225,10 +234,12 @@ def tst_unlink(mnt_dir):
         checked_unlink(name, mnt_dir)
         fh.write(data2)
         fh.seek(0)
-        assert fh.read() == data1+data2
+        assert fh.read() == data1 + data2
+
 
 def tst_statvfs(mnt_dir):
     os.statvfs(mnt_dir)
+
 
 def tst_link(mnt_dir):
     name1 = os.path.join(mnt_dir, name_generator())
@@ -250,6 +261,7 @@ def tst_link(mnt_dir):
     assert fstat1.st_nlink == 1
     os.unlink(name1)
 
+
 def tst_rename(mnt_dir):
     name1 = os.path.join(mnt_dir, name_generator())
     name2 = os.path.join(mnt_dir, name_generator())
@@ -269,6 +281,7 @@ def tst_rename(mnt_dir):
     assert os.path.basename(name2) in os.listdir(mnt_dir)
     os.unlink(name2)
 
+
 def tst_readdir(mnt_dir):
     dir_ = os.path.join(mnt_dir, name_generator())
     file_ = dir_ + "/" + name_generator()
@@ -282,7 +295,7 @@ def tst_readdir(mnt_dir):
 
     listdir_is = os.listdir(dir_)
     listdir_is.sort()
-    listdir_should = [ os.path.basename(file_), os.path.basename(subdir) ]
+    listdir_should = [os.path.basename(file_), os.path.basename(subdir)]
     listdir_should.sort()
     assert listdir_is == listdir_should
 
@@ -290,6 +303,7 @@ def tst_readdir(mnt_dir):
     os.unlink(subfile)
     os.rmdir(subdir)
     os.rmdir(dir_)
+
 
 def tst_truncate_path(mnt_dir):
     assert len(TEST_DATA) > 1024
@@ -313,9 +327,10 @@ def tst_truncate_path(mnt_dir):
     os.truncate(filename, size - 1024)
     assert os.stat(filename).st_size == size - 1024
     with open(filename, 'rb') as fh:
-        assert fh.read(size) == TEST_DATA[:size-1024]
+        assert fh.read(size) == TEST_DATA[: size - 1024]
 
     os.unlink(filename)
+
 
 def tst_truncate_fd(mnt_dir):
     assert len(TEST_DATA) > 1024
@@ -337,7 +352,8 @@ def tst_truncate_fd(mnt_dir):
         os.ftruncate(fd, size - 1024)
         assert os.fstat(fd).st_size == size - 1024
         fh.seek(0)
-        assert fh.read(size) == TEST_DATA[:size-1024]
+        assert fh.read(size) == TEST_DATA[: size - 1024]
+
 
 def tst_utimens(mnt_dir, ns_tol=0):
     filename = os.path.join(mnt_dir, name_generator())
@@ -346,8 +362,8 @@ def tst_utimens(mnt_dir, ns_tol=0):
 
     atime = fstat.st_atime + 42.28
     mtime = fstat.st_mtime - 42.23
-    atime_ns = fstat.st_atime_ns + int(42.28*1e9)
-    mtime_ns = fstat.st_mtime_ns - int(42.23*1e9)
+    atime_ns = fstat.st_atime_ns + int(42.28 * 1e9)
+    mtime_ns = fstat.st_mtime_ns - int(42.23 * 1e9)
     os.utime(filename, None, ns=(atime_ns, mtime_ns))
 
     fstat = os.lstat(filename)
@@ -391,6 +407,7 @@ def tst_rounding(mnt_dir, ns_tol=0):
 
     checked_unlink(filename, mnt_dir, isdir=True)
 
+
 def tst_passthrough(src_dir, mnt_dir):
     # Test propagation from source to mirror
     name = name_generator()
@@ -431,20 +448,30 @@ def tst_passthrough(src_dir, mnt_dir):
     assert name in os.listdir(mnt_dir)
     assert_same_stats(src_name, mnt_name)
 
+
 def assert_same_stats(name1, name2):
     stat1 = os.stat(name1)
     stat2 = os.stat(name2)
 
-    for name in ('st_atime_ns', 'st_mtime_ns', 'st_ctime_ns',
-                 'st_mode', 'st_ino', 'st_nlink', 'st_uid',
-                 'st_gid', 'st_size'):
+    for name in (
+        'st_atime_ns',
+        'st_mtime_ns',
+        'st_ctime_ns',
+        'st_mode',
+        'st_ino',
+        'st_nlink',
+        'st_uid',
+        'st_gid',
+        'st_size',
+    ):
         v1 = getattr(stat1, name)
         v2 = getattr(stat2, name)
 
         # Known bug, cf. https://github.com/libfuse/pyfuse3/issues/57
         if name.endswith('_ns'):
-            tolerance = 999_999 # <1 second
+            tolerance = 999_999  # <1 second
         else:
             tolerance = 0
-        assert  abs(v1 - v2) <= tolerance, 'Attribute {} differs by {} ({} vs {})'.format(
-            name, v1 - v2, v1, v2)
+        assert abs(v1 - v2) <= tolerance, 'Attribute {} differs by {} ({} vs {})'.format(
+            name, v1 - v2, v1, v2
+        )

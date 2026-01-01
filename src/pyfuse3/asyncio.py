@@ -80,10 +80,7 @@ class _Nursery:
         return self
 
     def start_soon(
-        self,
-        func: Callable[..., Any],
-        *args: Iterable[Any],
-        name: Optional[str] = None
+        self, func: Callable[..., Any], *args: Iterable[Any], name: Optional[str] = None
     ) -> None:
         if sys.version_info < (3, 7):
             task = asyncio.ensure_future(func(*args))
@@ -96,7 +93,7 @@ class _Nursery:
         self,
         exc_type: Optional[Type[BaseException]],
         exc_value: Optional[BaseException],
-        traceback: Optional[Any]
+        traceback: Optional[Any],
     ) -> None:
         # Wait for tasks to finish
         while len(self.tasks):
