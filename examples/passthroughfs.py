@@ -130,6 +130,7 @@ class Operations(pyfuse3.Operations):
         assert not(fd is None and path is None)
         try:
             if fd is None:
+                assert path is not None
                 stat = os.lstat(path)
             else:
                 stat = os.fstat(fd)
@@ -160,7 +161,8 @@ class Operations(pyfuse3.Operations):
         return fsencode(target)
 
     async def opendir(self, inode, ctx):
-        return inode
+        # For simplicity, we use the inode as file handle
+        return FileHandleT(inode)
 
     async def readdir(self, fh, start_id, token):
         path = self._inode_to_path(fh)
@@ -231,13 +233,13 @@ class Operations(pyfuse3.Operations):
         path = os.path.join(parent, name)
         try:
             os.symlink(target, path)
-            os.chown(path, ctx.uid, ctx.gid, follow_symlinks=False)
+            os.lchown(path, ctx.uid, ctx.gid)
         except OSError as exc:
             assert exc.errno is not None
             raise FUSEError(exc.errno)
         stat = os.lstat(path)
         self._add_path(stat.st_ino, path)
-        return await self.getattr(stat.st_ino)
+        return await self.getattr(InodeT(stat.st_ino))
 
     async def rename(self, parent_inode_old, name_old, parent_inode_new, name_new,
                      flags, ctx):

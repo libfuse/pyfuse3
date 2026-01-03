@@ -40,7 +40,10 @@ jobs:
 
       - name: Type check (mypy)
         run: uv run mypy .
-        
+
+      - name: Type check (pyright)
+        run: uv run pyright
+
       - name: Run tests
         run: uv run pytest -v -rs test/
 

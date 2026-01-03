@@ -32,6 +32,7 @@ Homepage = "https://github.com/libfuse/pyfuse3"
 
 [dependency-groups]
 dev = [
+    "pyright>=1.1.407",
     "mypy>=1.19.1",
     "pytest >= 3.4.0",
     "pytest-trio",
@@ -77,3 +78,14 @@ disallow_untyped_defs = false
 check_untyped_defs = true
 warn_redundant_casts = true
 warn_unused_ignores = true
+
+[tool.pyright]
+typeCheckingMode = "standard"
+exclude = [ "**/__pycache__",
+            "**/.*",
+           "util/",
+           "rst/conf.py" ]
+
+# Need for pyright to resolve tests importing tests/util.py (when pytest runs the
+# test, it adds the tests/ directory to sys.path)
+extraPaths = ['test']

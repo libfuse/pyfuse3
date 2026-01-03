@@ -334,9 +334,9 @@ class Operations:
     async def rename(
         self,
         parent_inode_old: InodeT,
-        name_old: str,
+        name_old: FileNameT,
         parent_inode_new: InodeT,
-        name_new: str,
+        name_new: FileNameT,
         flags: FlagT,
         ctx: "RequestContext"
     ) -> None:

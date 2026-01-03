@@ -42,6 +42,7 @@ def test_syncfs():
     pyfuse3.syncfs('.')
 
 def _getxattr_helper(path, name):
+    errno = None
     try:
         value = pyfuse3.getxattr(path, name)
     except OSError as exc:

@@ -28,7 +28,7 @@ import time
 import trio
 
 import pyfuse3
-from pyfuse3 import FUSEError
+from pyfuse3 import FileHandleT, FileInfo, FUSEError
 from util import cleanup, fuse_test_marker, umount, wait_for_mount
 
 pytestmark = fuse_test_marker()
@@ -212,7 +212,8 @@ class Fs(pyfuse3.Operations):
     async def opendir(self, inode, ctx):
         if inode != pyfuse3.ROOT_INODE:
             raise pyfuse3.FUSEError(errno.ENOENT)
-        return inode
+        # For simplicity, we use the inode as file handle
+        return FileHandleT(inode)
 
     async def readdir(self, fh, start_id, token):
         assert fh == pyfuse3.ROOT_INODE
@@ -226,7 +227,8 @@ class Fs(pyfuse3.Operations):
             raise pyfuse3.FUSEError(errno.ENOENT)
         if flags & os.O_RDWR or flags & os.O_WRONLY:
             raise pyfuse3.FUSEError(errno.EACCES)
-        return pyfuse3.FileInfo(fh=inode)
+        # For simplicity, we use the inode as file handle
+        return FileInfo(fh=FileHandleT(inode))
 
     async def read(self, fh, off, size):
         assert fh == self.hello_inode

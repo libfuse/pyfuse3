@@ -27,10 +27,12 @@ import logging
 import os
 import stat
 from argparse import ArgumentParser
+from typing import cast
 
 import trio
 
 import pyfuse3
+from pyfuse3 import FileHandleT, FileInfo, InodeT
 
 try:
     import faulthandler
@@ -45,7 +47,7 @@ class TestFs(pyfuse3.Operations):
     def __init__(self):
         super(TestFs, self).__init__()
         self.hello_name = b"message"
-        self.hello_inode = pyfuse3.ROOT_INODE+1
+        self.hello_inode = cast(InodeT, pyfuse3.ROOT_INODE+1)
         self.hello_data = b"hello world\n"
 
     async def getattr(self, inode, ctx=None):
@@ -77,7 +79,8 @@ class TestFs(pyfuse3.Operations):
     async def opendir(self, inode, ctx):
         if inode != pyfuse3.ROOT_INODE:
             raise pyfuse3.FUSEError(errno.ENOENT)
-        return inode
+        # For simplicity, we use the inode as file handle
+        return FileHandleT(inode)
 
     async def readdir(self, fh, start_id, token):
         assert fh == pyfuse3.ROOT_INODE
@@ -93,7 +96,8 @@ class TestFs(pyfuse3.Operations):
             raise pyfuse3.FUSEError(errno.ENOENT)
         if flags & os.O_RDWR or flags & os.O_WRONLY:
             raise pyfuse3.FUSEError(errno.EACCES)
-        return pyfuse3.FileInfo(fh=inode)
+        # For simplicity, we use the inode as file handle
+        return FileInfo(fh=FileHandleT(inode))
 
     async def read(self, fh, off, size):
         assert fh == self.hello_inode
