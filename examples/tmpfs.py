@@ -123,16 +123,16 @@ class Operations(pyfuse3.Operations):
 
         return row
 
-    async def lookup(self, inode_p, name, ctx=None):
+    async def lookup(self, parent_inode, name, ctx=None):
         if name == '.':
-            inode = inode_p
+            inode = parent_inode
         elif name == '..':
             inode = self.get_row("SELECT * FROM contents WHERE inode=?",
-                                 (inode_p,))['parent_inode']
+                                 (parent_inode,))['parent_inode']
         else:
             try:
                 inode = self.get_row("SELECT * FROM contents WHERE name=? AND parent_inode=?",
-                                     (name, inode_p))['inode']
+                                     (name, parent_inode))['inode']
             except NoSuchRowError:
                 raise(pyfuse3.FUSEError(errno.ENOENT))
 
@@ -172,60 +172,60 @@ class Operations(pyfuse3.Operations):
     async def opendir(self, inode, ctx):
         return inode
 
-    async def readdir(self, inode, off, token):
-        if off == 0:
-            off = -1
+    async def readdir(self, fh, start_id, token):
+        if start_id == 0:
+            start_id = -1
 
         cursor2 = self.db.cursor()
         cursor2.execute("SELECT * FROM contents WHERE parent_inode=? "
-                        'AND rowid > ? ORDER BY rowid', (inode, off))
+                        'AND rowid > ? ORDER BY rowid', (fh, start_id))
 
         for row in cursor2:
             pyfuse3.readdir_reply(
                 token, row['name'], await self.getattr(row['inode']), row['rowid'])
 
-    async def unlink(self, inode_p, name,ctx):
-        entry = await self.lookup(inode_p, name)
+    async def unlink(self, parent_inode, name, ctx):
+        entry = await self.lookup(parent_inode, name)
 
         if stat.S_ISDIR(entry.st_mode):
             raise pyfuse3.FUSEError(errno.EISDIR)
 
-        self._remove(inode_p, name, entry)
+        self._remove(parent_inode, name, entry)
 
-    async def rmdir(self, inode_p, name, ctx):
-        entry = await self.lookup(inode_p, name)
+    async def rmdir(self, parent_inode, name, ctx):
+        entry = await self.lookup(parent_inode, name)
 
         if not stat.S_ISDIR(entry.st_mode):
             raise pyfuse3.FUSEError(errno.ENOTDIR)
 
-        self._remove(inode_p, name, entry)
+        self._remove(parent_inode, name, entry)
 
-    def _remove(self, inode_p, name, entry):
+    def _remove(self, parent_inode, name, entry):
         if self.get_row("SELECT COUNT(inode) FROM contents WHERE parent_inode=?",
                         (entry.st_ino,))[0] > 0:
             raise pyfuse3.FUSEError(errno.ENOTEMPTY)
 
         self.cursor.execute("DELETE FROM contents WHERE name=? AND parent_inode=?",
-                        (name, inode_p))
+                        (name, parent_inode))
 
         if entry.st_nlink == 1 and entry.st_ino not in self.inode_open_count:
             self.cursor.execute("DELETE FROM inodes WHERE id=?", (entry.st_ino,))
 
-    async def symlink(self, inode_p, name, target, ctx):
+    async def symlink(self, parent_inode, name, target, ctx):
         mode = (stat.S_IFLNK | stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR |
                 stat.S_IRGRP | stat.S_IWGRP | stat.S_IXGRP |
                 stat.S_IROTH | stat.S_IWOTH | stat.S_IXOTH)
-        return await self._create(inode_p, name, mode, ctx, target=target)
+        return await self._create(parent_inode, name, mode, ctx, target=target)
 
-    async def rename(self, inode_p_old, name_old, inode_p_new, name_new,
+    async def rename(self, parent_inode_old, name_old, parent_inode_new, name_new,
                      flags, ctx):
         if flags != 0:
             raise FUSEError(errno.EINVAL)
 
-        entry_old = await self.lookup(inode_p_old, name_old)
+        entry_old = await self.lookup(parent_inode_old, name_old)
 
         try:
-            entry_new = await self.lookup(inode_p_new, name_new)
+            entry_new = await self.lookup(parent_inode_new, name_new)
         except pyfuse3.FUSEError as exc:
             if exc.errno != errno.ENOENT:
                 raise
@@ -234,14 +234,14 @@ class Operations(pyfuse3.Operations):
             target_exists = True
 
         if target_exists:
-            self._replace(inode_p_old, name_old, inode_p_new, name_new,
+            self._replace(parent_inode_old, name_old, parent_inode_new, name_new,
                           entry_old, entry_new)
         else:
             self.cursor.execute("UPDATE contents SET name=?, parent_inode=? WHERE name=? "
-                                "AND parent_inode=?", (name_new, inode_p_new,
-                                                       name_old, inode_p_old))
+                                "AND parent_inode=?", (name_new, parent_inode_new,
+                                                       name_old, parent_inode_old))
 
-    def _replace(self, inode_p_old, name_old, inode_p_new, name_new,
+    def _replace(self, parent_inode_old, name_old, parent_inode_new, name_new,
                  entry_old, entry_new):
 
         if self.get_row("SELECT COUNT(inode) FROM contents WHERE parent_inode=?",
@@ -249,23 +249,23 @@ class Operations(pyfuse3.Operations):
             raise pyfuse3.FUSEError(errno.ENOTEMPTY)
 
         self.cursor.execute("UPDATE contents SET inode=? WHERE name=? AND parent_inode=?",
-                            (entry_old.st_ino, name_new, inode_p_new))
+                            (entry_old.st_ino, name_new, parent_inode_new))
         self.db.execute('DELETE FROM contents WHERE name=? AND parent_inode=?',
-                        (name_old, inode_p_old))
+                        (name_old, parent_inode_old))
 
         if entry_new.st_nlink == 1 and entry_new.st_ino not in self.inode_open_count:
             self.cursor.execute("DELETE FROM inodes WHERE id=?", (entry_new.st_ino,))
 
 
-    async def link(self, inode, new_inode_p, new_name, ctx):
-        entry_p = await self.getattr(new_inode_p)
+    async def link(self, inode, new_parent_inode, new_name, ctx):
+        entry_p = await self.getattr(new_parent_inode)
         if entry_p.st_nlink == 0:
             log.warning('Attempted to create entry %s with unlinked parent %d',
-                        new_name, new_inode_p)
+                        new_name, new_parent_inode)
             raise FUSEError(errno.EINVAL)
 
         self.cursor.execute("INSERT INTO contents (name, inode, parent_inode) VALUES(?,?,?)",
-                            (new_name, inode, new_inode_p))
+                            (new_name, inode, new_parent_inode))
 
         return await self.getattr(inode)
 
@@ -310,11 +310,11 @@ class Operations(pyfuse3.Operations):
 
         return await self.getattr(inode)
 
-    async def mknod(self, inode_p, name, mode, rdev, ctx):
-        return await self._create(inode_p, name, mode, ctx, rdev=rdev)
+    async def mknod(self, parent_inode, name, mode, rdev, ctx):
+        return await self._create(parent_inode, name, mode, ctx, rdev=rdev)
 
-    async def mkdir(self, inode_p, name, mode, ctx):
-        return await self._create(inode_p, name, mode, ctx)
+    async def mkdir(self, parent_inode, name, mode, ctx):
+        return await self._create(parent_inode, name, mode, ctx)
 
     async def statfs(self, ctx):
         stat_ = pyfuse3.StatvfsData()
@@ -347,16 +347,16 @@ class Operations(pyfuse3.Operations):
         #pylint: disable=R0201,W0613
         return True
 
-    async def create(self, inode_parent, name, mode, flags, ctx):
+    async def create(self, parent_inode, name, mode, flags, ctx):
         #pylint: disable=W0612
-        entry = await self._create(inode_parent, name, mode, ctx)
+        entry = await self._create(parent_inode, name, mode, ctx)
         self.inode_open_count[entry.st_ino] += 1
         return (pyfuse3.FileInfo(fh=entry.st_ino), entry)
 
-    async def _create(self, inode_p, name, mode, ctx, rdev=0, target=None):
-        if (await self.getattr(inode_p)).st_nlink == 0:
+    async def _create(self, parent_inode, name, mode, ctx, rdev=0, target=None):
+        if (await self.getattr(parent_inode)).st_nlink == 0:
             log.warning('Attempted to create entry %s with unlinked parent %d',
-                        name, inode_p)
+                        name, parent_inode)
             raise FUSEError(errno.EINVAL)
 
         now_ns = int(time() * 1e9)
@@ -366,20 +366,20 @@ class Operations(pyfuse3.Operations):
 
         inode = self.cursor.lastrowid
         self.db.execute("INSERT INTO contents(name, inode, parent_inode) VALUES(?,?,?)",
-                        (name, inode, inode_p))
+                        (name, inode, parent_inode))
         return await self.getattr(inode)
 
-    async def read(self, fh, offset, length):
+    async def read(self, fh, off, size):
         data = self.get_row('SELECT data FROM inodes WHERE id=?', (fh,))[0]
         if data is None:
             data = b''
-        return data[offset:offset+length]
+        return data[off:off+size]
 
-    async def write(self, fh, offset, buf):
+    async def write(self, fh, off, buf):
         data = self.get_row('SELECT data FROM inodes WHERE id=?', (fh,))[0]
         if data is None:
             data = b''
-        data = data[:offset] + buf + data[offset+len(buf):]
+        data = data[:off] + buf + data[off+len(buf):]
 
         self.cursor.execute('UPDATE inodes SET data=?, size=? WHERE id=?',
                             (memoryview(data), len(data), fh))

@@ -214,9 +214,9 @@ class Fs(pyfuse3.Operations):
             raise pyfuse3.FUSEError(errno.ENOENT)
         return inode
 
-    async def readdir(self, fh, off, token):
+    async def readdir(self, fh, start_id, token):
         assert fh == pyfuse3.ROOT_INODE
-        if off == 0:
+        if start_id == 0:
             pyfuse3.readdir_reply(
                 token, self.hello_name, await self.getattr(self.hello_inode), 1)
         return
