@@ -10,6 +10,7 @@ the terms of the GNU LGPL.
 '''
 
 import sys
+from typing import cast
 
 import pytest
 
@@ -40,7 +41,7 @@ def get_mp():
         mp = multiprocessing.get_context('fork')
     else:
         # Older versions only support *fork* anyway
-        mp = multiprocessing
+        mp = multiprocessing  # type: ignore[assignment]
     if threading.active_count() != 1:
         raise RuntimeError("Multi-threaded test running is not supported")
 
@@ -159,7 +160,7 @@ class Fs(pyfuse3.Operations):
     def __init__(self, cross_process):
         super(Fs, self).__init__()
         self.hello_name = b"message"
-        self.hello_inode = pyfuse3.ROOT_INODE+1
+        self.hello_inode = cast(pyfuse3.InodeT, pyfuse3.ROOT_INODE+1)
         self.hello_data = b"hello world\n"
         self.status = cross_process
         self.lookup_cnt = 0

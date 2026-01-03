@@ -38,6 +38,9 @@ jobs:
       - name: Lint (ruff)
         run: uv run ruff check
 
+      - name: Type check (mypy)
+        run: uv run mypy .
+        
       - name: Run tests
         run: uv run pytest -v -rs test/
 

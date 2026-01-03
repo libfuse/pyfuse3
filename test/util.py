@@ -81,7 +81,7 @@ def wait_for(callable, timeout=10, interval=0.1):
         time.sleep(interval)
 
 def wait_for_mount(mount_process, mnt_dir):
-    elapsed = 0
+    elapsed = 0.0
     while elapsed < 30:
         if os.path.ismount(mnt_dir):
             return True

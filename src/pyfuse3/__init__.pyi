@@ -31,6 +31,7 @@ RENAME_NOREPLACE: FlagT
 ROOT_INODE: InodeT
 trio_token: Optional[TrioToken]
 __version__: str
+_NANOS_PER_SEC: int
 
 NamespaceT = Literal["system", "user"]
 StatDict = Mapping[str, int]

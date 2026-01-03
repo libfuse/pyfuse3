@@ -32,6 +32,7 @@ Homepage = "https://github.com/libfuse/pyfuse3"
 
 [dependency-groups]
 dev = [
+    "mypy>=1.19.1",
     "pytest >= 3.4.0",
     "pytest-trio",
     "ruff>=0.14.10",
@@ -68,3 +69,11 @@ extend-select = [
   'RUF100',  # Warn about unused suppressions
   'I', # Import ordering
 ]
+
+[tool.mypy]
+exclude = [ "^util/.+", "^rst/conf.py$" ]
+warn_unused_configs = true
+disallow_untyped_defs = false
+check_untyped_defs = true
+warn_redundant_casts = true
+warn_unused_ignores = true

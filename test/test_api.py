@@ -64,7 +64,7 @@ def _getxattr_helper(path, name):
 def test_entry_res():
     a = pyfuse3.EntryAttributes()
     val = 1000.2735
-    a.st_atime_ns = val*1e9
+    a.st_atime_ns = int(val*1e9)
     assert a.st_atime_ns / 1e9 == val
 
 def test_xattr():
@@ -102,5 +102,5 @@ def test_copy():
         inst_copy = copy(inst)
         assert getattr(inst, attr) == getattr(inst_copy, attr)
 
-    inst = pyfuse3.FUSEError(10)
-    assert inst.errno == copy(inst).errno
+    exc = pyfuse3.FUSEError(10)
+    assert exc.errno == copy(exc).errno

@@ -48,11 +48,12 @@ import sys
 from argparse import ArgumentParser
 from collections import defaultdict
 from os import fsdecode, fsencode
+from typing import cast
 
 import trio
 
 import pyfuse3
-from pyfuse3 import FUSEError
+from pyfuse3 import FileHandleT, FUSEError, InodeT
 
 faulthandler.enable()
 
@@ -133,6 +134,7 @@ class Operations(pyfuse3.Operations):
             else:
                 stat = os.fstat(fd)
         except OSError as exc:
+            assert exc.errno is not None
             raise FUSEError(exc.errno)
 
         entry = pyfuse3.EntryAttributes()
@@ -153,6 +155,7 @@ class Operations(pyfuse3.Operations):
         try:
             target = os.readlink(path)
         except OSError as exc:
+            assert exc.errno is not None
             raise FUSEError(exc.errno)
         return fsencode(target)
 
@@ -193,6 +196,7 @@ class Operations(pyfuse3.Operations):
             inode = os.lstat(path).st_ino
             os.unlink(path)
         except OSError as exc:
+            assert exc.errno is not None
             raise FUSEError(exc.errno)
         if inode in self._lookup_cnt:
             self._forget_path(inode, path)
@@ -205,6 +209,7 @@ class Operations(pyfuse3.Operations):
             inode = os.lstat(path).st_ino
             os.rmdir(path)
         except OSError as exc:
+            assert exc.errno is not None
             raise FUSEError(exc.errno)
         if inode in self._lookup_cnt:
             self._forget_path(inode, path)
@@ -228,6 +233,7 @@ class Operations(pyfuse3.Operations):
             os.symlink(target, path)
             os.chown(path, ctx.uid, ctx.gid, follow_symlinks=False)
         except OSError as exc:
+            assert exc.errno is not None
             raise FUSEError(exc.errno)
         stat = os.lstat(path)
         self._add_path(stat.st_ino, path)
@@ -246,8 +252,9 @@ class Operations(pyfuse3.Operations):
         path_new = os.path.join(parent_new, name_new)
         try:
             os.rename(path_old, path_new)
-            inode = os.lstat(path_new).st_ino
+            inode = cast(InodeT, os.lstat(path_new).st_ino)
         except OSError as exc:
+            assert exc.errno is not None
             raise FUSEError(exc.errno)
         if inode not in self._lookup_cnt:
             return
@@ -268,67 +275,78 @@ class Operations(pyfuse3.Operations):
         try:
             os.link(self._inode_to_path(inode), path, follow_symlinks=False)
         except OSError as exc:
+            assert exc.errno is not None
             raise FUSEError(exc.errno)
         self._add_path(inode, path)
         return await self.getattr(inode)
 
     async def setattr(self, inode, attr, fields, fh, ctx):
-        # We use the f* functions if possible so that we can handle
-        # a setattr() call for an inode without associated directory
-        # handle.
-        if fh is None:
-            path_or_fh = self._inode_to_path(inode)
-            truncate = os.truncate
-            chmod = os.chmod
-            chown = os.chown
-            stat = os.lstat
-        else:
-            path_or_fh = fh
-            truncate = os.ftruncate
-            chmod = os.fchmod
-            chown = os.fchown
-            stat = os.fstat
-
         try:
             if fields.update_size:
-                truncate(path_or_fh, attr.st_size)
+                if fh is None:
+                    os.truncate(self._inode_to_path(inode), attr.st_size)
+                else:
+                    os.ftruncate(fh, attr.st_size)
 
             if fields.update_mode:
                 # Under Linux, chmod always resolves symlinks so we should
                 # actually never get a setattr() request for a symbolic
                 # link.
                 assert not stat_m.S_ISLNK(attr.st_mode)
-                chmod(path_or_fh, stat_m.S_IMODE(attr.st_mode))
+                if fh is None:
+                    os.chmod(self._inode_to_path(inode), stat_m.S_IMODE(attr.st_mode))
+                else:
+                    os.fchmod(fh, stat_m.S_IMODE(attr.st_mode))
 
-            if fields.update_uid:
-                chown(path_or_fh, attr.st_uid, -1, follow_symlinks=False)
+            if fields.update_uid and fields.update_gid:
+                if fh is None:
+                    os.chown(self._inode_to_path(inode), attr.st_uid, attr.st_gid,
+                             follow_symlinks=False)
+                else:
+                    os.fchown(fh, attr.st_uid, attr.st_gid)
 
-            if fields.update_gid:
-                chown(path_or_fh, -1, attr.st_gid, follow_symlinks=False)
+            elif fields.update_uid:
+                if fh is None:
+                    os.chown(self._inode_to_path(inode), attr.st_uid, -1,
+                             follow_symlinks=False)
+                else:
+                    os.fchown(fh, attr.st_uid, -1)
+
+            elif fields.update_gid:
+                if fh is None:
+                    os.chown(self._inode_to_path(inode), -1, attr.st_gid,
+                             follow_symlinks=False)
+                else:
+                    os.fchown(fh, -1, attr.st_gid)
 
             if fields.update_atime and fields.update_mtime:
                 if fh is None:
-                    os.utime(path_or_fh, None, follow_symlinks=False,
+                    os.utime(self._inode_to_path(inode), None, follow_symlinks=False,
                              ns=(attr.st_atime_ns, attr.st_mtime_ns))
                 else:
-                    os.utime(path_or_fh, None,
+                    os.utime(fh, None,
                              ns=(attr.st_atime_ns, attr.st_mtime_ns))
             elif fields.update_atime or fields.update_mtime:
                 # We can only set both values, so we first need to retrieve the
                 # one that we shouldn't be changing.
-                oldstat = stat(path_or_fh)
+                if fh is None:
+                    path = self._inode_to_path(inode)
+                    oldstat = os.stat(path, follow_symlinks=False)
+                else:
+                    oldstat = os.fstat(fh)
                 if not fields.update_atime:
                     attr.st_atime_ns = oldstat.st_atime_ns
                 else:
                     attr.st_mtime_ns = oldstat.st_mtime_ns
                 if fh is None:
-                    os.utime(path_or_fh, None, follow_symlinks=False,
+                    os.utime(path, None, follow_symlinks=False, # pyright: ignore[reportPossiblyUnboundVariable]
                              ns=(attr.st_atime_ns, attr.st_mtime_ns))
                 else:
-                    os.utime(path_or_fh, None,
+                    os.utime(fh, None,
                              ns=(attr.st_atime_ns, attr.st_mtime_ns))
 
         except OSError as exc:
+            assert exc.errno is not None
             raise FUSEError(exc.errno)
 
         return await self.getattr(inode)
@@ -339,6 +357,7 @@ class Operations(pyfuse3.Operations):
             os.mknod(path, mode=(mode & ~ctx.umask), device=rdev)
             os.chown(path, ctx.uid, ctx.gid)
         except OSError as exc:
+            assert exc.errno is not None
             raise FUSEError(exc.errno)
         attr = self._getattr(path=path)
         self._add_path(attr.st_ino, path)
@@ -350,6 +369,7 @@ class Operations(pyfuse3.Operations):
             os.mkdir(path, mode=(mode & ~ctx.umask))
             os.chown(path, ctx.uid, ctx.gid)
         except OSError as exc:
+            assert exc.errno is not None
             raise FUSEError(exc.errno)
         attr = self._getattr(path=path)
         self._add_path(attr.st_ino, path)
@@ -361,6 +381,7 @@ class Operations(pyfuse3.Operations):
         try:
             statfs = os.statvfs(root)
         except OSError as exc:
+            assert exc.errno is not None
             raise FUSEError(exc.errno)
         for attr in ('f_bsize', 'f_frsize', 'f_blocks', 'f_bfree', 'f_bavail',
                      'f_files', 'f_ffree', 'f_favail'):
@@ -377,24 +398,26 @@ class Operations(pyfuse3.Operations):
         try:
             fd = os.open(self._inode_to_path(inode), flags)
         except OSError as exc:
+            assert exc.errno is not None
             raise FUSEError(exc.errno)
         self._inode_fd_map[inode] = fd
         self._fd_inode_map[fd] = inode
         self._fd_open_count[fd] = 1
-        return pyfuse3.FileInfo(fh=fd)
+        return pyfuse3.FileInfo(fh=cast(FileHandleT, fd))
 
     async def create(self, inode_p, name, mode, flags, ctx):
         path = os.path.join(self._inode_to_path(inode_p), fsdecode(name))
         try:
             fd = os.open(path, flags | os.O_CREAT | os.O_TRUNC)
         except OSError as exc:
+            assert exc.errno is not None
             raise FUSEError(exc.errno)
         attr = self._getattr(fd=fd)
         self._add_path(attr.st_ino, path)
         self._inode_fd_map[attr.st_ino] = fd
         self._fd_inode_map[fd] = attr.st_ino
         self._fd_open_count[fd] = 1
-        return (pyfuse3.FileInfo(fh=fd), attr)
+        return (pyfuse3.FileInfo(fh=cast(FileHandleT, fd)), attr)
 
     async def read(self, fd, offset, length):
         os.lseek(fd, offset, os.SEEK_SET)
@@ -416,6 +439,7 @@ class Operations(pyfuse3.Operations):
         try:
             os.close(fd)
         except OSError as exc:
+            assert exc.errno is not None
             raise FUSEError(exc.errno)
 
 def init_logging(debug=False):

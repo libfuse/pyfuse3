@@ -55,7 +55,7 @@ log = logging.getLogger(__name__)
 # is the case for Cython-defined async functions.
 def async_wrapper(fn: Callable[..., Any]) -> Callable[..., Any]:
     @functools.wraps(fn)
-    async def wrapper(*args, **kwargs):  # type: ignore
+    async def wrapper(*args, **kwargs):
         await fn(*args, **kwargs)
     return wrapper
 
