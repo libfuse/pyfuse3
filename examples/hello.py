@@ -26,13 +26,13 @@ import errno
 import logging
 import os
 import stat
-from argparse import ArgumentParser
+from argparse import ArgumentParser, Namespace
 from typing import cast
 
 import trio
 
 import pyfuse3
-from pyfuse3 import FileHandleT, FileInfo, InodeT
+from pyfuse3 import EntryAttributes, FileHandleT, FileInfo, InodeT, ReaddirToken, RequestContext
 
 try:
     import faulthandler
@@ -45,14 +45,14 @@ log = logging.getLogger(__name__)
 
 
 class TestFs(pyfuse3.Operations):
-    def __init__(self):
+    def __init__(self) -> None:
         super(TestFs, self).__init__()
         self.hello_name = b"message"
         self.hello_inode = cast(InodeT, pyfuse3.ROOT_INODE + 1)
         self.hello_data = b"hello world\n"
 
-    async def getattr(self, inode, ctx=None):
-        entry = pyfuse3.EntryAttributes()
+    async def getattr(self, inode: InodeT, ctx: RequestContext | None = None) -> EntryAttributes:
+        entry = EntryAttributes()
         if inode == pyfuse3.ROOT_INODE:
             entry.st_mode = stat.S_IFDIR | 0o755
             entry.st_size = 0
@@ -72,18 +72,20 @@ class TestFs(pyfuse3.Operations):
 
         return entry
 
-    async def lookup(self, parent_inode, name, ctx=None):
+    async def lookup(
+        self, parent_inode: InodeT, name: bytes, ctx: RequestContext
+    ) -> EntryAttributes:
         if parent_inode != pyfuse3.ROOT_INODE or name != self.hello_name:
             raise pyfuse3.FUSEError(errno.ENOENT)
-        return await self.getattr(self.hello_inode)
+        return await self.getattr(self.hello_inode, ctx)
 
-    async def opendir(self, inode, ctx):
+    async def opendir(self, inode: InodeT, ctx: RequestContext) -> FileHandleT:
         if inode != pyfuse3.ROOT_INODE:
             raise pyfuse3.FUSEError(errno.ENOENT)
         # For simplicity, we use the inode as file handle
         return FileHandleT(inode)
 
-    async def readdir(self, fh, start_id, token):
+    async def readdir(self, fh: FileHandleT, start_id: int, token: ReaddirToken) -> None:
         assert fh == pyfuse3.ROOT_INODE
 
         # only one entry
@@ -91,7 +93,7 @@ class TestFs(pyfuse3.Operations):
             pyfuse3.readdir_reply(token, self.hello_name, await self.getattr(self.hello_inode), 1)
         return
 
-    async def open(self, inode, flags, ctx):
+    async def open(self, inode: InodeT, flags: int, ctx: RequestContext) -> FileInfo:
         if inode != self.hello_inode:
             raise pyfuse3.FUSEError(errno.ENOENT)
         if flags & os.O_RDWR or flags & os.O_WRONLY:
@@ -99,12 +101,12 @@ class TestFs(pyfuse3.Operations):
         # For simplicity, we use the inode as file handle
         return FileInfo(fh=FileHandleT(inode))
 
-    async def read(self, fh, off, size):
+    async def read(self, fh: FileHandleT, off: int, size: int) -> bytes:
         assert fh == self.hello_inode
         return self.hello_data[off : off + size]
 
 
-def init_logging(debug=False):
+def init_logging(debug: bool = False) -> None:
     formatter = logging.Formatter(
         '%(asctime)s.%(msecs)03d %(threadName)s: [%(name)s] %(message)s',
         datefmt="%Y-%m-%d %H:%M:%S",
@@ -121,7 +123,7 @@ def init_logging(debug=False):
     root_logger.addHandler(handler)
 
 
-def parse_args():
+def parse_args() -> Namespace:
     '''Parse command line'''
 
     parser = ArgumentParser()
@@ -136,7 +138,7 @@ def parse_args():
     return parser.parse_args()
 
 
-def main():
+def main() -> None:
     options = parse_args()
     init_logging(options.debug)
 

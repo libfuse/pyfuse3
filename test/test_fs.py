@@ -28,7 +28,15 @@ import time
 import trio
 
 import pyfuse3
-from pyfuse3 import FileHandleT, FileInfo, FUSEError
+from pyfuse3 import (
+    EntryAttributes,
+    FileHandleT,
+    FileInfo,
+    FUSEError,
+    InodeT,
+    ReaddirToken,
+    RequestContext,
+)
 from util import cleanup, fuse_test_marker, umount, wait_for_mount
 
 pytestmark = fuse_test_marker()
@@ -165,7 +173,7 @@ class Fs(pyfuse3.Operations):
     def __init__(self, cross_process):
         super(Fs, self).__init__()
         self.hello_name = b"message"
-        self.hello_inode = cast(pyfuse3.InodeT, pyfuse3.ROOT_INODE + 1)
+        self.hello_inode = cast(InodeT, pyfuse3.ROOT_INODE + 1)
         self.hello_data = b"hello world\n"
         self.status = cross_process
         self.lookup_cnt = 0
@@ -175,8 +183,8 @@ class Fs(pyfuse3.Operations):
         self.status.entry_timeout = 99999
         self.status.attr_timeout = 99999
 
-    async def getattr(self, inode, ctx=None):
-        entry = pyfuse3.EntryAttributes()
+    async def getattr(self, inode: InodeT, ctx: RequestContext | None = None) -> EntryAttributes:
+        entry = EntryAttributes()
         if inode == pyfuse3.ROOT_INODE:
             entry.st_mode = stat.S_IFDIR | 0o755
             entry.st_size = 0
@@ -207,12 +215,14 @@ class Fs(pyfuse3.Operations):
             else:
                 assert inode == pyfuse3.ROOT_INODE
 
-    async def lookup(self, parent_inode, name, ctx=None):
+    async def lookup(
+        self, parent_inode: InodeT, name: bytes, ctx: RequestContext
+    ) -> EntryAttributes:
         if parent_inode != pyfuse3.ROOT_INODE or name != self.hello_name:
             raise pyfuse3.FUSEError(errno.ENOENT)
         self.lookup_cnt += 1
         self.status.lookup_called = True
-        return await self.getattr(self.hello_inode)
+        return await self.getattr(self.hello_inode, ctx)
 
     async def opendir(self, inode, ctx):
         if inode != pyfuse3.ROOT_INODE:
@@ -220,7 +230,7 @@ class Fs(pyfuse3.Operations):
         # For simplicity, we use the inode as file handle
         return FileHandleT(inode)
 
-    async def readdir(self, fh, start_id, token):
+    async def readdir(self, fh: FileHandleT, start_id: int, token: ReaddirToken) -> None:
         assert fh == pyfuse3.ROOT_INODE
         if start_id == 0:
             pyfuse3.readdir_reply(token, self.hello_name, await self.getattr(self.hello_inode), 1)

@@ -16,22 +16,25 @@ to stdout/stderr), and a `assert_logs` function (for logging messages).
 import functools
 import logging
 import re
+from collections.abc import Generator
 from contextlib import contextmanager
 
 import pytest
 
 
 class CountMessagesHandler(logging.Handler):
-    def __init__(self, level=logging.NOTSET):
+    def __init__(self, level: int = logging.NOTSET) -> None:
         super().__init__(level)
-        self.count = 0
+        self.count: int = 0
 
-    def emit(self, record):
+    def emit(self, record: logging.LogRecord) -> None:
         self.count += 1
 
 
 @contextmanager
-def assert_logs(pattern, level=logging.WARNING, count=None):
+def assert_logs(
+    pattern: str, level: int = logging.WARNING, count: int | None = None
+) -> Generator[None, None, None]:
     '''Assert that suite emits specified log message
 
     *pattern* is matched against the *unformatted* log message, i.e. before any
@@ -44,7 +47,7 @@ def assert_logs(pattern, level=logging.WARNING, count=None):
     does not generate exceptions for them (no matter their severity).
     '''
 
-    def filter(record):
+    def filter(record: logging.LogRecord) -> bool:
         if record.levelno == level and re.search(pattern, record.msg):
             record.checklogs_ignore = True
             return True
@@ -102,7 +105,7 @@ def check_test_output(capfd, item):
             pytest.fail('Suspicious output to stdout (matched "%s")' % hit.group(0))
 
 
-def register_output(item, pattern, count=1, flags=re.MULTILINE):
+def register_output(item, pattern: str, count: int = 1, flags: int = re.MULTILINE) -> None:
     '''Register *pattern* as false positive for output checking
 
     This prevents the test from failing because the output otherwise

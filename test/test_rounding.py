@@ -16,14 +16,13 @@ if __name__ == '__main__':
 
     sys.exit(pytest.main([__file__] + sys.argv[1:]))
 
-import pyfuse3
-from pyfuse3 import _NANOS_PER_SEC
+from pyfuse3 import _NANOS_PER_SEC, EntryAttributes
 
 
 def test_rounding():
     # Incorrect division previously resulted in rounding errors for
     # all dates.
-    entry = pyfuse3.EntryAttributes()
+    entry = EntryAttributes()
 
     # Approximately 67 years, ending in 999.
     # Note: 67 years were chosen to avoid y2038 issues (1970 + 67 = 2037).

@@ -25,6 +25,7 @@ from pickle import PicklingError
 import pytest
 
 import pyfuse3
+from pyfuse3 import EntryAttributes, RequestContext, SetattrFields, StatvfsData
 
 
 def test_listdir():
@@ -68,7 +69,7 @@ def _getxattr_helper(path, name):
 
 
 def test_entry_res():
-    a = pyfuse3.EntryAttributes()
+    a = EntryAttributes()
     val = 1000.2735
     a.st_atime_ns = int(val * 1e9)
     assert a.st_atime_ns / 1e9 == val
@@ -99,10 +100,10 @@ def test_xattr():
 
 
 def test_copy():
-    for obj in (pyfuse3.SetattrFields(), pyfuse3.RequestContext()):
+    for obj in (SetattrFields(), RequestContext()):
         pytest.raises(PicklingError, copy, obj)
 
-    for inst, attr in ((pyfuse3.EntryAttributes(), 'st_mode'), (pyfuse3.StatvfsData(), 'f_files')):
+    for inst, attr in ((EntryAttributes(), 'st_mode'), (StatvfsData(), 'f_files')):
         setattr(inst, attr, 42)
         inst_copy = copy(inst)
         assert getattr(inst, attr) == getattr(inst_copy, attr)

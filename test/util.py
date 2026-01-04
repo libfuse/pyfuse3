@@ -9,14 +9,20 @@ This file is part of pyfuse3. This work may be distributed under
 the terms of the GNU LGPL.
 '''
 
+import multiprocessing
 import os
 import platform
 import shutil
 import stat
 import subprocess
 import time
+from collections.abc import Callable
+from multiprocessing.context import ForkProcess
+from typing import TypeVar
 
 import pytest
+
+Process = subprocess.Popen | multiprocessing.Process | ForkProcess
 
 
 def fuse_test_marker():
@@ -56,7 +62,7 @@ def fuse_test_marker():
     return pytest.mark.uses_fuse()
 
 
-def exitcode(process):
+def exitcode(process: Process) -> int | None:
     if isinstance(process, subprocess.Popen):
         return process.poll()
     else:
@@ -66,13 +72,16 @@ def exitcode(process):
             return process.exitcode
 
 
-def wait_for(callable, timeout=10, interval=0.1):
+T = TypeVar('T')
+
+
+def wait_for(callable: Callable[[], T], timeout: float = 10, interval: float = 0.1) -> T | None:
     '''Wait until *callable* returns something True and return it
 
     If *timeout* expires, return None
     '''
 
-    waited = 0
+    waited = 0.0
     while True:
         ret = callable()
         if ret:
@@ -83,7 +92,7 @@ def wait_for(callable, timeout=10, interval=0.1):
         time.sleep(interval)
 
 
-def wait_for_mount(mount_process, mnt_dir):
+def wait_for_mount(mount_process: Process, mnt_dir: str) -> bool:
     elapsed = 0.0
     while elapsed < 30:
         if os.path.ismount(mnt_dir):
@@ -95,7 +104,7 @@ def wait_for_mount(mount_process, mnt_dir):
     pytest.fail("mountpoint failed to come up")
 
 
-def cleanup(mount_process, mnt_dir):
+def cleanup(mount_process: Process, mnt_dir: str) -> None:
     if platform.system() == 'Darwin':
         subprocess.call(
             ['umount', '-l', mnt_dir], stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT
@@ -117,7 +126,7 @@ def cleanup(mount_process, mnt_dir):
             mount_process.kill()
 
 
-def umount(mount_process, mnt_dir):
+def umount(mount_process: Process, mnt_dir: str) -> None:
     if platform.system() == 'Darwin':
         subprocess.check_call(['umount', '-l', mnt_dir])
     else:
@@ -138,13 +147,12 @@ def umount(mount_process, mnt_dir):
                 mount_process.kill()
     else:
         mount_process.join(5)
-        code = mount_process.exitcode
-        if code == 0:
+        if mount_process.exitcode == 0:
             return
-        elif code is None:
+        elif mount_process.exitcode is None:
             mount_process.terminate()
             mount_process.join(1)
         else:
-            pytest.fail('file system process terminated with code %s' % (code,))
+            pytest.fail('file system process terminated with code %s' % (mount_process.exitcode,))
 
     pytest.fail('mount process did not terminate')
