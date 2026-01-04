@@ -474,7 +474,10 @@ def assert_same_stats(name1, name2, check_times: bool = True):
         if name.endswith('_ns') and os.getenv('CI') == 'true':
             continue
 
-        # Skip time checks when writeback cache is enabled
+        # When FUSE writeback cache is enabled, the kernel maintains mtime/ctime
+        # internally and only flushes them to the underlying filesystem on close.
+        # Until then, the timestamps reported for the passthrough mount and the
+        # backing directory may legitimately differ, so skip strict time checks.
         if name.endswith('_ns') and not check_times:
             continue
 
