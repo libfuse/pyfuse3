@@ -96,7 +96,8 @@ def test_tmpfs(tmpdir):
         umount(mount_process, mnt_dir)
 
 
-def test_passthroughfs(tmpdir):
+@pytest.mark.parametrize('enable_writeback_cache', (True, False))
+def test_passthroughfs(tmpdir, enable_writeback_cache):
     mnt_dir = str(tmpdir.mkdir('mnt'))
     src_dir = str(tmpdir.mkdir('src'))
     cmdline = [
@@ -105,6 +106,8 @@ def test_passthroughfs(tmpdir):
         src_dir,
         mnt_dir,
     ]
+    if enable_writeback_cache:
+        cmdline.append('--enable-writeback-cache')
     mount_process = subprocess.Popen(cmdline, stdin=subprocess.DEVNULL, universal_newlines=True)
     try:
         wait_for_mount(mount_process, mnt_dir)
@@ -125,7 +128,7 @@ def test_passthroughfs(tmpdir):
         tst_truncate_path(mnt_dir)
         tst_truncate_fd(mnt_dir)
         tst_unlink(mnt_dir)
-        tst_passthrough(src_dir, mnt_dir)
+        tst_passthrough(src_dir, mnt_dir, enable_writeback_cache=enable_writeback_cache)
     except:
         cleanup(mount_process, mnt_dir)
         raise
@@ -408,7 +411,7 @@ def tst_rounding(mnt_dir, ns_tol=0):
     checked_unlink(filename, mnt_dir, isdir=True)
 
 
-def tst_passthrough(src_dir, mnt_dir):
+def tst_passthrough(src_dir, mnt_dir, enable_writeback_cache: bool = False):
     # Test propagation from source to mirror
     name = name_generator()
     src_name = os.path.join(src_dir, name)
@@ -419,7 +422,7 @@ def tst_passthrough(src_dir, mnt_dir):
         fh.write('Hello, world')
     assert name in os.listdir(src_dir)
     assert name in os.listdir(mnt_dir)
-    assert_same_stats(src_name, mnt_name)
+    assert_same_stats(src_name, mnt_name, check_times=not enable_writeback_cache)
 
     # Test propagation from mirror to source
     name = name_generator()
@@ -431,7 +434,7 @@ def tst_passthrough(src_dir, mnt_dir):
         fh.write('Hello, world')
     assert name in os.listdir(src_dir)
     assert name in os.listdir(mnt_dir)
-    assert_same_stats(src_name, mnt_name)
+    assert_same_stats(src_name, mnt_name, check_times=not enable_writeback_cache)
 
     # Test propagation inside subdirectory
     name = name_generator()
@@ -446,10 +449,10 @@ def tst_passthrough(src_dir, mnt_dir):
         fh.write('Hello, world')
     assert name in os.listdir(src_dir)
     assert name in os.listdir(mnt_dir)
-    assert_same_stats(src_name, mnt_name)
+    assert_same_stats(src_name, mnt_name, check_times=not enable_writeback_cache)
 
 
-def assert_same_stats(name1, name2):
+def assert_same_stats(name1, name2, check_times: bool = True):
     stat1 = os.stat(name1)
     stat2 = os.stat(name2)
 
@@ -469,6 +472,13 @@ def assert_same_stats(name1, name2):
 
         # Known bug, cf. https://github.com/libfuse/pyfuse3/issues/57
         if name.endswith('_ns') and os.getenv('CI') == 'true':
+            continue
+
+        # When FUSE writeback cache is enabled, the kernel maintains mtime/ctime
+        # internally and only flushes them to the underlying filesystem on close.
+        # Until then, the timestamps reported for the passthrough mount and the
+        # backing directory may legitimately differ, so skip strict time checks.
+        if name.endswith('_ns') and not check_times:
             continue
 
         assert v1 == v2, 'Attribute {} differs by {} ({} vs {})'.format(name, v1 - v2, v1, v2)
