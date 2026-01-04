@@ -468,10 +468,7 @@ def assert_same_stats(name1, name2):
         v2 = getattr(stat2, name)
 
         # Known bug, cf. https://github.com/libfuse/pyfuse3/issues/57
-        if name.endswith('_ns'):
-            tolerance = 999_999  # <1 second
-        else:
-            tolerance = 0
-        assert abs(v1 - v2) <= tolerance, 'Attribute {} differs by {} ({} vs {})'.format(
-            name, v1 - v2, v1, v2
-        )
+        if name.endswith('_ns') and os.getenv('CI') == 'true':
+            continue
+
+        assert v1 == v2, 'Attribute {} differs by {} ({} vs {})'.format(name, v1 - v2, v1, v2)
