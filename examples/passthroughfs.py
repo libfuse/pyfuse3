@@ -72,7 +72,7 @@ log = logging.getLogger(__name__)
 
 
 class Operations(pyfuse3.Operations):
-    def __init__(self, source: str, enable_writeback_cache: bool = True) -> None:
+    def __init__(self, source: str, enable_writeback_cache: bool = False) -> None:
         super().__init__()
         self.enable_writeback_cache = enable_writeback_cache
         self._inode_path_map: dict[InodeT, str | set[str]] = {pyfuse3.ROOT_INODE: source}
