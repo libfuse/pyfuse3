@@ -72,10 +72,9 @@ log = logging.getLogger(__name__)
 
 
 class Operations(pyfuse3.Operations):
-    enable_writeback_cache = True
-
-    def __init__(self, source: str) -> None:
+    def __init__(self, source: str, enable_writeback_cache: bool = True) -> None:
         super().__init__()
+        self.enable_writeback_cache = enable_writeback_cache
         self._inode_path_map: dict[InodeT, str | set[str]] = {pyfuse3.ROOT_INODE: source}
         self._lookup_cnt: defaultdict[InodeT, int] = defaultdict(lambda: 0)
         self._fd_inode_map: dict[int, InodeT] = dict()
@@ -534,6 +533,12 @@ def parse_args(args: list[str]) -> Namespace:
     parser.add_argument(
         '--debug-fuse', action='store_true', default=False, help='Enable FUSE debugging output'
     )
+    parser.add_argument(
+        '--enable-writeback-cache',
+        action='store_true',
+        default=False,
+        help='Enable writeback cache (default: disabled)',
+    )
 
     return parser.parse_args(args)
 
@@ -541,7 +546,7 @@ def parse_args(args: list[str]) -> Namespace:
 def main() -> None:
     options = parse_args(sys.argv[1:])
     init_logging(options.debug)
-    operations = Operations(options.source)
+    operations = Operations(options.source, enable_writeback_cache=options.enable_writeback_cache)
 
     log.debug('Mounting...')
     fuse_options = set(pyfuse3.default_options)
