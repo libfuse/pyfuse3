@@ -493,7 +493,7 @@ class Operations(pyfuse3.Operations):
         return len(buf)
 
     async def release(self, fh: FileHandleT) -> None:
-        inode = cast(InodeT, fh)
+        inode = fh
         self.inode_open_count[inode] -= 1
 
         if self.inode_open_count[inode] == 0:

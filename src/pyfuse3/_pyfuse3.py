@@ -13,7 +13,7 @@ import errno
 import functools
 import logging
 from importlib.metadata import PackageNotFoundError, version as package_version
-from typing import TYPE_CHECKING, Any, Callable, NewType, Optional, Sequence, Tuple
+from typing import TYPE_CHECKING, Any, Callable, Optional, Sequence, Tuple
 
 # Version information
 try:
@@ -21,11 +21,10 @@ try:
 except PackageNotFoundError:
     __version__ = 'unknown'
 
-# These types are specific instances of builtin types:
-FileHandleT = NewType("FileHandleT", int)
+FileHandleT = int
 FileNameT = bytes
 FlagT = int
-InodeT = NewType("InodeT", int)
+InodeT = int
 ModeT = int
 XAttrNameT = bytes
 

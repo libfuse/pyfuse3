@@ -48,7 +48,7 @@ class TestFs(pyfuse3.Operations):
     def __init__(self) -> None:
         super(TestFs, self).__init__()
         self.hello_name = b"message"
-        self.hello_inode = cast(InodeT, pyfuse3.ROOT_INODE + 1)
+        self.hello_inode = pyfuse3.ROOT_INODE + 1
         self.hello_data = b"hello world\n"
 
     async def getattr(self, inode: InodeT, ctx: RequestContext | None = None) -> EntryAttributes:

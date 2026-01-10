@@ -216,7 +216,7 @@ class Fs(pyfuse3.Operations):
     def __init__(self, cross_process):
         super(Fs, self).__init__()
         self.hello_name = b"message"
-        self.hello_inode = cast(InodeT, pyfuse3.ROOT_INODE + 1)
+        self.hello_inode = pyfuse3.ROOT_INODE + 1
         self.hello_data = b"hello world\n"
         self.status = cross_process
         self.lookup_cnt = 0

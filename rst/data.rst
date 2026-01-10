@@ -43,35 +43,32 @@
 
 .. autoexception:: FUSEError
 
-.. autoclass currently doesn't work for NewTypes
-.. https://github.com/sphinx-doc/sphinx/issues/11552
-
 .. class:: FileHandleT
 
-   A subclass of `int`, representing an integer file handle produced by a
+   A type alias for `int`, representing an integer file handle produced by a
    `~Operations.create`, `~Operations.open`, or `~Operations.opendir` call.
 
 .. class:: FileNameT
 
-   A subclass of `bytes`, representing a file name, with no embedded
+   A type alias for `bytes`, representing a file name, with no embedded
    zero-bytes (``\0``).
 
 .. class:: FlagT
 
-   A subclass of `int`, representing flags modifying the behavior of an
+   A type alias for `int`, representing flags modifying the behavior of an
    operation.
 
 .. class:: InodeT
 
-   A subclass of `int`, representing an inode number.
+   A type alias for `int`, representing an inode number.
 
 .. class:: ModeT
 
-   A subclass of `int`, representing a file mode.
+   A type alias for `int`, representing a file mode.
 
 .. class:: XAttrNameT
 
-   A subclass of `bytes`, representing an extended attribute name, with no
+   A type alias for `bytes`, representing an extended attribute name, with no
    embedded zero-bytes (``\0``).
 
 .. autoclass:: RequestContext

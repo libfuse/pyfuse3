@@ -49,7 +49,6 @@ from argparse import ArgumentParser, Namespace
 from collections import defaultdict
 from collections.abc import Sequence
 from os import fsdecode, fsencode
-from typing import cast
 
 import trio
 
@@ -283,7 +282,7 @@ class Operations(pyfuse3.Operations):
         path_new = os.path.join(parent_new, name_new_str)
         try:
             os.rename(path_old, path_new)
-            inode = cast(InodeT, os.lstat(path_new).st_ino)
+            inode = os.lstat(path_new).st_ino
         except OSError as exc:
             assert exc.errno is not None
             raise FUSEError(exc.errno)
@@ -461,7 +460,7 @@ class Operations(pyfuse3.Operations):
         self._inode_fd_map[inode] = fd
         self._fd_inode_map[fd] = inode
         self._fd_open_count[fd] = 1
-        return FileInfo(fh=cast(FileHandleT, fd))
+        return FileInfo(fh=fd)
 
     async def create(
         self, parent_inode: InodeT, name: bytes, mode: int, flags: int, ctx: RequestContext
@@ -477,7 +476,7 @@ class Operations(pyfuse3.Operations):
         self._inode_fd_map[attr.st_ino] = fd
         self._fd_inode_map[fd] = attr.st_ino
         self._fd_open_count[fd] = 1
-        return (FileInfo(fh=cast(FileHandleT, fd)), attr)
+        return (FileInfo(fh=fd), attr)
 
     async def read(self, fh: FileHandleT, off: int, size: int) -> bytes:
         os.lseek(fh, off, os.SEEK_SET)

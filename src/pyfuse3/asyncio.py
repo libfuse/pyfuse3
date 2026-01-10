@@ -41,7 +41,7 @@ def current_trio_token() -> str:
     return 'asyncio'
 
 
-_read_futures = collections.defaultdict(set)
+_read_futures: dict[FileHandleT, set[asyncio.Future[Any]]] = collections.defaultdict(set)
 
 
 async def wait_readable(fd: FileHandleT) -> None:
