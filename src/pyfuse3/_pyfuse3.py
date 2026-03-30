@@ -240,7 +240,7 @@ class Operations:
         '''Remove a (possibly special) file.
 
         This method must remove the (special or regular) file *name* from the
-        direcory with inode *parent_inode*.  *ctx* will be a `RequestContext`
+        directory with inode *parent_inode*.  *ctx* will be a `RequestContext`
         instance.
 
         If the inode associated with *file* (i.e., not the *parent_inode*) has a
@@ -260,7 +260,7 @@ class Operations:
     async def rmdir(self, parent_inode: InodeT, name: FileNameT, ctx: "RequestContext") -> None:
         '''Remove directory *name*.
 
-        This method must remove the directory *name* from the direcory with
+        This method must remove the directory *name* from the directory with
         inode *parent_inode*. *ctx* will be a `RequestContext` instance. If
         there are still entries in the directory, the method should raise
         ``FUSEError(errno.ENOTEMPTY)``.
@@ -275,7 +275,7 @@ class Operations:
 
         (Since hard links to directories are not allowed by POSIX, this method
         is not required to check if there are still other directory entries
-        refering to the same inode. This conveniently avoids the ambigiouties
+        referring to the same inode. This conveniently avoids the ambigiouties
         associated with the ``.`` and ``..`` entries).
         '''
 
@@ -350,7 +350,7 @@ class Operations:
         new_name: FileNameT,
         ctx: "RequestContext",
     ) -> "EntryAttributes":
-        '''Create directory entry *name* in *parent_inode* refering to *inode*.
+        '''Create directory entry *name* in *parent_inode* referring to *inode*.
 
         *ctx* will be a `RequestContext` instance.
 

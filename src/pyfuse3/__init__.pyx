@@ -801,7 +801,7 @@ def terminate():
 def close(unmount=True):
     '''Clean up and ensure filesystem is unmounted
 
-    If *unmount* is False, only clean up operations are peformed, but the file
+    If *unmount* is False, only clean up operations are performed, but the file
     system is not explicitly unmounted.
 
     Normally, the filesystem is unmounted by the user calling umount(8) or
