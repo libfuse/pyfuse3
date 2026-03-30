@@ -275,7 +275,7 @@ class Operations:
 
         (Since hard links to directories are not allowed by POSIX, this method
         is not required to check if there are still other directory entries
-        referring to the same inode. This conveniently avoids the ambigiouties
+        referring to the same inode. This conveniently avoids the ambiguities
         associated with the ``.`` and ``..`` entries).
         '''
 
