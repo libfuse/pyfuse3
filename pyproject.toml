@@ -91,5 +91,9 @@ exclude = [ "**/__pycache__",
 # test, it adds the tests/ directory to sys.path)
 extraPaths = ['test']
 
+[tool.codespell]
+skip = '.git,*.html,developer-notes/'
+ignore-words-list = 're-use,re-used'
+
 [tool.ruff.format]
 quote-style = "preserve"
