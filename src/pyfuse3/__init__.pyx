@@ -557,7 +557,7 @@ def syncfs(path):
     '''Sync filesystem mounted at *path*
 
     This is a Python interface to the syncfs(2) system call. There is no
-    particular relation to libfuse, it is provided by pyfuse3 as a convience.
+    particular relation to libfuse, it is provided by pyfuse3 as a convenience.
     '''
 
     cdef int ret
@@ -791,7 +791,7 @@ def terminate():
 
     When called by a thread different from the one that runs the main loop, the call must
     be wrapped with `trio.from_thread.run_sync`. The necessary *trio_token* argument can
-    (for convience) be retrieved from the `trio_token` module attribute.
+    (for convenience) be retrieved from the `trio_token` module attribute.
     '''
 
     fuse_session_exit(session)
@@ -801,7 +801,7 @@ def terminate():
 def close(unmount=True):
     '''Clean up and ensure filesystem is unmounted
 
-    If *unmount* is False, only clean up operations are peformed, but the file
+    If *unmount* is False, only clean up operations are performed, but the file
     system is not explicitly unmounted.
 
     Normally, the filesystem is unmounted by the user calling umount(8) or
