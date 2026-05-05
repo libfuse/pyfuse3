@@ -21,6 +21,7 @@ import errno
 import logging
 import multiprocessing
 import os
+import select
 import stat
 import threading
 import time
@@ -34,6 +35,7 @@ from pyfuse3 import (
     FileInfo,
     FUSEError,
     InodeT,
+    PollHandle,
     ReaddirToken,
     RequestContext,
 )
@@ -59,11 +61,20 @@ def get_mp():
 
 @pytest.fixture()
 def testfs(tmpdir):
+    yield from _mount_fs(tmpdir, Fs)
+
+
+@pytest.fixture()
+def pollfs(tmpdir):
+    yield from _mount_fs(tmpdir, PollTestFs)
+
+
+def _mount_fs(tmpdir, fs_class):
     mnt_dir = str(tmpdir)
     mp = get_mp()
     with mp.Manager() as mgr:
         cross_process = mgr.Namespace()
-        mount_process = mp.Process(target=run_fs, args=(mnt_dir, cross_process))
+        mount_process = mp.Process(target=run_fs, args=(mnt_dir, cross_process, fs_class))
 
         mount_process.start()
         try:
@@ -116,6 +127,38 @@ def test_notify_store(testfs):
         fs_state.read_called = False
         assert fh.read() == 'hello world\n'
         assert not fs_state.read_called
+
+
+def test_notify_poll(pollfs):
+    (mnt_dir, fs_state) = pollfs
+    path = os.path.join(mnt_dir, 'message')
+
+    with open(path, 'rb', buffering=0) as fh:
+        poller = select.poll()
+        poller.register(fh.fileno(), select.POLLPRI)
+
+        events = []
+
+        def poll_wait():
+            events.extend(poller.poll(5000))
+
+        thread = threading.Thread(target=poll_wait)
+        thread.start()
+
+        deadline = time.monotonic() + 5
+        while time.monotonic() < deadline and not fs_state.poll_handle_received:
+            time.sleep(0.01)
+
+        assert fs_state.poll_called
+        assert fs_state.poll_handle_received
+        assert not events
+
+        pyfuse3.setxattr(path, 'command', b'poll_ready')
+        thread.join(5)
+        assert not thread.is_alive()
+        assert events
+        assert events[0][0] == fh.fileno()
+        assert events[0][1] & select.POLLPRI
 
 
 def test_entry_timeout(testfs):
@@ -267,11 +310,57 @@ class Fs(pyfuse3.Operations):
 
         elif value == b'terminate':
             pyfuse3.terminate()
+
         else:
             raise FUSEError(errno.EINVAL)
 
 
-def run_fs(mountpoint, cross_process):
+class PollTestFs(Fs):
+    def __init__(self, cross_process):
+        super().__init__(cross_process)
+        self.poll_handle: PollHandle | None = None
+        self.status.poll_called = False
+        self.status.poll_handle_received = False
+        self.status.poll_ready = False
+
+    async def poll(
+        self,
+        inode: InodeT,
+        fh: FileHandleT,
+        poll_handle: PollHandle | None,
+        ctx: RequestContext,
+    ) -> int:
+        assert inode == self.hello_inode
+        assert fh == self.hello_inode
+
+        self.status.poll_called = True
+
+        if poll_handle is not None:
+            self.poll_handle = poll_handle
+            self.status.poll_handle_received = True
+
+        if self.status.poll_ready:
+            return select.POLLPRI
+
+        return 0
+
+    async def setxattr(self, inode, name, value, ctx):
+        if value != b"poll_ready":
+            return await super().setxattr(inode, name, value, ctx)
+
+        if inode != self.hello_inode or name != b"command":
+            raise FUSEError(errno.ENOTSUP)
+
+        self.status.poll_ready = True
+
+        if self.poll_handle is None:
+            raise FUSEError(errno.EINVAL)
+
+        self.poll_handle.notify()
+        self.poll_handle = None
+
+
+def run_fs(mountpoint, cross_process, fs_class=Fs):
     # Logging (note that we run in a new process, so we can't
     # rely on direct log capture and instead print to stdout)
     root_logger = logging.getLogger()
@@ -285,7 +374,7 @@ def run_fs(mountpoint, cross_process):
     root_logger.addHandler(handler)
     root_logger.setLevel(logging.DEBUG)
 
-    testfs = Fs(cross_process)
+    testfs = fs_class(cross_process)
     fuse_options = set(pyfuse3.default_options)
     fuse_options.add('fsname=pyfuse3_testfs')
     pyfuse3.init(testfs, mountpoint, fuse_options)
