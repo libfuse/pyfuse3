@@ -119,6 +119,8 @@ cdef extern from "<fuse_lowlevel.h>" nogil:
                            off_t offset, off_t length, fuse_file_info *fi) except *
         void (*readdirplus) (fuse_req_t req, fuse_ino_t ino, size_t size, off_t off,
                              fuse_file_info *fi) except *
+        void (*poll) (fuse_req_t req, fuse_ino_t ino, fuse_file_info *fi,
+                      fuse_pollhandle *ph) except *
 
 
     # Reply functions
@@ -137,6 +139,7 @@ cdef extern from "<fuse_lowlevel.h>" nogil:
                         fuse_buf_copy_flags flags)
     int fuse_reply_statfs(fuse_req_t req, statvfs *stbuf)
     int fuse_reply_xattr(fuse_req_t req, size_t count)
+    int fuse_reply_poll(fuse_req_t req, unsigned revents)
 
     size_t fuse_add_direntry(fuse_req_t req, const_char *buf, size_t bufsize,
                              const_char *name, struct_stat *stbuf,
@@ -157,6 +160,7 @@ cdef extern from "<fuse_lowlevel.h>" nogil:
                                    fuse_buf_copy_flags flags)
     int fuse_lowlevel_notify_retrieve(fuse_session *se, fuse_ino_t ino,
                                       size_t size, off_t offset, void *cookie)
+    int fuse_lowlevel_notify_poll(fuse_pollhandle *ph)
 
     # Utility functions
     void *fuse_req_userdata(fuse_req_t req)

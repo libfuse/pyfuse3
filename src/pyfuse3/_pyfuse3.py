@@ -35,6 +35,7 @@ if TYPE_CHECKING:
         EntryAttributes,
         FileInfo,
         FUSEError,
+        PollHandle,
         ReaddirToken,
         RequestContext,
         SetattrFields,
@@ -447,6 +448,44 @@ class Operations:
 
         *fh* will be an integer filehandle returned by a prior `open` or
         `create` call.
+        '''
+
+        raise FUSEError(errno.ENOSYS)
+
+    async def poll(
+        self,
+        inode: InodeT,
+        fh: FileHandleT,
+        poll_handle: Optional["PollHandle"],
+        ctx: "RequestContext",
+    ) -> int:
+        '''Check IO readiness on an open file.
+
+        This method is called when a process performs :manpage:`poll(2)`,
+        :manpage:`select(2)` or :manpage:`epoll_wait(2)` on a file descriptor
+        backed by *fh* (returned by a prior `open` or `create` call). *inode*
+        identifies the inode that *fh* refers to.
+
+        The method will return the bitwise-or of the currently active poll
+        events, for example `select.POLLIN`, `select.POLLOUT` or
+        `select.POLLPRI`. If no events are currently ready, it will return `0`.
+
+        If *poll_handle* is `None`, the kernel has not provided a notification
+        handle for this request. The filesystem should only return the current
+        readiness mask and must not attempt to store a handle or arrange a later
+        `PollHandle.notify` call for this poll request.
+
+        If *poll_handle* is not `None`, the kernel has provided a notification
+        handle that may be used to wake waiters if readiness changes after this
+        method returns. The filesystem may store the handle and later call
+        `PollHandle.notify` when a relevant event becomes available. Each
+        `~Operations.poll` call produces a fresh handle; storing a new handle
+        should replace any previously held one, allowing the old handle to be
+        destroyed.
+
+        If this method raises `FUSEError(errno.ENOSYS)` (the default), the
+        kernel will fall back to a default poll implementation and will not call
+        this handler again for the lifetime of the mount.
         '''
 
         raise FUSEError(errno.ENOSYS)
