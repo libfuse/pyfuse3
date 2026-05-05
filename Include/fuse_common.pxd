@@ -42,6 +42,11 @@ cdef extern from * nogil: # fuse_common.h should not be included
     struct fuse_chan:
         pass
 
+    struct fuse_pollhandle:
+        pass
+
+    void fuse_pollhandle_destroy(fuse_pollhandle *ph)
+
     struct fuse_loop_config:
        int clone_fd
        unsigned max_idle_threads

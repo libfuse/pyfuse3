@@ -504,6 +504,78 @@ cdef class FUSEError(Exception):
         return strerror(self.errno_)
 
 
+@cython.freelist(10)
+cdef class PollHandle:
+    '''
+    Opaque handle for delivering poll(2) readiness notifications.
+
+    Instances of this class are created by pyfuse3 and passed to
+    `Operations.poll`. The filesystem may keep a reference and later
+    call `PollHandle.notify` on the handle to wake up any process currently
+    blocked in :manpage:`poll(2)`, :manpage:`select(2)` or
+    :manpage:`epoll_wait(2)` for the corresponding file descriptor.
+
+    A single notification is sufficient to clear all pending waiters;
+    filesystems should normally discard the handle after notifying.
+
+    The underlying ``fuse_pollhandle`` is automatically destroyed when
+    the Python object is garbage collected, so filesystems should simply
+    drop the reference when the notification is no longer needed.
+    '''
+
+    cdef fuse_pollhandle *_ph
+
+    def __cinit__(self):
+        self._ph = NULL
+
+    def __init__(self):
+        raise TypeError('PollHandle cannot be instantiated directly')
+
+    @staticmethod
+    cdef PollHandle from_ptr(fuse_pollhandle *ph):
+        cdef PollHandle self
+
+        if ph == NULL:
+            raise ValueError('NULL fuse_pollhandle')
+
+        self = PollHandle.__new__(PollHandle)
+        self._ph = ph
+        return self
+
+    def __dealloc__(self):
+        if self._ph is not NULL:
+            fuse_pollhandle_destroy(self._ph)
+            self._ph = NULL
+
+    def __getstate__(self):
+        raise PicklingError("PollHandle instances can't be pickled")
+
+    def notify(self):
+        '''
+        Notify IO readiness for this poll handle.
+
+        After this returns, any process waiting in :manpage:`poll(2)`,
+        :manpage:`select(2)` or :manpage:`epoll_wait(2)` on the
+        corresponding file descriptor will be woken so it can re-poll
+        the filesystem for the current readiness mask.
+
+        Each `PollHandle` is intended for a single notification. After a
+        successful call, the filesystem should not call `notify_poll` again on
+        the same handle and should discard it.
+        '''
+
+        cdef int ret
+
+        if self._ph == NULL:
+            raise RuntimeError('PollHandle is no longer valid')
+
+        with nogil:
+            ret = fuse_lowlevel_notify_poll(self._ph)
+
+        if ret != 0:
+            raise OSError(-ret, 'fuse_lowlevel_notify_poll returned: ' + strerror(-ret))
+
+
 def listdir(path):
     '''Like `os.listdir`, but releases the GIL.
 

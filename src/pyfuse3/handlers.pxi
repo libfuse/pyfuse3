@@ -836,6 +836,39 @@ async def fuse_access_async (_Container c):
 
 
 
+cdef void fuse_poll (fuse_req_t req, fuse_ino_t ino, fuse_file_info *fi,
+                     fuse_pollhandle *ph):
+    cdef _Container c = _Container()
+    cdef object py_ph
+    c.req = req
+    c.ino = ino
+    if fi is NULL:
+        c.fh = 0
+    else:
+        c.fh = fi.fh
+    if ph == NULL:
+        py_ph = None
+    else:
+        py_ph = PollHandle.from_ptr(ph)
+    save_retval(fuse_poll_async(c, py_ph))
+
+async def fuse_poll_async (_Container c, object py_ph):
+    cdef int ret
+    cdef unsigned revents
+
+    ctx = get_request_context(c.req)
+    try:
+        result = await operations.poll(c.ino, c.fh, py_ph, ctx)
+    except FUSEError as e:
+        ret = fuse_reply_err(c.req, e.errno)
+    else:
+        revents = <unsigned> (result if result is not None else 0)
+        ret = fuse_reply_poll(c.req, revents)
+
+    if ret != 0:
+        log.error('fuse_poll(): fuse_reply_* failed with %s', strerror(-ret))
+
+
 cdef void fuse_create (fuse_req_t req, fuse_ino_t parent, const_char *name,
                        mode_t mode, fuse_file_info *fi):
     cdef _Container c = _Container()

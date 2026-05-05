@@ -69,6 +69,7 @@ cdef void init_fuse_ops():
     fuse_ops.create = fuse_create
     fuse_ops.forget_multi = fuse_forget_multi
     fuse_ops.write_buf = fuse_write_buf
+    fuse_ops.poll = fuse_poll
 
 cdef make_fuse_args(args, fuse_args* f_args):
     cdef char* arg
