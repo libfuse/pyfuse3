@@ -74,9 +74,7 @@ def _mount_fs(tmpdir, fs_class):
     mp = get_mp()
     with mp.Manager() as mgr:
         cross_process = mgr.Namespace()
-        mount_process = mp.Process(
-            target=run_fs, args=(mnt_dir, cross_process, fs_class)
-        )
+        mount_process = mp.Process(target=run_fs, args=(mnt_dir, cross_process, fs_class))
 
         mount_process.start()
         try:
