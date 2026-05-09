@@ -4,6 +4,24 @@
 
 .. currentmodule:: pyfuse3
 
+Unreleased Changes
+==================
+
+* Filesystems may now define a `~Operations.poll` method to support the
+  ``epoll`` and `select` system calls.
+
+* The `FileHandleT` and `InodeT` types are no longer declared as *NewTypes* but
+  are now simply aliases for *int*. This should make it easier to write type
+  annotations.
+
+* Future releases of pyfuse will be signed with signify rather than GPG.
+  The public key to verify the signature of a the next version will
+  always be included in the previous versions, so this version already
+  ships the public key that will be used to sign the next versions,
+  :file:`signify/pyfuse-3.5.pub` for any bugfix releases and
+  :file:`signify/pyfuse-next.pub` for the next minor (or major)
+  release.
+
 pyfuse 3.4.2 (2026-01-06)
 =========================
 

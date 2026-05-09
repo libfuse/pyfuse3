@@ -45,14 +45,15 @@ pytest --logdebug=pyfuse3 test/
 pytest --logdebug=all test/
 ```
 
-### Type Checking and Linting
+### Pre-completion checks
 ```bash
 # Run in this order, fixing issues before proceeding to next tool:
 pyright
 mypy
-ruff check
+ruff check --fix
 ruff format
-pytest test/
+pytest --tb=short - test/
+sphinx-build -W --keep-going -b html rst doc/html
 ```
 
 ### Documentation

@@ -12,3 +12,4 @@ __pycache__
 test/.pytest_cache/
 *.egg-info
 *.pyc
+signify/*.sec

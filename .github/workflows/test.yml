@@ -51,4 +51,4 @@ jobs:
         run: uv run pytest -v -rs test/
 
       - name: Build docs
-        run: uv run sphinx-build -b html rst doc/html
+        run: uv run sphinx-build -W --keep-going -b html rst doc/html

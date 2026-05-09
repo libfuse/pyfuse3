@@ -28,6 +28,17 @@ To install a stable pyfuse3 release, ensure you have the non-Python dependencies
 installed and then use your favorite Python package manager to install pyfuse3 from
 PyPI (e.g. ``pip install pyfuse3``).
 
+Pyfuse release tarballs are signed with
+`signify <https://github.com/aperezdc/signify>`_. You can validate the signature with::
+
+  signify -V -m pyfuse3-A.B.C.tar.gz -p <public-key>
+
+The public key needs to be retrieved from a trustworthy source for the first installation.
+Afterwards, the trust chain is self-sustaining: each release tarball contains the public key for the
+release in its ``signify/`` directory. Bugfix releases (``A.B.C``) will be signed
+by :file:`pyfuse-A.B.pub`. New major or minor releases (``A.B.0``) will be signed by
+:file:`pyfuse-next.pub`.
+
 
 Installing from Git / Developing pyfuse3
 ========================================
