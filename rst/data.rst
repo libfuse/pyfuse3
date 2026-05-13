@@ -198,3 +198,7 @@
 .. autoclass:: ReaddirToken
 
    An identifier for a particular `~Operations.readdir` invocation.
+
+.. autoclass:: PollHandle
+
+   .. automethod:: notify

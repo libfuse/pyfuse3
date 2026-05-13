@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pyright:*)",
+      "mcp__plugin_serena_serena__read_file",
+      "mcp__plugin_serena_serena__create_text_file",
+      "mcp__plugin_serena_serena__replace_content"
+    ]
+  }
+}

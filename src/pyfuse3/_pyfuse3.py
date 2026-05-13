@@ -467,8 +467,8 @@ class Operations:
         identifies the inode that *fh* refers to.
 
         The method will return the bitwise-or of the currently active poll
-        events, for example `select.POLLIN`, `select.POLLOUT` or
-        `select.POLLPRI`. If no events are currently ready, it will return `0`.
+        events, for example ``select.POLLIN``, ``select.POLLOUT`` or
+        ``select.POLLPRI``. If no events are currently ready, it will return ``0``.
 
         If *poll_handle* is `None`, the kernel has not provided a notification
         handle for this request. The filesystem should only return the current
@@ -483,7 +483,7 @@ class Operations:
         should replace any previously held one, allowing the old handle to be
         destroyed.
 
-        If this method raises `FUSEError(errno.ENOSYS)` (the default), the
+        If this method raises ``FUSEError(errno.ENOSYS)`` (the default), the
         kernel will fall back to a default poll implementation and will not call
         this handler again for the lifetime of the mount.
         '''

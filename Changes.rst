@@ -7,8 +7,8 @@
 pyfuse 3.4.2 (2026-01-06)
 =========================
 
-* Removed the `pyfuse3_asyncio` module. This has been renamed to
-  `pyfuse3.asyncio` for quite some time.
+* Removed the ``pyfuse3_asyncio`` module. This has been renamed to
+  :mod:`pyfuse3.asyncio` for quite some time.
 
 * Fixed a test failure in test_examples.py
 

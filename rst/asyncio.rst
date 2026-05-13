@@ -1,5 +1,7 @@
 .. _asyncio:
 
+.. py:module:: pyfuse3.asyncio
+
 =================
  asyncio Support
 =================

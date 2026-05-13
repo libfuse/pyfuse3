@@ -560,8 +560,8 @@ cdef class PollHandle:
         the filesystem for the current readiness mask.
 
         Each `PollHandle` is intended for a single notification. After a
-        successful call, the filesystem should not call `notify_poll` again on
-        the same handle and should discard it.
+        successful call, the filesystem should discard the handle and not
+        call this method again.
         '''
 
         cdef int ret
