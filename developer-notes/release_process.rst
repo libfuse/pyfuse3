@@ -1,52 +1,31 @@
 Steps for Releasing a New Version
 ---------------------------------
 
- * Start a new changeset
- * Go through commits since last release, and document user-visible changes in
-  `Changes.rst`. Decide on an appropriate version number.
- * `export NEWVER=XX.YY.Z`
- * `export MAJOR_REV=${NEWVER%.*}`
- * When creating a new minor or major release, rotate the signing keys.
-   * `mv signify/pyfuse-{next, $MAJOR_REV}.pub`
-   * `mv $PYFUSE_SIGNING_KEYS_DIR/pyfuse-{next, $MAJOR_REV}.pub`
-   * `signify -G -n -p signify/pyfuse-next.pub -s $PYFUSE_SIGNING_KEYS_DIR/pyfuse-next.sec`
-   * `rm signify/pyfuse-<prev>.pub`
- * `git commit --all -m "Released $NEWVER"`
- * `git tag v$NEWVER`
- * `uv sync --locked`
- * `uv run sphinx-build -b html rst doc/html`
- * `uv build --sdist`
- * `signify -S -s $PYFUSE_SIGNING_KEYS_DIR/pyfuse-$MAJOR_REV.sec -m dist/pyfuse3-$NEWVER.tar.gz`
- * `uv run twine upload dist/pyfuse3-$NEWVER.tar.gz` (or `util/upload-pypi $NEWVER`)
- * `git push && git push --tags`
- * Create release on GitHub (https://github.com/libfuse/pyfuse3/releases/)
- * Send announcement to mailing list
-  * Get contributors: `git log --pretty="format:%an <%aE>" "${PREV_TAG}..v${NEWVER}" | sort -u`
+1. Start a new changeset
 
+2. Go through commits since last release, and document user-visible changes in
+  `Changes.rst`. Decide on an appropriate version number, and add the corresponding
+   release heading (The version number in this heading is what the release
+   script will use.).
 
-Announcement template:
-----------------------
+3. Make sure ``$PYFUSE_SIGNING_KEYS_DIR`` points at the directory holding the
+   signify secret keys (containing at minimum ``pyfuse-next.sec`` and
+   ``pyfuse-<current-major>.sec``).
 
-Dear all,
+4. Run ``util/make_release.py``. The script:
 
-I'm happy to announce a new release of pyfuse3, version <X.Y>.
+   * rotates the signify keys when the new version starts a new minor or
+     major release (otherwise it reuses the existing key for bugfix releases),
+   * commits ``Changes.rst`` as ``Released <X.Y.Z>`` and tags ``v<X.Y.Z>``,
+   * builds the HTML docs and the sdist via ``uv``,
+   * signs the sdist with ``signify``,
+   * writes an announcement template 
 
-pyfuse3 is a set of Python 3 bindings for `libfuse 3`_. It provides an
-asynchronous API compatible with Trio_ and asyncio_, and enables you to easily
-write a full-featured Linux filesystem in Python.
+5. Upload to PyPI: ``uv run twine upload dist/pyfuse3-<X.Y.Z>.tar.gz``.
 
-From the changelog:
+6. Push to GitHub: ``git push && git push --tags``.
 
-<paste here>
+7. Create a release on GitHub at
+   https://github.com/libfuse/pyfuse3/releases/.
 
-The following people have contributed code to this release:
-
-[PASTE HERE]
-
-As usual, the newest release can be downloaded from PyPi at
-https://pypi.python.org/pypi/pyfuse3/.
-
-Please report any bugs on the issue tracker at
-https://github.com/libfuse/pyfuse3/issues. For discussion and questions, please
-use the general FUSE mailing list (i.e., this list) or the GitHub discussion
-forum at https://github.com/libfuse/pyfuse3/discussions.
+8. Send the announcement to the FUSE mailing list.
