@@ -207,7 +207,10 @@ class Operations(pyfuse3.Operations):
                 continue
             if not pyfuse3.readdir_reply(token, fsencode(name), attr, ino):
                 break
-            self._add_path(attr.st_ino, os.path.join(path, name))
+            # A plain FUSE_READDIR (token.plus is False) takes no kernel lookup
+            # reference, so we must not bump the lookup count for it.
+            if token.plus:
+                self._add_path(attr.st_ino, os.path.join(path, name))
 
     async def unlink(self, parent_inode: InodeT, name: bytes, ctx: RequestContext) -> None:
         name_str = fsdecode(name)

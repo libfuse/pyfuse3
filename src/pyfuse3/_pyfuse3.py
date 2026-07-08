@@ -509,11 +509,27 @@ class Operations:
 
         Instead of returning the directory entries directly, the method must
         call `readdir_reply` for each directory entry. If `readdir_reply`
-        returns True, the file system must increase the lookup count for the
-        provided directory entry by one and call `readdir_reply` again for the
-        next entry (if any). If `readdir_reply` returns False, the lookup count
-        must *not* be increased and the method should return without further
-        calls to `readdir_reply`.
+        returns True, the file system should call `readdir_reply` again for the
+        next entry (if any). If `readdir_reply` returns False, the method should
+        return without further calls to `readdir_reply`.
+
+        Whether reporting an entry takes a kernel lookup reference (and so
+        requires the file system to increase that inode's lookup count) depends
+        on how the client requested the listing. This is exposed as the
+        read-only `ReaddirToken.plus` attribute:
+
+        - If *token* ``.plus`` is True (the request was ``FUSE_READDIRPLUS``,
+          which is what a normal Linux kernel always sends), then each entry for
+          which `readdir_reply` returns True takes an implicit lookup reference,
+          and the file system *must* increase that inode's lookup count by one.
+        - If *token* ``.plus`` is False (the request was a plain
+          ``FUSE_READDIR``, which some clients such as gVisor's sentry send),
+          the kernel takes no lookup reference for the reported entries, so the
+          file system must *not* increase the lookup count. Increasing it would
+          leak the inode, as no `forget` will ever balance it.
+
+        In either case, if `readdir_reply` returns False the lookup count must
+        *not* be increased for that entry.
 
         The *start_id* parameter will be either zero (in which case listing
         should begin with the first entry) or it will correspond to a value that
