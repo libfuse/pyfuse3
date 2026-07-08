@@ -87,6 +87,15 @@ def _mount_fs(tmpdir, fs_class):
             umount(mount_process, mnt_dir)
 
 
+def test_readdir(testfs):
+    (mnt_dir, fs_state) = testfs
+    # Exercises opendir + readdir inside the mounted daemon. This also runs the
+    # ``assert token.plus is True`` invariant in Fs.readdir, confirming that a
+    # normal kernel negotiates FUSE_READDIRPLUS and that ReaddirToken.plus is
+    # readable from Python.
+    assert os.listdir(mnt_dir) == ['message']
+
+
 def test_invalidate_entry(testfs):
     (mnt_dir, fs_state) = testfs
     path = os.path.join(mnt_dir, 'message')
@@ -275,6 +284,10 @@ class Fs(pyfuse3.Operations):
 
     async def readdir(self, fh: FileHandleT, start_id: int, token: ReaddirToken) -> None:
         assert fh == pyfuse3.ROOT_INODE
+        # A normal Linux kernel always negotiates FUSE_READDIRPLUS, so token.plus
+        # must be True here. The plain-readdir path (token.plus is False) can only
+        # be reached with a client that issues FUSE_READDIR, such as gVisor.
+        assert token.plus is True
         if start_id == 0:
             pyfuse3.readdir_reply(token, self.hello_name, await self.getattr(self.hello_inode), 1)
         return

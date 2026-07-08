@@ -4,6 +4,18 @@
 
 .. currentmodule:: pyfuse3
 
+Unreleased Changes
+==================
+
+* pyfuse3 no longer aborts with "Kernel too old" when the FUSE connection lacks
+  ``FUSE_CAP_READDIRPLUS``, and now answers plain ``FUSE_READDIR`` requests in
+  addition to ``FUSE_READDIRPLUS``. This lets filesystems run under FUSE clients
+  that implement only plain readdir, such as gVisor's sentry (gVisor issue
+  #3404). Filesystems that track lookup counts must consult the new read-only
+  `ReaddirToken.plus` attribute: entries returned for a plain ``FUSE_READDIR``
+  take no kernel lookup reference and must not increase the lookup count. See
+  `~Operations.readdir`.
+
 pyfuse 3.5.0 (2026-05-13)
 =========================
 
