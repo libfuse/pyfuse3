@@ -1,6 +1,15 @@
 name: Test
 
-on: [push]
+on:
+  push:
+  pull_request:
+    branches: [main]
+
+# For a PR branch, the push and the pull_request event trigger the same tests,
+# so keep only the most recent run for a branch.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
 
 env:
   FORCE_COLOR: 1
