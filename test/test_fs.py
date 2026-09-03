@@ -10,7 +10,6 @@ the terms of the GNU LGPL.
 '''
 
 import sys
-from typing import cast
 
 import pytest
 

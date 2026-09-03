@@ -27,7 +27,6 @@ import logging
 import os
 import stat
 from argparse import ArgumentParser, Namespace
-from typing import cast
 
 import trio
 

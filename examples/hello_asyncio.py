@@ -28,7 +28,6 @@ import logging
 import os
 import stat
 from argparse import ArgumentParser, Namespace
-from typing import cast
 
 import pyfuse3
 import pyfuse3.asyncio
