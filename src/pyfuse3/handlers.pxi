@@ -31,8 +31,11 @@ cdef class _Container:
     cdef uint64_t fh
 
 cdef void fuse_init (void *userdata, fuse_conn_info *conn):
+    log.debug('FUSE protocol version %d.%d, kernel capabilities: 0x%x',
+              conn.proto_major, conn.proto_minor, conn.capable)
     if not conn.capable & FUSE_CAP_READDIRPLUS:
-        raise RuntimeError('Kernel too old, pyfuse3 requires kernel 3.9 or newer!')
+        # E.g. macFUSE. The kernel will send plain readdir requests, see fuse_readdir().
+        log.debug('Kernel does not support readdirplus, falling back to readdir.')
     conn.want &= ~(<unsigned> FUSE_CAP_READDIRPLUS_AUTO)
 
     if (operations.supports_dot_lookup and
@@ -564,6 +567,12 @@ cdef class ReaddirToken:
     cdef char *buf_start
     cdef char *buf
     cdef size_t size
+    # True if the token belongs to a readdirplus request, False for a
+    # plain readdir request.
+    cdef bint plus
+    # For plain readdir requests: inodes of the reported entries (other
+    # than . and ..), see fuse_readdir_async().
+    cdef object inodes
 
 cdef void fuse_readdirplus (fuse_req_t req, fuse_ino_t ino, size_t size, off_t off,
                             fuse_file_info *fi):
@@ -581,6 +590,8 @@ async def fuse_readdirplus_async (_Container c):
     token.buf_start = NULL
     token.size = c.size
     token.req = c.req
+    token.plus = True
+    token.inodes = None
 
     try:
         await operations.readdir(c.fh, c.off, token)
@@ -596,6 +607,52 @@ async def fuse_readdirplus_async (_Container c):
 
     if ret != 0:
         log.error('fuse_readdirplus(): fuse_reply_* failed with %s', strerror(-ret))
+
+
+cdef void fuse_readdir (fuse_req_t req, fuse_ino_t ino, size_t size, off_t off,
+                        fuse_file_info *fi):
+    global py_retval
+    cdef _Container c = _Container()
+    c.req = req
+    c.size = size
+    c.off = off
+    c.fh = fi.fh
+    save_retval(fuse_readdir_async(c))
+
+async def fuse_readdir_async (_Container c):
+    # The kernel sends plain readdir requests (instead of readdirplus
+    # requests) if it does not support readdirplus, e.g. macFUSE.
+    #
+    # The `Operations.readdir` API has readdirplus semantics: the file system
+    # increases the lookup count of every reported entry. However, the kernel
+    # does not perform lookups for the entries returned by a plain readdir
+    # request, so the lookup counts are decreased again with a `forget` call
+    # after the request has been answered.
+    cdef int ret
+    cdef ReaddirToken token = ReaddirToken()
+    token.buf_start = NULL
+    token.size = c.size
+    token.req = c.req
+    token.plus = False
+    token.inodes = []
+
+    try:
+        await operations.readdir(c.fh, c.off, token)
+    except FUSEError as e:
+        ret = fuse_reply_err(c.req, e.errno)
+    else:
+        if token.buf_start == NULL:
+            ret = fuse_reply_buf(c.req, NULL, 0)
+        else:
+            ret = fuse_reply_buf(c.req, token.buf_start, c.size - token.size)
+    finally:
+        stdlib.free(token.buf_start)
+
+    if ret != 0:
+        log.error('fuse_readdir(): fuse_reply_* failed with %s', strerror(-ret))
+
+    if token.inodes:
+        await operations.forget([(ino, 1) for ino in token.inodes])
 
 
 cdef void fuse_releasedir (fuse_req_t req, fuse_ino_t ino, fuse_file_info *fi):
@@ -655,7 +712,17 @@ async def fuse_statfs_async (_Container c):
     try:
         stats = <StatvfsData?> await operations.statfs(ctx)
     except FUSEError as e:
-        ret = fuse_reply_err(c.req, e.errno)
+        if e.errno == errno.ENOSYS:
+            # Reply with the same default values that libfuse uses for file
+            # systems that do not implement statfs at all. The kernel does not
+            # handle ENOSYS for this request in a useful way (on macOS, it
+            # results in most other operations failing with ENOSYS as well).
+            stats = StatvfsData()
+            stats.f_bsize = 512
+            stats.f_namemax = 255
+            ret = fuse_reply_statfs(c.req, &stats.stat)
+        else:
+            ret = fuse_reply_err(c.req, e.errno)
     else:
         ret = fuse_reply_statfs(c.req, &stats.stat)
 
@@ -687,13 +754,18 @@ async def fuse_setxattr_async (_Container c, name, value):
         fuse_reply_err(c.req, 0)
         return
 
+    # macOS passes through flags that only concern the setxattr(2) call
+    # itself. Ignore them (on other platforms, they are defined as zero).
+    flags = c.flags & ~(libc_extra.XATTR_NOFOLLOW | libc_extra.XATTR_NODEFAULT |
+                        libc_extra.XATTR_NOSECURITY)
+
     # Make sure we know all the flags
-    if c.flags & ~(libc_extra.XATTR_CREATE | libc_extra.XATTR_REPLACE):
-        raise ValueError('unknown flag(s): %o' % c.flags)
+    if flags & ~(libc_extra.XATTR_CREATE | libc_extra.XATTR_REPLACE):
+        raise ValueError('unknown flag(s): %o' % flags)
 
     ctx = get_request_context(c.req)
     try:
-        if c.flags & libc_extra.XATTR_CREATE: # Attribute must not exist
+        if flags & libc_extra.XATTR_CREATE: # Attribute must not exist
             try:
                 await operations.getxattr(c.ino, name, ctx)
             except FUSEError as e:
@@ -702,7 +774,7 @@ async def fuse_setxattr_async (_Container c, name, value):
             else:
                 raise FUSEError(errno.EEXIST)
 
-        elif c.flags & libc_extra.XATTR_REPLACE: # Attribute must exist
+        elif flags & libc_extra.XATTR_REPLACE: # Attribute must exist
             await operations.getxattr(c.ino, name, ctx)
 
         await operations.setxattr(c.ino, name, value, ctx)

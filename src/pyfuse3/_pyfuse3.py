@@ -528,6 +528,12 @@ class Operations:
         required. However, if they are reported the filesystem *must not*
         increase the lookup count for the corresponding inodes (even if
         `readdir_reply` returns True).
+
+        If the kernel does not support *readdirplus* requests (this is the case
+        for macFUSE), it does not perform lookups for the reported entries. In
+        this case, pyfuse3 calls `forget` for the reported entries right after
+        this method has returned, so that the lookup counts are decreased
+        again.
         '''
 
         raise FUSEError(errno.ENOSYS)
@@ -557,6 +563,11 @@ class Operations:
         *ctx* will be a `RequestContext` instance.
 
         The method must return an appropriately filled `StatvfsData` instance.
+
+        If this method raises ``FUSEError(errno.ENOSYS)`` (the default), pyfuse3
+        replies with the same default values that libfuse uses for file systems
+        that do not implement this request: a block size of 512 bytes, a maximum
+        file name length of 255 bytes and zero for everything else.
         '''
 
         raise FUSEError(errno.ENOSYS)

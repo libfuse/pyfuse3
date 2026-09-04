@@ -18,6 +18,7 @@ if __name__ == '__main__':
 
 import errno
 import os
+import platform
 import tempfile
 from copy import copy
 from pickle import PicklingError
@@ -39,7 +40,14 @@ def test_listdir():
 def test_sup_groups():
     gids = pyfuse3.get_sup_groups(os.getpid())
     gids2 = set(os.getgroups())
-    assert gids == gids2
+    if platform.system() == 'Darwin':
+        # The kernel stores at most 16 group ids in the process credentials
+        # (which is what get_sup_groups() returns), while os.getgroups() also
+        # returns the groups that macOS resolves through Open Directory.
+        assert gids
+        assert gids <= gids2
+    else:
+        assert gids == gids2
 
 
 def test_syncfs():
@@ -54,11 +62,13 @@ def _getxattr_helper(path, name):
         errno = exc.errno
         value = None
 
-    if not hasattr(os, 'getxattr'):
+    # Only available on Linux
+    os_getxattr = getattr(os, 'getxattr', None)
+    if os_getxattr is None:
         return value
 
     try:
-        value2 = os.getxattr(path, name)
+        value2 = os_getxattr(path, name)
     except OSError as exc:
         assert exc.errno == errno
     else:
@@ -89,13 +99,15 @@ def test_xattr():
             raise
         assert _getxattr_helper(fh.name, key) == value
 
-        if not hasattr(os, 'setxattr'):
+        # Only available on Linux
+        os_setxattr = getattr(os, 'setxattr', None)
+        if os_setxattr is None:
             return
 
         key = 'user.another_new_attribute'
         assert _getxattr_helper(fh.name, key) is None
         value = b'a nice little bytestring, but slightly modified'
-        os.setxattr(fh.name, key, value)
+        os_setxattr(fh.name, key, value)
         assert _getxattr_helper(fh.name, key) == value
 
 
