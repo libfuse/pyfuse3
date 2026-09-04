@@ -4,6 +4,23 @@
 
 .. currentmodule:: pyfuse3
 
+Unreleased Changes
+==================
+
+* Added support for macOS (using the libfuse 3 library provided by macFUSE 5, tested with
+  macFUSE 5.1.3). See :doc:`platforms` for the differences to Linux.
+
+* If the kernel does not support *readdirplus* requests (e.g. macFUSE), pyfuse3 now falls back
+  to plain *readdir* requests (and calls `~Operations.forget` for the reported entries, so that
+  the lookup count semantics of `~Operations.readdir` stay the same). Previously, pyfuse3
+  refused to work with such kernels.
+
+* If `~Operations.statfs` raises ``FUSEError(errno.ENOSYS)``, pyfuse3 now replies with the same
+  default values that libfuse uses for file systems that do not implement *statfs*, instead of
+  passing the error to the kernel.
+
+* `syncfs` and `get_sup_groups` now also work on macOS.
+
 pyfuse 3.5.0 (2026-05-13)
 =========================
 

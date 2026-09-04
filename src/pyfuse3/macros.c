@@ -41,13 +41,3 @@ the terms of the GNU LGPL.
 #define SET_BIRTHTIME_NS(stbuf, val) ((stbuf)->st_birthtimespec.tv_nsec = (val))
 #endif
 
-
-#if PLATFORM == PLATFORM_LINUX || PLATFORM == PLATFORM_BSD
-#define ASSIGN_DARWIN(x,y)
-#define ASSIGN_NOT_DARWIN(x,y) ((x) = (y))
-#elif PLATFORM == PLATFORM_DARWIN
-#define ASSIGN_DARWIN(x,y) ((x) = (y))
-#define ASSIGN_NOT_DARWIN(x,y)
-#else
-#error This should not happen
-#endif
