@@ -15,11 +15,13 @@ from setuptools.build_meta import *  # noqa: F403
 def pkg_config(pkg, cflags=True, ldflags=False, min_ver=None):
     """Frontend to pkg-config"""
 
+    PKG_CONFIG = os.environ.get('PKG_CONFIG', 'pkg-config').split()
+
     if min_ver:
-        cmd = ['pkg-config', pkg, '--atleast-version', min_ver]
+        cmd = PKG_CONFIG + [pkg, '--atleast-version', min_ver]
 
         if subprocess.call(cmd) != 0:
-            cmd = ['pkg-config', '--modversion', pkg]
+            cmd = PKG_CONFIG + ['--modversion', pkg]
             proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
             version = proc.communicate()[0].strip()
             if not version:
@@ -29,7 +31,7 @@ def pkg_config(pkg, cflags=True, ldflags=False, min_ver=None):
                     '%s version too old (found: %s, required: %s)' % (pkg, version, min_ver)
                 )
 
-    cmd = ['pkg-config', pkg]
+    cmd = PKG_CONFIG + [pkg]
     if cflags:
         cmd.append('--cflags')
     if ldflags:
