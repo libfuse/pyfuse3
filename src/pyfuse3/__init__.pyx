@@ -13,6 +13,9 @@ cdef extern from "pyfuse3.h":
         PLATFORM_LINUX
         PLATFORM_BSD
         PLATFORM_DARWIN
+    enum:
+        RENAME_EXCHANGE
+        RENAME_NOREPLACE
 
 ###########
 # C IMPORTS
@@ -21,12 +24,12 @@ cdef extern from "pyfuse3.h":
 from fuse_lowlevel cimport *
 from .macros cimport *
 from posix.stat cimport struct_stat, S_IFMT, S_IFDIR, S_IFREG
-from posix.types cimport mode_t, dev_t, off_t
+from posix.types cimport mode_t, dev_t, off_t, gid_t, pid_t
 from libc.stdint cimport uint32_t
 from libc.stdlib cimport const_char
 from libc cimport stdlib, string, errno
 from posix cimport unistd
-from libc.errno cimport EACCES, ETIMEDOUT, EPROTO, EINVAL, ENOMSG, ENOATTR
+from libc.errno cimport EACCES, ETIMEDOUT, EPROTO, EINVAL, ENOMSG, ENOATTR, ENOSYS
 from posix.unistd cimport getpid
 from posix.time cimport timespec
 from cpython.bytes cimport (PyBytes_AsStringAndSize, PyBytes_FromStringAndSize,
@@ -42,12 +45,6 @@ cimport libc_extra
 # EXTERNAL DEFINITIONS #
 ########################
 
-
-cdef extern from "<linux/fs.h>" nogil:
-  enum:
-    RENAME_EXCHANGE
-    RENAME_NOREPLACE
-
 cdef extern from "Python.h" nogil:
     int PY_SSIZE_T_MAX
 
@@ -60,6 +57,7 @@ from queue import Queue
 import logging
 import os
 import os.path
+import select
 import sys
 import trio
 import threading
@@ -84,6 +82,8 @@ cdef object mountpoint_b
 cdef fuse_session* session = NULL
 cdef fuse_lowlevel_ops fuse_ops
 cdef int session_fd
+# On macOS, the session fd is not waited on directly, see _FdReadinessProxy.
+cdef object fd_proxy = None
 cdef object py_retval
 
 cdef object _notify_queue = None
@@ -573,7 +573,7 @@ cdef class PollHandle:
             ret = fuse_lowlevel_notify_poll(self._ph)
 
         if ret != 0:
-            raise OSError(-ret, 'fuse_lowlevel_notify_poll returned: ' + strerror(-ret))
+            raise _notify_error(ret, 'fuse_lowlevel_notify_poll')
 
 
 def listdir(path):
@@ -636,7 +636,7 @@ def syncfs(path):
 
     fd = os.open(path, flags=os.O_DIRECTORY)
     try:
-        ret = libc_extra.syncfs(fd)
+        ret = libc_extra.syncfs_p(fd)
 
         if ret != 0:
             raise OSError(errno.errno, strerror(errno.errno), path)
@@ -775,7 +775,13 @@ def getxattr(path, name, size_t size_guess=128, namespace='user'):
         stdlib.free(buf)
 
 
-default_options = frozenset(('default_permissions',))
+if PLATFORM == PLATFORM_DARWIN:
+    # Without noappledouble, macOS creates AppleDouble (._*) files on the file
+    # system whenever it fails to store extended attributes (e.g. because the
+    # file system does not implement them).
+    default_options = frozenset(('default_permissions', 'noappledouble'))
+else:
+    default_options = frozenset(('default_permissions',))
 
 def init(ops, mountpoint, options=default_options):
     '''Initialize and mount FUSE file system
@@ -797,6 +803,11 @@ def init(ops, mountpoint, options=default_options):
     (in `mount.c <https://github.com/libfuse/libfuse/blob/fuse-3.2.6/lib/mount.c#L80>`_)
     and ``struct fuse_opt fuse_ll_opts[]``
     (in `fuse_lowlevel_c <https://github.com/libfuse/libfuse/blob/fuse-3.2.6/lib/fuse_lowlevel.c#L2572>`_).
+
+    On macOS, `default_options` additionally contains ``noappledouble``, which
+    prevents macOS from creating AppleDouble (``._*``) files on the file
+    system. The macFUSE specific mount options are described in the `macFUSE
+    wiki <https://github.com/macfuse/macfuse/wiki/Mount-Options>`_.
     '''
 
     log.debug('Initializing pyfuse3')
@@ -811,6 +822,7 @@ def init(ops, mountpoint, options=default_options):
     global mountpoint_b
     global session
     global session_fd
+    global fd_proxy
     global worker_data
 
     worker_data = _WorkerData()
@@ -831,6 +843,8 @@ def init(ops, mountpoint, options=default_options):
         raise RuntimeError('fuse_session_mount failed')
 
     session_fd = fuse_session_fd(session)
+    if PLATFORM == PLATFORM_DARWIN:
+        fd_proxy = _FdReadinessProxy(session_fd)
 
 
 @async_wrapper
@@ -867,7 +881,10 @@ def terminate():
     '''
 
     fuse_session_exit(session)
-    trio.lowlevel.notify_closing(session_fd)
+    if fd_proxy is None:
+        trio.lowlevel.notify_closing(session_fd)
+    else:
+        trio.lowlevel.notify_closing(fd_proxy.fd)
 
 
 def close(unmount=True):
@@ -889,15 +906,40 @@ def close(unmount=True):
     the filesystem even if *unmount* is True.
     '''
 
+    cdef int res
+    cdef char *cpath
+
     global mountpoint_b
     global session
+    global fd_proxy
 
-    if unmount:
+    # On macOS, libfuse unmounts asynchronously through the DiskArbitration
+    # framework, and the unmount does not happen if the process terminates
+    # before it is complete. Therefore, pyfuse3 unmounts synchronously with
+    # unmount(2) instead. This has to be done after the session has been
+    # destroyed (which closes the FUSE device): the file system can no longer
+    # serve requests, and as long as the device is open, the kernel waits for
+    # the file system to answer the requests generated by the unmount.
+    if unmount and PLATFORM != PLATFORM_DARWIN:
         log.debug('Calling fuse_session_unmount')
         fuse_session_unmount(session)
 
+    if fd_proxy is not None:
+        fd_proxy.stop()
+        fd_proxy = None
+
     log.debug('Calling fuse_session_destroy')
     fuse_session_destroy(session)
+
+    if unmount and PLATFORM == PLATFORM_DARWIN:
+        log.debug('Calling unmount')
+        cpath = PyBytes_AsString(mountpoint_b)
+        with nogil:
+            res = libc_extra.force_unmount_p(cpath)
+        # EINVAL: not mounted (anymore)
+        if res != 0 and errno.errno != EINVAL:
+            log.warning('Unmounting %s failed: %s', bytes2str(mountpoint_b),
+                        strerror(errno.errno))
 
     mountpoint_b = None
     session = NULL
@@ -929,7 +971,7 @@ def invalidate_inode(fuse_ino_t inode, attr_only=False):
             ret = fuse_lowlevel_notify_inval_inode(session, inode, 0, 0)
 
     if ret != 0:
-        raise OSError(-ret, 'fuse_lowlevel_notify_inval_inode returned: ' + strerror(-ret))
+        raise _notify_error(ret, 'fuse_lowlevel_notify_inval_inode')
 
 
 def invalidate_entry(fuse_ino_t inode_p, bytes name, fuse_ino_t deleted=0):
@@ -978,14 +1020,12 @@ def invalidate_entry(fuse_ino_t inode_p, bytes name, fuse_ino_t deleted=0):
         with nogil: # might block!
             ret = fuse_lowlevel_notify_delete(session, inode_p, deleted, cname, len_)
         if ret != 0:
-            raise OSError(-ret, 'fuse_lowlevel_notify_delete returned: '
-                          + strerror(-ret))
+            raise _notify_error(ret, 'fuse_lowlevel_notify_delete')
     else:
         with nogil: # might block!
             ret = fuse_lowlevel_notify_inval_entry(session, inode_p, cname, len_)
         if ret != 0:
-            raise OSError(-ret, 'fuse_lowlevel_notify_inval_entry returned: '
-                          + strerror(-ret))
+            raise _notify_error(ret, 'fuse_lowlevel_notify_inval_entry')
 
 
 def invalidate_entry_async(inode_p, name, deleted=0, ignore_enoent=False):
@@ -1034,8 +1074,8 @@ def notify_store(inode, offset, data):
     If this function raises an exception, the store may still have completed
     partially.
 
-    If the operation is not supported by the kernel, raises `OSError`
-    with errno ENOSYS.
+    If the operation is not supported by the kernel (this is the case for
+    macFUSE), raises `OSError` with errno ENOSYS.
     '''
 
     # This should not block, but the kernel may need to do some work so release
@@ -1065,18 +1105,34 @@ def notify_store(inode, offset, data):
 
     PyBuffer_Release(&pybuf)
     if ret != 0:
-        raise OSError(-ret, 'fuse_lowlevel_notify_store returned: ' + strerror(-ret))
+        raise _notify_error(ret, 'fuse_lowlevel_notify_store')
 
 
 def get_sup_groups(pid):
     '''Return supplementary group ids of *pid*
 
-    This function is relatively expensive because it has to read the group ids
-    from ``/proc/[pid]/status``. For the same reason, it will also not work on
-    systems that do not provide a ``/proc`` file system.
+    On Linux, this function is relatively expensive because it has to read the
+    group ids from ``/proc/[pid]/status``. For the same reason, it will also not
+    work on systems that do not provide a ``/proc`` file system. On macOS, the
+    group ids are retrieved from the kernel with :manpage:`sysctl(3)`.
 
     Returns a set.
     '''
+
+    cdef gid_t gids_c[256]
+    cdef int n
+    cdef pid_t pid_c
+
+    if PLATFORM == PLATFORM_DARWIN:
+        pid_c = pid
+        with nogil:
+            n = libc_extra.get_sup_groups_p(pid_c, gids_c, 256)
+        if n < 0:
+            raise OSError(errno.errno, strerror(errno.errno))
+        gids = set()
+        for i in range(n):
+            gids.add(gids_c[i])
+        return gids
 
     with open('/proc/%d/status' % pid, 'r') as fh:
         for line in fh:
@@ -1120,11 +1176,17 @@ def readdir_reply(ReaddirToken token, name, EntryAttributes attr, off_t next_id)
         token.buf = token.buf_start
 
     cname = PyBytes_AsString(name)
-    len_ = fuse_add_direntry_plus(token.req, token.buf, token.size,
-                                  cname, &attr.fuse_param, next_id)
+    if token.plus:
+        len_ = fuse_add_direntry_plus(token.req, token.buf, token.size,
+                                      cname, &attr.fuse_param, next_id)
+    else:
+        len_ = fuse_add_direntry(token.req, token.buf, token.size,
+                                 cname, attr.attr, next_id)
     if len_ > token.size:
         return False
 
+    if not token.plus and name != b'.' and name != b'..':
+        token.inodes.append(attr.st_ino)
     token.size -= len_
     token.buf = &token.buf[len_]
     return True

@@ -4,7 +4,7 @@ This file provides guidance to AI Agents when working with code in this reposito
 
 ## Project Overview
 
-pyfuse3 is a Python 3 binding for libfuse 3 that provides an asynchronous API compatible with Trio and asyncio. It enables writing full-featured Linux filesystems in Python.
+pyfuse3 is a Python 3 binding for libfuse 3 that provides an asynchronous API compatible with Trio and asyncio. It enables writing full-featured Linux and macOS filesystems in Python.
 
 **Development Status**: Stable when used with Trio. The project is in maintenance mode - bugs are fixed and compatibility with new Python/libfuse versions is maintained, but no new features are planned. Pull requests for improvements may be accepted.
 
@@ -14,7 +14,8 @@ This project uses a **custom build backend** (`util/build_backend.py`) that wrap
 
 - Dynamically configures Cython extensions based on pkg-config output and platform detection
 - Requires libfuse3 >= 3.2.0 (checked via pkg-config)
-- Platform-specific: adds darwin_compat.c on macOS, -lrt on Linux
+- Platform-specific: -lrt on Linux, `-DFUSE_DARWIN_ENABLE_EXTENSIONS=0` on macOS (pyfuse3 uses
+  the vanilla libfuse API of macFUSE, not its Darwin-specific variant)
 - Uses Cython to compile `.pyx` files to C extensions
 
 ## Development Setup
@@ -120,7 +121,7 @@ src/pyfuse3/
   handlers.pxi          # FUSE request handlers (included by __init__.pyx)
   internal.pxi          # Internal Cython utilities
   macros.pxd            # Cython macro definitions
-  *.c, *.h              # C compatibility code (darwin_compat, etc.)
+  *.c, *.h              # Small C helpers with platform-specific code (xattr.h, syncfs.h, ...)
 
 examples/
   hello.py              # Simple example with Trio
@@ -152,5 +153,7 @@ developer-notes/
 ## Platform Support
 
 - **Linux**: Primary platform, fully supported
-- **macOS**: Supported with darwin_compat.c compatibility layer
+- **macOS**: Supported via macFUSE's libfuse3 (see `rst/platforms.rst` for the differences, e.g.
+  no readdirplus, so pyfuse3 falls back to plain readdir; the FUSE fd cannot be used with kqueue,
+  so a helper thread waits for it with select(2))
 - **FreeBSD**: Limited support via PLATFORM_BSD detection

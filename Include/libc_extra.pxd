@@ -11,6 +11,7 @@ the terms of the GNU LGPL.
 '''
 
 from posix.time cimport timespec
+from posix.types cimport gid_t, pid_t
 
 cdef extern from "<dirent.h>" nogil:
     ctypedef struct DIR:
@@ -60,5 +61,11 @@ cdef extern from "xattr.h" nogil:
 cdef extern from "gettime.h" nogil:
     int gettime_realtime(timespec *tp)
 
-cdef extern from "<unistd.h>" nogil:
-    int syncfs(int fd)
+cdef extern from "syncfs.h" nogil:
+    int syncfs_p(int fd)
+
+cdef extern from "supgroups.h" nogil:
+    int get_sup_groups_p(pid_t pid, gid_t *list, int size)
+
+cdef extern from "unmount.h" nogil:
+    int force_unmount_p(const char *path)

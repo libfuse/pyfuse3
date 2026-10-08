@@ -57,12 +57,13 @@ cdef void init_fuse_ops():
     fuse_ops.release = fuse_release
     fuse_ops.fsync = fuse_fsync
     fuse_ops.opendir = fuse_opendir
+    fuse_ops.readdir = fuse_readdir
     fuse_ops.readdirplus = fuse_readdirplus
     fuse_ops.releasedir = fuse_releasedir
     fuse_ops.fsyncdir = fuse_fsyncdir
     fuse_ops.statfs = fuse_statfs
-    ASSIGN_NOT_DARWIN(fuse_ops.setxattr, &fuse_setxattr)
-    ASSIGN_NOT_DARWIN(fuse_ops.getxattr, &fuse_getxattr)
+    fuse_ops.setxattr = fuse_setxattr
+    fuse_ops.getxattr = fuse_getxattr
     fuse_ops.listxattr = fuse_listxattr
     fuse_ops.removexattr = fuse_removexattr
     fuse_ops.access = fuse_access
@@ -147,6 +148,22 @@ cdef strerror(int errno):
     except ValueError:
         return 'errno: %d' % errno
 
+cdef _notify_error(int ret, str func):
+    '''Return an OSError for the failed fuse_lowlevel_notify_*() call *func*
+
+    *ret* is the (negative) return value of the call.
+    '''
+
+    cdef int err = -ret
+
+    # macFUSE rejects notifications that it does not support with EINVAL
+    # (which the kernel returns for the write to the FUSE device). Report
+    # them as ENOSYS, like Linux does.
+    if PLATFORM == PLATFORM_DARWIN and err == EINVAL:
+        err = ENOSYS
+
+    return OSError(err, '%s returned: %s' % (func, strerror(err)))
+
 cdef PyBytes_from_bufvec(fuse_bufvec *src):
     cdef fuse_bufvec dst
     cdef size_t len_
@@ -199,6 +216,106 @@ cdef class _WorkerData:
 # the trio module.
 cdef _WorkerData worker_data
 
+class _FdReadinessProxy:
+    '''Make readability of a file descriptor observable through a pipe.
+
+    The macFUSE device does not support kqueue(2), so on macOS the FUSE session
+    fd cannot be waited on with `trio.lowlevel.wait_readable`. Instances of this
+    class run a helper thread that waits for the session fd to become readable
+    with select(2) and then writes a byte into a pipe. The read end of the pipe
+    (the `fd` attribute) supports kqueue and is waited on instead.
+
+    To make sure that the helper thread only reports readability once per
+    request, it waits for a permit before each select(2) call. The permit is
+    granted initially and after each request has been read from the session fd
+    (`rearm`).
+    '''
+
+    def __init__(self, fuse_fd):
+        self._fuse_fd = fuse_fd
+        self._stopped = False
+        self._start()
+
+    def _start(self):
+        '''Create the pipes and start the helper thread'''
+
+        (self.fd, self._ready_w) = os.pipe()
+        (self._stop_r, self._stop_w) = os.pipe()
+        self._permit = threading.Semaphore(1)
+        self._stopping = False
+        self._thread = threading.Thread(target=self._run, name='pyfuse3-fd-proxy')
+        self._thread.daemon = True
+        self._thread.start()
+
+    def restart_after_fork(self):
+        '''Replace the pipes and the helper thread in a child process
+
+        Only the thread that calls fork(2) survives it. A file system that
+        daemonizes between `init` and `main` would therefore be left with a
+        proxy whose helper thread is gone: nothing writes to the readiness
+        pipe anymore, so the main loop waits forever while the file system is
+        already mounted, and every access to it blocks in the kernel.
+        '''
+
+        if self._stopped:
+            return
+        # The inherited pipes belong to the helper thread that did not survive
+        # the fork, so they are of no use to the child.
+        for fd in (self.fd, self._ready_w, self._stop_r, self._stop_w):
+            try:
+                os.close(fd)
+            except OSError:
+                pass
+        self._start()
+
+    def _run(self):
+        try:
+            while True:
+                self._permit.acquire()
+                if self._stopping:
+                    break
+                (readable, _, _) = select.select([self._fuse_fd, self._stop_r], [], [])
+                if self._stop_r in readable:
+                    break
+                os.write(self._ready_w, b'\0')
+        finally:
+            # Signal EOF to `consume`, in case we are terminating unexpectedly.
+            os.close(self._ready_w)
+
+    def consume(self):
+        '''Consume the readiness notification
+
+        Must be called right after `fd` has become readable. Returns False if
+        the helper thread has terminated (so no more notifications will come).
+        '''
+
+        return os.read(self.fd, 1) != b''
+
+    def rearm(self):
+        '''Allow the helper thread to wait for the next request'''
+
+        self._permit.release()
+
+    def stop(self):
+        '''Terminate the helper thread and close the pipes'''
+
+        self._stopped = True
+        self._stopping = True
+        os.write(self._stop_w, b'\0')
+        self._permit.release()
+        self._thread.join()
+        for fd in (self.fd, self._stop_r, self._stop_w):
+            os.close(fd)
+
+def _restart_fd_proxy_after_fork():
+    '''Restart the FUSE fd readiness proxy in a child process after fork(2)'''
+
+    if fd_proxy is not None:
+        fd_proxy.restart_after_fork()
+
+if PLATFORM == PLATFORM_DARWIN:
+    os.register_at_fork(after_in_child=_restart_fd_proxy_after_fork)
+
 async def _wait_fuse_readable():
     '''Wait for FUSE fd to become readable
 
@@ -219,7 +336,13 @@ async def _wait_fuse_readable():
                 log.debug('FUSE session exit flag set while waiting for FUSE fd '
                           'to become readable.')
                 return False
-            await trio.lowlevel.wait_readable(session_fd)
+            if fd_proxy is None:
+                await trio.lowlevel.wait_readable(session_fd)
+            else:
+                await trio.lowlevel.wait_readable(fd_proxy.fd)
+                if not fd_proxy.consume():
+                    log.debug('FUSE fd readiness proxy terminated.')
+                    return False
             #log.debug('%s: fuse fd readable, unparking next task.', name)
     except trio.ClosedResourceError:
         log.debug('FUSE fd about to be closed.')
@@ -251,6 +374,8 @@ async def _session_loop(nursery, int min_tasks, int max_tasks):
             break
 
         res = fuse_session_receive_buf(session, &buf)
+        if fd_proxy is not None:
+            fd_proxy.rearm()
         if not worker_data.active_readers and worker_data.task_count < max_tasks:
             worker_data.task_count += 1
             log.debug('%s: No tasks waiting, starting another worker (now %d total).',

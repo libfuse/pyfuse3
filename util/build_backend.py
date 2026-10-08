@@ -63,18 +63,17 @@ def get_extension_modules():
     link_args = pkg_config('fuse3', cflags=False, ldflags=True, min_ver='3.2.0')
     link_args.append('-lpthread')
 
-    # Determine source files based on platform
-    c_sources = ['src/pyfuse3/__init__.pyx']
-
     if os.uname()[0] in ('Linux', 'GNU/kFreeBSD'):
         link_args.append('-lrt')
     elif os.uname()[0] == 'Darwin':
-        c_sources.append('src/pyfuse3/darwin_compat.c')
+        # macFUSE's headers default to a Darwin-specific variant of the
+        # libfuse API. pyfuse3 uses the vanilla API instead, see pyfuse3.h.
+        compile_args.append('-DFUSE_DARWIN_ENABLE_EXTENSIONS=0')
 
     return [
         Extension(
             'pyfuse3.__init__',
-            c_sources,
+            ['src/pyfuse3/__init__.pyx'],
             extra_compile_args=compile_args,
             extra_link_args=link_args,
             include_dirs=['Include'],

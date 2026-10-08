@@ -20,6 +20,7 @@ import errno
 import logging
 import multiprocessing
 import os
+import platform
 import select
 import stat
 import threading
@@ -38,20 +39,41 @@ from pyfuse3 import (
     ReaddirToken,
     RequestContext,
 )
-from util import cleanup, fuse_test_marker, umount, wait_for_mount
+from util import cleanup, fuse_test_marker, macfuse_version, umount, wait_for_mount
 
 pytestmark = fuse_test_marker()
 
+_IS_DARWIN = platform.system() == 'Darwin'
+_MACFUSE_VERSION = macfuse_version()
+# macFUSE started honoring FUSE entry-invalidation notifications with version
+# 5.3.1 (its kernel extension then removes the item from the name cache when
+# handling FUSE_NOTIFY_INVAL_ENTRY). Earlier releases accept the notification
+# but their vnode name cache ignores it, so the entry is not looked up again.
+_MACFUSE_INVALIDATES_ENTRIES = _MACFUSE_VERSION is not None and _MACFUSE_VERSION >= (5, 3, 1)
+
+# macFUSE keeps directory entries in the kernel's vnode name cache until they
+# are explicitly invalidated; there is no per-entry expiry, so the
+# entry_timeout is not observed.
+macfuse_no_entry_timeout = pytest.mark.skipif(
+    _IS_DARWIN,
+    reason='macFUSE does not expire cached directory entries after entry_timeout',
+)
+macfuse_no_entry_invalidation = pytest.mark.skipif(
+    _IS_DARWIN and not _MACFUSE_INVALIDATES_ENTRIES,
+    reason='macFUSE < 5.3.1 does not invalidate cached directory entries',
+)
+
 
 def get_mp():
-    # We can't use forkserver because we have to make sure
-    # that the server inherits the per-test stdout/stderr file
-    # descriptors.
-    if hasattr(multiprocessing, 'get_context'):
-        mp = multiprocessing.get_context('fork')
-    else:
-        # Older versions only support *fork* anyway
-        mp = multiprocessing  # type: ignore[assignment]
+    if _IS_DARWIN:
+        # On macOS, libfuse's mount path uses libdispatch (GCD), which is not
+        # fork-safe: once GCD has been initialized in the parent process (for
+        # example by an earlier test), forking and then mounting in the child
+        # aborts in a dispatch_once() fork-safety check. Use spawn instead.
+        return multiprocessing.get_context('spawn')
+    # On Linux we use fork (not forkserver) so that the server process inherits
+    # the per-test stdout/stderr file descriptors, which the log checks rely on.
+    mp = multiprocessing.get_context('fork')
     if threading.active_count() != 1:
         raise RuntimeError("Multi-threaded test running is not supported")
 
@@ -86,6 +108,7 @@ def _mount_fs(tmpdir, fs_class):
             umount(mount_process, mnt_dir)
 
 
+@macfuse_no_entry_invalidation
 def test_invalidate_entry(testfs):
     (mnt_dir, fs_state) = testfs
     path = os.path.join(mnt_dir, 'message')
@@ -119,6 +142,7 @@ def test_invalidate_inode(testfs):
         assert fs_state.read_called
 
 
+@pytest.mark.skipif(platform.system() == 'Darwin', reason='macFUSE does not support notify_store')
 def test_notify_store(testfs):
     (mnt_dir, fs_state) = testfs
     with open(os.path.join(mnt_dir, 'message'), 'r') as fh:
@@ -128,6 +152,7 @@ def test_notify_store(testfs):
         assert not fs_state.read_called
 
 
+@pytest.mark.skipif(platform.system() == 'Darwin', reason='macFUSE does not send poll requests')
 def test_notify_poll(pollfs):
     (mnt_dir, fs_state) = pollfs
     path = os.path.join(mnt_dir, 'message')
@@ -160,6 +185,7 @@ def test_notify_poll(pollfs):
         assert events[0][1] & select.POLLPRI
 
 
+@macfuse_no_entry_timeout
 def test_entry_timeout(testfs):
     (mnt_dir, fs_state) = testfs
     fs_state.entry_timeout = 1
@@ -206,6 +232,7 @@ def test_terminate(tmpdir):
             pyfuse3.setxattr(mnt_dir, 'command', b'terminate')
             mount_process.join(5)
             assert mount_process.exitcode is not None
+            assert not os.path.ismount(mnt_dir)
         except:
             cleanup(mount_process, mnt_dir)
             raise

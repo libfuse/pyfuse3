@@ -20,6 +20,14 @@ also need the following additional dependencies installed on your system:
   *python3-devel* package on many Linux distributions)
 * A C compiler
 
+On macOS, libfuse is provided by macFUSE_ version 5 (pyfuse3 has been tested with macFUSE 5.1.3,
+older macFUSE 5 releases may work but are untested). Install macFUSE (e.g. with
+``brew install --cask macfuse``) and
+*pkg-config* (e.g. with ``brew install pkg-config``). macFUSE installs its *libfuse3* headers and
+library under :file:`/usr/local`, if *pkg-config* does not find them, set
+``PKG_CONFIG_PATH=/usr/local/lib/pkgconfig``. See :doc:`platforms` for the differences between
+macFUSE and FUSE on Linux.
+
 
 Stable releases
 ===============
@@ -48,6 +56,7 @@ Clone the pyfuse3_ repository and take a look at :file:`developer_notes/setup.md
 
 
 .. _libfuse: http://github.com/libfuse/libfuse
+.. _macFUSE: https://macfuse.github.io/
 .. _attr: http://savannah.nongnu.org/projects/attr/
 .. _`pkg-config`: http://www.freedesktop.org/wiki/Software/pkg-config
 .. _pyfuse3: https://github.com/libfuse/pyfuse3/

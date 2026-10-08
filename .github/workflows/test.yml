@@ -26,6 +26,12 @@ jobs:
           # 3.15 is not released yet, uv will install the latest pre-release.
           - python-version: "3.15"
             os: ubuntu-26.04
+          # macOS: builds against macFUSE's libfuse3. The tests that need to
+          # mount a file system are skipped, because the macFUSE kernel
+          # extension cannot be loaded on GitHub's runners (it requires
+          # approval by a user).
+          - python-version: "3.14"
+            os: macos-15
 
     steps:
       - uses: actions/checkout@v7
@@ -41,9 +47,17 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install Linux dependencies
+        if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y libattr1-dev libfuse3-dev fuse3 pkg-config gcc
+
+      - name: Install macOS dependencies
+        if: runner.os == 'macOS'
+        run: |
+          brew install --cask macfuse
+          brew install pkg-config
+          echo "PKG_CONFIG_PATH=/usr/local/lib/pkgconfig" >> "$GITHUB_ENV"
 
       - name: Build
         run: uv sync --locked

@@ -17,12 +17,12 @@ import stat
 import subprocess
 import time
 from collections.abc import Callable
-from multiprocessing.context import ForkProcess
+from multiprocessing.context import ForkProcess, SpawnProcess
 from typing import TypeVar
 
 import pytest
 
-Process = subprocess.Popen | multiprocessing.Process | ForkProcess
+Process = subprocess.Popen | multiprocessing.Process | ForkProcess | SpawnProcess
 
 
 def fuse_test_marker():
@@ -33,10 +33,18 @@ def fuse_test_marker():
     supported, return `pytest.mark.uses_fuse()`.
     '''
 
-    if platform.system() == 'Darwin':
-        # No working autodetection, just assume it will work.
-        return
     skip = lambda x: pytest.mark.skip(reason=x)
+
+    if platform.system() == 'Darwin':
+        # macFUSE creates the /dev/macfuse* device nodes when its kernel
+        # extension is loaded. Without the kernel extension, mounting is
+        # not possible (e.g. on CI runners, where the extension cannot be
+        # approved by a user).
+        if not os.path.exists('/Library/Filesystems/macfuse.fs'):
+            return skip('macFUSE does not seem to be installed')
+        if not os.path.exists('/dev/macfuse0'):
+            return skip('macFUSE kernel extension does not seem to be loaded')
+        return pytest.mark.uses_fuse()
 
     fusermount_path = shutil.which('fusermount')
     if fusermount_path is None:
@@ -60,6 +68,31 @@ def fuse_test_marker():
         os.close(fd)
 
     return pytest.mark.uses_fuse()
+
+
+def macfuse_version() -> tuple[int, ...] | None:
+    '''Return the installed macFUSE version as a tuple of ints, or None.
+
+    Returns None if not running on macOS or if the version cannot be
+    determined. The version is read from the macFUSE framework bundle.
+    '''
+
+    if platform.system() != 'Darwin':
+        return None
+    import plistlib
+
+    try:
+        with open('/Library/Frameworks/macFUSE.framework/Resources/Info.plist', 'rb') as fh:
+            info = plistlib.load(fh)
+    except OSError:
+        return None
+    version = info.get('CFBundleShortVersionString', '')
+    parts = []
+    for component in version.split('.'):
+        if not component.isdigit():
+            break
+        parts.append(int(component))
+    return tuple(parts) or None
 
 
 def exitcode(process: Process) -> int | None:
@@ -107,7 +140,7 @@ def wait_for_mount(mount_process: Process, mnt_dir: str) -> bool:
 def cleanup(mount_process: Process, mnt_dir: str) -> None:
     if platform.system() == 'Darwin':
         subprocess.call(
-            ['umount', '-l', mnt_dir], stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT
+            ['umount', '-f', mnt_dir], stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT
         )
     else:
         subprocess.call(
@@ -128,7 +161,7 @@ def cleanup(mount_process: Process, mnt_dir: str) -> None:
 
 def umount(mount_process: Process, mnt_dir: str) -> None:
     if platform.system() == 'Darwin':
-        subprocess.check_call(['umount', '-l', mnt_dir])
+        subprocess.check_call(['umount', mnt_dir])
     else:
         subprocess.check_call(['fusermount', '-z', '-u', mnt_dir])
     assert not os.path.ismount(mnt_dir)
