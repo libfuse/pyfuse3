@@ -39,7 +39,7 @@ StatDict = Mapping[str, int]
 default_options: frozenset[str]
 
 class ReaddirToken:
-    pass
+    plus: bool
 
 class RequestContext:
     @property

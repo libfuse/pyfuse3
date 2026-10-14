@@ -29,10 +29,14 @@ cdef class _Container:
     cdef size_t   size
     cdef struct_stat stat
     cdef uint64_t fh
+    cdef bint readdir_plain
 
 cdef void fuse_init (void *userdata, fuse_conn_info *conn):
-    if not conn.capable & FUSE_CAP_READDIRPLUS:
-        raise RuntimeError('Kernel too old, pyfuse3 requires kernel 3.9 or newer!')
+    # A client that supports FUSE_CAP_READDIRPLUS still issues plain
+    # FUSE_READDIR when it wants entries without attributes, and some clients
+    # (e.g. gVisor's sentry) implement only plain FUSE_READDIR. We register
+    # both operations and never require READDIRPLUS, so there is nothing to
+    # negotiate here beyond disabling the "auto" heuristic below.
     conn.want &= ~(<unsigned> FUSE_CAP_READDIRPLUS_AUTO)
 
     if (operations.supports_dot_lookup and
@@ -564,6 +568,7 @@ cdef class ReaddirToken:
     cdef char *buf_start
     cdef char *buf
     cdef size_t size
+    cdef readonly bint plus
 
 cdef void fuse_readdirplus (fuse_req_t req, fuse_ino_t ino, size_t size, off_t off,
                             fuse_file_info *fi):
@@ -575,12 +580,24 @@ cdef void fuse_readdirplus (fuse_req_t req, fuse_ino_t ino, size_t size, off_t o
     c.fh = fi.fh
     save_retval(fuse_readdirplus_async(c))
 
+cdef void fuse_readdir (fuse_req_t req, fuse_ino_t ino, size_t size, off_t off,
+                        fuse_file_info *fi):
+    global py_retval
+    cdef _Container c = _Container()
+    c.req = req
+    c.size = size
+    c.off = off
+    c.fh = fi.fh
+    c.readdir_plain = True
+    save_retval(fuse_readdirplus_async(c))
+
 async def fuse_readdirplus_async (_Container c):
     cdef int ret
     cdef ReaddirToken token = ReaddirToken()
     token.buf_start = NULL
     token.size = c.size
     token.req = c.req
+    token.plus = not c.readdir_plain
 
     try:
         await operations.readdir(c.fh, c.off, token)

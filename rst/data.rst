@@ -196,6 +196,13 @@
 
    An identifier for a particular `~Operations.readdir` invocation.
 
+   .. attribute:: plus
+
+      A read-only boolean indicating how the client requested the listing. If
+      True, the request was ``FUSE_READDIRPLUS`` and reported entries take a
+      kernel lookup reference; if False, it was a plain ``FUSE_READDIR`` and
+      they do not. See `~Operations.readdir` for the effect on lookup counts.
+
 .. autoclass:: PollHandle
 
    .. automethod:: notify
